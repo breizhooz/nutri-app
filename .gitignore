@@ -1,0 +1,38 @@
+#  Environnements virtuels
+.venv/
+venv/
+env/
+
+#  Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+#  Packaging
+build/
+dist/
+*.egg-info/
+
+#  Tests / coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+#  IDE
+.idea/
+.vscode/
+
+#  Fichiers d'environnement (secrets)
+.env
+.env.*
+!.env.example
+
+#  Docker (optionnel si tu en as)
+*.log
+docker-compose.override.yml
+
+#  OS
+.DS_Store
+Thumbs.db

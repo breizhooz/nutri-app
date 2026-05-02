@@ -1,0 +1,29 @@
+services:
+
+  postgres-user:
+    image: postgres:16-alpine
+    env_file: ./services-infra/conf/.env.infra
+    ports:
+      - "5433:5432"                  # 5433 sur ta machine pour éviter les conflits
+    volumes:
+      - pgdata-user:/var/lib/postgresql/data   # données persistantes
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U nutriuser -d nutriplanner_user" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  service-user:
+    build:
+      context: ./service-user
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./service-user:/app
+    env_file: ./service-user/conf/.env
+    depends_on:
+      postgres-user:
+        condition: service_healthy
+
+volumes:
+  pgdata-user:
