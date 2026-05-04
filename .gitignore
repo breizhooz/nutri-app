@@ -28,6 +28,7 @@ htmlcov/
 .env
 .env.*
 !.env.example
+!.env.*.example
 
 #  Docker (optionnel si tu en as)
 *.log
