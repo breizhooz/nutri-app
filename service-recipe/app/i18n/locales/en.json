@@ -1,0 +1,38 @@
+{
+  "enums": {
+    "difficulty": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard"
+    },
+    "origin": {
+      "web": "Web",
+      "book": "Book",
+      "tv": "TV",
+      "personal": "Personnal"
+    },
+    "unit": {
+    "g": "grams",
+    "ml": "milliliters",
+    "unite": "unit(s)",
+    "cas": "tablespoon(s)",
+    "cac": "teaspoon(s)"
+  }
+  },
+  "recipe": {
+    "fields": {
+      "title": "Title",
+      "description": "Description",
+      "instructions": "Instructions",
+      "prep_time": "Preparation time",
+      "cook_time": "Cooking time",
+      "servings": "Servings",
+      "difficulty": "Difficulty",
+      "origin": "Origin"
+    },
+    "errors": {
+      "not_found": "Recipe not found",
+      "slug_exists": "A recipe with this title already exists"
+    }
+  }
+}

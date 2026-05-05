@@ -1,0 +1,38 @@
+{
+  "enums": {
+    "difficulty": {
+      "easy": "Facile",
+      "medium": "Moyen",
+      "hard": "Difficile"
+    },
+    "origin": {
+      "web": "Web",
+      "book": "Livre",
+      "tv": "Télévision",
+      "personal": "Personnel"
+    },
+    "unit": {
+      "g": "grammes",
+      "ml": "millilitres",
+      "unite": "unité(s)",
+      "cas": "cuillère(s) à soupe",
+      "cac": "cuillère(s) à café"
+    }
+  },
+  "recipe": {
+    "fields": {
+      "title": "Titre",
+      "description": "Description",
+      "instructions": "Instructions",
+      "prep_time": "Temps de préparation",
+      "cook_time": "Temps de cuisson",
+      "servings": "Portions",
+      "difficulty": "Difficulté",
+      "origin": "Origine"
+    },
+    "errors": {
+      "not_found": "Recette non trouvée",
+      "slug_exists": "Une recette avec ce titre existe déjà"
+    }
+  }
+}
