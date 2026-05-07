@@ -51,8 +51,6 @@ class TestTranslationLoader():
         """Clé manquante retourne la clé elle-même (fallback)"""
         loader = TranslationLoader(locales_dir=temp_locale_files)
         result = loader.get("nonexistent.key.path", locale="fr")
-        print("wazaaa")
-        print(result)
         assert result == "nonexistent.key.path"
 
     def test_get_missing_locale_returns_key(self, temp_locale_files, monkeypatch):

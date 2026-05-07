@@ -1,5 +1,5 @@
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Optional, Any,  list
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from typing import Optional, Any,  List
 from datetime import datetime
 from .recipe_ingredient import RecipeIngredientBase, RecipeIngredientResponse
 from app.models.enums import (
@@ -13,7 +13,7 @@ class RecipeBase(BaseModel):
     instructions: str
     prep_time_minutes: Optional[int] = None
     cook_time_minutes: Optional[int] = None
-    servins: int = 4
+    servings: int = 4
     difficulty: DifficultyLevel = DifficultyLevel.EASY
     cuisine_origin: CuisineOrigin = CuisineOrigin.FRENCH
     origin_recipe: RecipeOrigin = RecipeOrigin.PERSONAL
@@ -25,7 +25,14 @@ class RecipeBase(BaseModel):
 
 class RecipeCreate(RecipeBase):
     # Pour la création, on s'attend à recevoir une liste d'ingrédients (ID + quantité)
-    recipe_ingredients: list[RecipeIngredientBase]
+    recipe_ingredients: List[RecipeIngredientBase]
+
+    @field_validator('book_name')
+    @classmethod
+    def validate_book_name(cls, v, info):
+        """book_name require if origin==book"""
+        if info.data.get('origin_recipe') == RecipeOrigin.BOOK:
+            raise ValueError("book_name is require whein origin = book")
 
 class RecipeUpdate(BaseModel):
     title: Optional[str] = Field(None, max_length=300)
@@ -33,7 +40,7 @@ class RecipeUpdate(BaseModel):
     instructions: Optional[str] = None
     prep_time_minutes: Optional[int] = None
     cook_time_minutes: Optional[int] = None
-    servins: Optional[int] = None # Toujours avec ta petite typo "servins" ;)
+    servings: Optional[int] = None 
     difficulty: Optional[DifficultyLevel] = None
     cuisine_origin: Optional[CuisineOrigin] = None
     origin_recipe: Optional[RecipeOrigin] = None
@@ -41,7 +48,7 @@ class RecipeUpdate(BaseModel):
     book_name: Optional[str] = None
     source_url: Optional[str] = None
     image_url: Optional[str] = None
-    recipe_ingredients: Optional[list[RecipeIngredientBase]] = None
+    recipe_ingredients: Optional[List[RecipeIngredientBase]] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -50,6 +57,6 @@ class RecipeResponse(RecipeBase):
     created_at: datetime
     updated_at: datetime
     # On expose les ingrédients complets dans la réponse
-    recipe_ingredients: list[RecipeIngredientResponse]
+    recipe_ingredients: List[RecipeIngredientResponse]
     
     model_config = ConfigDict(from_attributes=True)

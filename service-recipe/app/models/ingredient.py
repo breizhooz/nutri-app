@@ -1,9 +1,9 @@
 from typing import Optional, Any
-from sqlalchemy import String, Text, Integer, ForeignKey, func, JSON, Float,  Enum as SQLEnum
+from sqlalchemy import String, Integer, ForeignKey, func, JSON, Float,  Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.enums import TypeOfIngredient, Allergen, Nutrition, Diet
-from app.db.base import Base
+from app.db.base_class import Base
 
 class Ingredient(Base):
     __tablename__ = "ingredients"

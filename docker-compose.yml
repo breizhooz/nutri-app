@@ -74,7 +74,8 @@ services:
     volumes:
       - ./service-recipe:/app
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER_USER}:${POSTGRES_USER_PASSWORD}@postgres-user:5432/${POSTGRES_USER_DB}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@postgres-recipe:5432/${POSTGRES_RECIPE_DB}
+      
     env_file:
       - .env
       - ./service-recipe/conf/.env

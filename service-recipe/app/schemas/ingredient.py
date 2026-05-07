@@ -1,12 +1,12 @@
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
-from typing import Optional, Any, Union, list
+from typing import Optional, Any, Union, List
 from app.models.enums import (
     TypeOfIngredient, Allergen, Nutrition, Diet
 )
 
 class IngredientBase(BaseModel):
     name: str = Field(..., max_length=200)
-    tags: list[Union[TypeOfIngredient, Allergen, Nutrition, Diet]] = []
+    tags: List[Union[TypeOfIngredient, Allergen, Nutrition, Diet]] = []
     free_tags: dict[str, Any] = {}
     calories_per_100g: Optional[float] = None
     proteins_per_100g: Optional[float] = None
@@ -18,7 +18,7 @@ class IngredientCreate(IngredientBase):
 
 class IngredientUpdate(BaseModel):
     name: Optional[str] = Field(None, max_length=200)
-    tags: Optional[list[Union[TypeOfIngredient, Allergen, Nutrition, Diet]]] = None
+    tags: Optional[List[Union[TypeOfIngredient, Allergen, Nutrition, Diet]]] = None
     free_tags: Optional[dict[str, Any]] = None
     calories_per_100g: Optional[float] = None
     proteins_per_100g: Optional[float] = None

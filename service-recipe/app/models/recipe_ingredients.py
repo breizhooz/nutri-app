@@ -1,9 +1,12 @@
+from typing import TYPE_CHECKING
 from sqlalchemy import String, ForeignKey
-from sqlalchemy import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .recipe import Recipe
-from .ingredient import Ingredient
-from app.db.base import Base
+if TYPE_CHECKING:
+    from .recipe import Recipe
+    from .ingredient import Ingredient
+
+from app.db.base_class import Base
 
 class RecipeIngredient(Base):
     __tablename__ = "recipe_ingredients"
