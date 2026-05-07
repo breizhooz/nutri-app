@@ -1,7 +1,7 @@
 from typing import Optional, Any
 from sqlalchemy import String, Integer, ForeignKey, func, JSON, Float,  Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from app.models.enums import TypeOfIngredient, Allergen, Nutrition, Diet
 from app.db.base_class import Base
 
@@ -19,6 +19,27 @@ class Ingredient(Base):
         server_default="{}",
         comment="List of tags issus from Enums"
     )
+
+    @validates("tags")
+    def validate_tags(self, key, tags_list):
+        if not tags_list:
+            return tags_list
+
+        allowed_values = {
+            *[e.value for e in TypeOfIngredient],
+            *[e.value for e in Allergen],
+            *[e.value for e in Nutrition],
+            *[e.value for e in Diet],
+        }
+
+        for tag in tags_list:
+            if tag not in allowed_values:
+                raise ValueError(
+                    f"Le tag '{tag}' n'est pas une valeur valide. "
+                    f"Valeurs attendues issues de TypeOfIngredient, Allergen, Nutrition ou Diet."
+                )
+        
+        return tags_list
     
     free_tags: Mapped[dict[str, Any]] = mapped_column(
         JSON, 

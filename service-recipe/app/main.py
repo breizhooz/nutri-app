@@ -6,11 +6,13 @@ from app.db.session import engine
 from app.db.session import get_session
 from app.i18n.loader import t
 from app.api.routes import recipes as recipes_router
+from app.api.routes import ingredient as ingredient_router
 
 
 app = FastAPI(title="service-recipe", version="0.1.0")
 
 app.include_router(recipes_router.router, prefix="/api/v1/recipe", tags=["recipe"])
+app.include_router(ingredient_router.router, prefix="/api/v1/ingredient", tags=["recipe"])
 
 # app.include_router(users_routes.router, prefix="/api/v1/users", tags=["users"])
 @app.get("/health")
