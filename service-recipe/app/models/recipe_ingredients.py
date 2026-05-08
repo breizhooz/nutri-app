@@ -9,6 +9,9 @@ if TYPE_CHECKING:
 from app.db.base_class import Base
 
 class RecipeIngredient(Base):
+    """
+    Linked between recipe and ingredient
+    """
     __tablename__ = "recipe_ingredients"
     
     id: Mapped[int] = mapped_column(primary_key=True)

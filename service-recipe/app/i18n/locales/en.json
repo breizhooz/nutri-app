@@ -42,6 +42,11 @@
       "australian": "australian",
       "polynesian": "polynesian"
     },
+    "course_type":{
+      "starter": "starter",
+      "main": "main course",
+      "dessert": "dessert"
+    },
     "seasonality":{
       "spring": "spring",
       "summer": "summer",
@@ -221,19 +226,34 @@
   }
   },
   "recipe": {
-    "fields": {
-      "title": "Title",
-      "description": "Description",
-      "instructions": "Instructions",
-      "prep_time": "Preparation time",
-      "cook_time": "Cooking time",
-      "servings": "Servings",
-      "difficulty": "Difficulty",
-      "origin": "Origin"
-    },
     "errors": {
       "not_found": "Recipe not found",
-      "slug_exists": "A recipe with this title already exists"
+      "invalid_difficulty": "Invalid difficulty level",
+      "missing_title": "Title is required",
+      "missing_ingredients": "At least one ingredient is required",
+      "duplicate_ingredient": "This ingredient is already in the recipe",
+      "user_not_found": "User not found",
+      "unauthorized": "You are not authorized to modify this recipe"
+    },
+    "success": {
+      "created": "Recipe created successfully",
+      "updated": "Recipe updated",
+      "deleted": "Recipe deleted"
+    }
+  },
+  "ingredient": {
+    "errors": {
+      "already_exist": "This ingredient already exists.",
+      "not_found": "Ingredient not found",
+      "invalid_unit": "Invalid unit of measurement",
+      "invalid_allergen": "Invalid allergen"
+    }
+  },
+  "validation": {
+    "errors": {
+      "invalid_id": "Invalid ID",
+      "negative_quantity": "Quantity must be positive",
+      "invalid_email": "Invalid email"
     }
   }
 }

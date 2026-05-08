@@ -1,13 +1,17 @@
 from typing import Any
 from sqlalchemy import String, Text, Integer, ForeignKey, func, JSON,  Enum as SQLEnum
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from datetime import datetime
-from app.db.base_class import Base
-from app.models.enums import DifficultyLevel, RecipeOrigin, CuisineOrigin
+
+from app.models.abstract_model import AbstractModel
+from app.models.enums import DifficultyLevel, RecipeOrigin, CuisineOrigin, CourseType
 from app.models.recipe_ingredients import RecipeIngredient
 
 
-class Recipe(Base):
+class Recipe(AbstractModel):
+    """
+    Model for the recipe
+    """
     __tablename__ = "recipes"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -28,7 +32,11 @@ class Recipe(Base):
         SQLEnum(DifficultyLevel, native_enum=False, length=50),
         default = DifficultyLevel.EASY
     )
-
+    @validates("difficulty")
+    def validate_difficuty(self, key, val):
+        """Check enmu DifficultyLevel"""
+        return self.generic_enum_validator(key, val, DifficultyLevel)
+    
     tags: Mapped[dict[str, Any]] = mapped_column(
         JSON, 
         default={}, 
@@ -39,11 +47,31 @@ class Recipe(Base):
         SQLEnum(CuisineOrigin, native_enum=False, length=50),
         default = CuisineOrigin.FRENCH
     )
+    @validates("cuisine_origin")
+    def validate_cuisine(self, key, val):
+        """Check enmu cuisine_origin"""
+        return self.generic_enum_validator(key, val, CuisineOrigin)
+    
     #origin of the recipe
     origin_recipe: Mapped[RecipeOrigin] = mapped_column(
         SQLEnum(RecipeOrigin, native_enum=False, length=50),
         default = RecipeOrigin.PERSONAL
     )
+    @validates("origin_recipe")
+    def validate_origin_recipe(self, key, val):
+        """Check enmu origin_recipe"""
+        return self.generic_enum_validator(key, val, RecipeOrigin)
+    
+    #origin of the recipe
+    course_type: Mapped[CourseType] = mapped_column(
+        SQLEnum(CourseType, native_enum=False, length=50),
+        default = CourseType.STARTER
+    )
+    @validates("course_type")
+    def validate_cuourse_type(self, key, val):
+        """Check enmu origin_recipe"""
+        return self.generic_enum_validator(key, val, CourseType)
+    
     book_name: Mapped[str | None] = mapped_column(String(300))
     source_url: Mapped[str | None] = mapped_column(String(500))
 

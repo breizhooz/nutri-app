@@ -42,6 +42,11 @@
       "australian": "australienne",
       "polynesian": "polynésienne"
     },
+    "course_type":{
+      "starter": "entrée",
+      "main": "plat",
+      "dessert": "dessert"
+    },
     "seasonality":{
       "spring": "printemps",
       "summer": "été",
@@ -222,19 +227,34 @@
     }
   },
   "recipe": {
-    "fields": {
-      "title": "Titre",
-      "description": "Description",
-      "instructions": "Instructions",
-      "prep_time": "Temps de préparation",
-      "cook_time": "Temps de cuisson",
-      "servings": "Portions",
-      "difficulty": "Difficulté",
-      "origin": "Origine"
-    },
     "errors": {
       "not_found": "Recette non trouvée",
-      "slug_exists": "Une recette avec ce titre existe déjà"
+      "invalid_difficulty": "Niveau de difficulté invalide",
+      "missing_title": "Le titre est obligatoire",
+      "missing_ingredients": "Au moins un ingrédient est requis",
+      "duplicate_ingredient": "Cet ingrédient est déjà dans la recette",
+      "user_not_found": "Utilisateur introuvable",
+      "unauthorized": "Vous n'êtes pas autorisé à modifier cette recette"
+    },
+    "success": {
+      "created": "Recette créée avec succès",
+      "updated": "Recette mise à jour",
+      "deleted": "Recette supprimée"
+    }
+  },
+  "ingredient": {
+    "errors": {
+      "already_exist": "Cet ingrédient existe déjà.",
+      "not_found": "Ingrédient non trouvé",
+      "invalid_unit": "Unité de mesure invalide",
+      "invalid_allergen": "Allergène invalide"
+    }
+  },
+  "validation": {
+    "errors": {
+      "invalid_id": "ID invalide",
+      "negative_quantity": "La quantité doit être positive",
+      "invalid_email": "Email invalide"
     }
   }
 }

@@ -23,7 +23,7 @@ htmlcov/
 #  IDE
 .idea/
 .vscode/
-
+*.code-workspace
 #  Fichiers d'environnement (secrets)
 .env
 .env.*

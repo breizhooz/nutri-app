@@ -1,15 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from starlette.requests import Request
 from app.db.session import get_session
 from app.models.recipe import Recipe
 from app.models.recipe_ingredients import RecipeIngredient
 from app.schemas.recipe import RecipeCreate, RecipeResponse
 from app.core.utils import slugify
+from app.i18n import LocalizedHTTPException
 
 router = APIRouter()
 
-@router.post("/recipes", response_model=RecipeResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/recipe", response_model=RecipeResponse, status_code=status.HTTP_201_CREATED)
 async def create_recipe(
     recipe_data: RecipeCreate,
     session: AsyncSession = Depends(get_session)
@@ -68,18 +70,36 @@ async def create_recipe(
     
     return recipe
 
-@router.get("/recipes/{slug}", response_model=RecipeResponse)
+@router.get("/recipe/{slug}", response_model=RecipeResponse)
 async def get_recipe_by_slug(
     slug: str,
+    request: Request,
     session: AsyncSession = Depends(get_session)
 ):
-    """Récupérer une recette par son slug"""
+    """get recipe by slug"""
     result = await session.execute(
         select(Recipe).where(Recipe.slug == slug)
     )
     recipe = result.scalar_one_or_none()
     
     if not recipe:
-        raise HTTPException(status_code=404, detail="Recette non trouvée")
+        locale = request.state.locale
+        raise LocalizedHTTPException.recipe_not_found(request)
+    
+    return recipe
+
+
+@router.get("/recipe/id/{id}", response_model=RecipeResponse)
+async def get_recipe_by_id(
+    id: int,
+    request: Request,
+    session: AsyncSession = Depends(get_session)
+):
+    """get recipe by id"""
+    recipe = await db.get(Recipe, id)
+    
+    if not recipe:
+        locale = request.state.locale
+        raise LocalizedHTTPException.recipe_not_found(request)
     
     return recipe

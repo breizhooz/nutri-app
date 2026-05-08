@@ -63,7 +63,7 @@ services:
       - nutriplanner
 
 # ══════════════════════════════════════════════════════════
-# SERVICE — Recipe
+# SERVICE — Recipe linked to postgre
 # ══════════════════════════════════════════════════════════
   service-recipe:
     build:

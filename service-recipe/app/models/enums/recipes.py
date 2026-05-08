@@ -13,6 +13,12 @@ class RecipeOrigin(str, PyEnum):
     TV = "enums.origin_recipe.tv"
     PERSONAL = "enums.origin_recipe.personal"
 
+class CourseType(str, PyEnum):
+    """Type of moment recipe"""
+    STARTER = "enums.course_type.starter"
+    MAIN_COURSE = "enums.course_type.main"
+    DESSERT = "enums.course_type.dessert"
+
 class CuisineOrigin(str, PyEnum):
     """Origin of cuisine"""
     EUROPE = "enums.origin_recipe.cuisine_origine.europe"

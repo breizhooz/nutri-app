@@ -1,5 +1,5 @@
 from .enums import Seasonality
-from .recipes import CuisineOrigin, DifficultyLevel, RecipeOrigin
+from .recipes import CuisineOrigin, DifficultyLevel, RecipeOrigin, CourseType
 from .food import TypeOfIngredient, CookingMethod
 from .health import Allergen, Diet, Nutrition
 
@@ -14,5 +14,6 @@ __all__ = [
     "RecipeOrigin",
     "Allergen", 
     "Diet", 
-    "Nutrition"
+    "Nutrition",
+    "CourseType"
 ]

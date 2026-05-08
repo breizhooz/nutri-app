@@ -14,10 +14,18 @@ class TranslationLoader:
 
     def _load_all(self):
         """Load all available translations on start"""
+        if not self.locales_dir.exists():
+            raise FileNotFoundError(f"Locales directory not found: {self.locales_dir}")
+        
         for locale_dir in self.locales_dir.glob("*.json"):
             locale = locale_dir.stem #get filename without extension
-            with open(locale_dir, "r", encoding="utf-8") as f:
-                self.translations[locale] = json.load(f)
+            try:
+                with open(locale_dir, "r", encoding="utf-8") as f:
+                    self.translations[locale] = json.load(f)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid Json in {locale_dir}: {e}")
+            except Exception as e:
+                raise RuntimeError(f"Failed to load {locale_dir}: {e}")
 
     def get(self, key: str, locale: str = "fr", **kwargs) -> str:
         """
