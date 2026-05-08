@@ -23,11 +23,12 @@ htmlcov/
 #  IDE
 .idea/
 .vscode/
-
+*.code-workspace
 #  Fichiers d'environnement (secrets)
 .env
 .env.*
 !.env.example
+!.env.*.example
 
 #  Docker (optionnel si tu en as)
 *.log
