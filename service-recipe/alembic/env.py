@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from app.db.base import Base
+from app.models import recipe, ingredient, recipe_ingredients
 
 # Alembic lit sa propre config
 config = context.config

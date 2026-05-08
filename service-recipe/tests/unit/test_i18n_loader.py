@@ -63,6 +63,7 @@ class TestTranslationLoader():
     def test_translate_enum_french(self, temp_locale_files, monkeypatch):
         """Teste translate_enum pour un enum en français"""
         loader = TranslationLoader(locales_dir=temp_locale_files)
+        
 
         from enum import Enum
 
@@ -70,7 +71,6 @@ class TestTranslationLoader():
             EASY = "easy"
             MEDIUM = "medium"
 
-        loader = TranslationLoader()
         result = loader.translate_enum(DifficultyLevel.EASY, "difficulty", locale="fr")
 
         assert result == "Facile"

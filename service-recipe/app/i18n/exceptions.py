@@ -1,7 +1,7 @@
 from fastapi import HTTPException, Request, status
 from app.i18n.loader import t
 
-class LocalizedHTTPException(HTTPException)
+class LocalizedHTTPException(HTTPException):
     """
     overload translation for exception
     """
@@ -27,4 +27,4 @@ class LocalizedHTTPException(HTTPException)
     
     @staticmethod
     def ingredient_already_exist(request: Request) -> HTTPException:
-        return LocalizedHTTPException(404, "ingredient.errors.already_exist", request)
+        return LocalizedHTTPException(409, "ingredient.errors.already_exist", request)

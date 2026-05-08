@@ -29,14 +29,3 @@ async def health():
         "service": "service-recipe",
         "database": db_status,
     }
-
-@app.get("/recipes/{id}")
-async def get_recipe(id: int, request: Request,db: AsyncSession = Depends(get_session)):
-    recipe = await db.get(id)
-    locale = request.state.locale  # fr, en, es...
-    
-    return {
-        "title": recipe.title,
-        "difficulty": t.get(recipe.difficulty.value, locale=locale),  # "Facile"
-        "cuisine": t.get(recipe.cuisine_origin.value, locale=locale)  # "française"
-    }

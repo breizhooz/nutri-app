@@ -10,7 +10,7 @@ class Ingredient(Base):
     __tablename__ = "ingredients"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name:  Mapped[str] = mapped_column(String(200), unique=True, nullable=False)
+    name:  Mapped[str] = mapped_column(String(200), unique=True)
 
     # Utilisation de ARRAY avec le type natif Enum de SQLAlchemy
     # On utilise String comme type de base pour stocker la valeur "enums.type..."

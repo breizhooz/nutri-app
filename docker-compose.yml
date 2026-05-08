@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER_USER}
       POSTGRES_PASSWORD: ${POSTGRES_USER_PASSWORD}
     ports:
-      - "5433:5432"                  # 5433 sur ta machine pour éviter les conflits
+      - "5433:5432"
     volumes:
       - pgdata-user:/var/lib/postgresql/data   # données persistantes
     healthcheck:
@@ -29,7 +29,7 @@ services:
       POSTGRES_USER: ${POSTGRES_RECIPE_USER}
       POSTGRES_PASSWORD: ${POSTGRES_RECIPE_PASSWORD}
     ports:
-      - "5434:5432"                  # 5433 sur ta machine pour éviter les conflits
+      - "5434:5432"
     volumes:
       - pgdata-recipe:/var/lib/postgresql/data   # données persistantes
     healthcheck:

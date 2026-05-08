@@ -35,7 +35,7 @@ class Recipe(AbstractModel):
     @validates("difficulty")
     def validate_difficuty(self, key, val):
         """Check enmu DifficultyLevel"""
-        return self.generic_enum_validator(key, val, DifficultyLevel)
+        return self._generic_enum_validator(key, val, DifficultyLevel)
     
     tags: Mapped[dict[str, Any]] = mapped_column(
         JSON, 
@@ -50,7 +50,7 @@ class Recipe(AbstractModel):
     @validates("cuisine_origin")
     def validate_cuisine(self, key, val):
         """Check enmu cuisine_origin"""
-        return self.generic_enum_validator(key, val, CuisineOrigin)
+        return self._generic_enum_validator(key, val, CuisineOrigin)
     
     #origin of the recipe
     origin_recipe: Mapped[RecipeOrigin] = mapped_column(
@@ -60,7 +60,7 @@ class Recipe(AbstractModel):
     @validates("origin_recipe")
     def validate_origin_recipe(self, key, val):
         """Check enmu origin_recipe"""
-        return self.generic_enum_validator(key, val, RecipeOrigin)
+        return self._generic_enum_validator(key, val, RecipeOrigin)
     
     #origin of the recipe
     course_type: Mapped[CourseType] = mapped_column(
@@ -70,7 +70,7 @@ class Recipe(AbstractModel):
     @validates("course_type")
     def validate_cuourse_type(self, key, val):
         """Check enmu origin_recipe"""
-        return self.generic_enum_validator(key, val, CourseType)
+        return self._generic_enum_validator(key, val, CourseType)
     
     book_name: Mapped[str | None] = mapped_column(String(300))
     source_url: Mapped[str | None] = mapped_column(String(500))

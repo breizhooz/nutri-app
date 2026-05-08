@@ -11,7 +11,7 @@ from app.i18n import LocalizedHTTPException
 router = APIRouter(prefix="/ingredients", tags=["ingredients"])
 
 @router.post("/", response_model=IngredientResponse, status_code=status.HTTP_201_CREATED)
-def create_ingredient(
+async def create_ingredient(
     obj_in: IngredientCreate, 
     request: Request,
     session: AsyncSession = Depends(get_session)):
@@ -30,7 +30,7 @@ def create_ingredient(
     return db_obj
 
 @router.get("/", response_model=List[IngredientResponse])
-def read_ingredients(
+async def read_ingredients(
     skip: int = 0, 
     limit: int = 100,
     session: AsyncSession = Depends(get_session)):
@@ -39,14 +39,14 @@ def read_ingredients(
     return ingredients
 
 @router.get("/{ingredient_id}", response_model=IngredientResponse)
-def read_ingredient(ingredient_id: int, request: Request, session: AsyncSession = Depends(get_session)):
+async def read_ingredient(ingredient_id: int, request: Request, session: AsyncSession = Depends(get_session)):
     db_obj = session.get(Ingredient, ingredient_id)
     if not db_obj:
         raise LocalizedHTTPException.ingredient_not_found(request)
     return db_obj
 
 @router.patch("/{ingredient_id}", response_model=IngredientResponse)
-def update_ingredient(ingredient_id: int, obj_in: IngredientUpdate, request: Request, session: AsyncSession = Depends(get_session)):
+async def update_ingredient(ingredient_id: int, obj_in: IngredientUpdate, request: Request, session: AsyncSession = Depends(get_session)):
     db_obj = session.get(Ingredient, ingredient_id)
     if not db_obj:
         raise LocalizedHTTPException.ingredient_not_found(request)
@@ -60,7 +60,7 @@ def update_ingredient(ingredient_id: int, obj_in: IngredientUpdate, request: Req
     return db_obj
 
 @router.delete("/{ingredient_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_ingredient(ingredient_id: int, request: Request, session: AsyncSession = Depends(get_session)):
+async def delete_ingredient(ingredient_id: int, request: Request, session: AsyncSession = Depends(get_session)):
     db_obj = session.get(Ingredient, ingredient_id)
     if not db_obj:
         raise LocalizedHTTPException.ingredient_not_found(request)

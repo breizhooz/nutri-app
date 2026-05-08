@@ -27,4 +27,10 @@ docker compose exec service-recipe alembic history
 
 # Rollback d'une migration
 docker compose exec service-recipe alembic downgrade -1
+
+# lancer les TUs
+docker compose run service-recipe pytest tests/ -v 
+python -m pytest tests/unit/test_schemas_recipe.py tests/unit/test_routes_recipe.py -v 2>&1
 ```
+
+

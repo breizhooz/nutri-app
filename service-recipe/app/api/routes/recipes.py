@@ -46,7 +46,7 @@ async def create_recipe(
         cook_time_minutes=recipe_data.cook_time_minutes,
         servings=recipe_data.servings,
         difficulty=recipe_data.difficulty,
-        origin=recipe_data.origin,
+        origin=recipe_data.origin_recipe,
         book_name=recipe_data.book_name,
         source_url=recipe_data.source_url,
         image_url=recipe_data.image_url
@@ -56,7 +56,7 @@ async def create_recipe(
     await session.flush()  # Obtenir recipe.id
     
     # Ajouter les ingrédients
-    for ing_data in recipe_data.ingredients:
+    for ing_data in recipe_data.recipe_ingredients:
         recipe_ingredient = RecipeIngredient(
             recipe_id=recipe.id,
             ingredient_id=ing_data.ingredient_id,
@@ -70,7 +70,7 @@ async def create_recipe(
     
     return recipe
 
-@router.get("/recipe/{slug}", response_model=RecipeResponse)
+@router.get("/{slug}", response_model=RecipeResponse)
 async def get_recipe_by_slug(
     slug: str,
     request: Request,
@@ -83,23 +83,21 @@ async def get_recipe_by_slug(
     recipe = result.scalar_one_or_none()
     
     if not recipe:
-        locale = request.state.locale
         raise LocalizedHTTPException.recipe_not_found(request)
-    
+
     return recipe
 
 
-@router.get("/recipe/id/{id}", response_model=RecipeResponse)
+@router.get("/id/{id}", response_model=RecipeResponse)
 async def get_recipe_by_id(
     id: int,
     request: Request,
     session: AsyncSession = Depends(get_session)
 ):
     """get recipe by id"""
-    recipe = await db.get(Recipe, id)
-    
+    recipe = await session.get(Recipe, id)
+
     if not recipe:
-        locale = request.state.locale
         raise LocalizedHTTPException.recipe_not_found(request)
     
     return recipe
