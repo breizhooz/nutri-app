@@ -28,3 +28,11 @@ class LocalizedHTTPException(HTTPException):
     @staticmethod
     def ingredient_already_exist(request: Request) -> HTTPException:
         return LocalizedHTTPException(409, "ingredient.errors.already_exist", request)
+
+    @staticmethod
+    def user_id_not_exists(request: Request) -> HTTPException:
+        return LocalizedHTTPException(422, "recipe.errors.user_not_exists", request)
+
+    @staticmethod
+    def service_user_unavailable(request: Request) -> HTTPException:
+        return LocalizedHTTPException(503, "http_client.service_user.errors.unavailable", request)
