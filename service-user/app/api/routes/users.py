@@ -1,5 +1,4 @@
 import uuid
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -83,3 +82,20 @@ async def delete_user(
         )
     await session.delete(user)
     await session.commit()
+
+@router.get("/{user_id}/exists")
+async def is_user_exist(
+    user_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session)
+) -> dict[str, bool]:
+    """
+    Endpoint to check if user id exist in service user.
+
+    return {"exist": true/false} without other data
+    """
+    result = await session.execute(
+        select(User.id).where(User.id == user_id)
+    )
+    user_exist = result.scalar_one_or_none() is not None
+
+    return {"exists": user_exist}
