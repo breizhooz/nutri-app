@@ -233,7 +233,8 @@
       "missing_ingredients": "At least one ingredient is required",
       "duplicate_ingredient": "This ingredient is already in the recipe",
       "user_not_found": "User not found",
-      "unauthorized": "You are not authorized to modify this recipe"
+      "unauthorized": "You are not authorized to modify this recipe",
+      "user_not_exists": "User doesn't exist"
     },
     "success": {
       "created": "Recipe created successfully",
@@ -254,6 +255,13 @@
       "invalid_id": "Invalid ID",
       "negative_quantity": "Quantity must be positive",
       "invalid_email": "Invalid email"
+    }
+  },
+  "http_client":{
+    "service_user":{
+      "errors":{
+        "unavailable": "service-user unavailable"
+      }
     }
   }
 }

@@ -75,7 +75,7 @@ services:
       - ./service-recipe:/app
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@postgres-recipe:5432/${POSTGRES_RECIPE_DB}
-      
+      - SERVICE_USER_URL=http://service-user:8000
     env_file:
       - .env
       - ./service-recipe/conf/.env

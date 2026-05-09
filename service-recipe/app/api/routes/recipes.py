@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from starlette.requests import Request
+from app.core.http_client import ServicesUserClient, get_user_client, ServiceUnavailableError
 from app.db.session import get_session
 from app.models.recipe import Recipe
 from app.models.recipe_ingredients import RecipeIngredient
@@ -11,11 +12,22 @@ from app.i18n import LocalizedHTTPException
 
 router = APIRouter()
 
-@router.post("/recipe", response_model=RecipeResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=RecipeResponse, status_code=status.HTTP_201_CREATED)
 async def create_recipe(
     recipe_data: RecipeCreate,
-    session: AsyncSession = Depends(get_session)
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+    user_client: ServicesUserClient = Depends(get_user_client)
 ):
+    if recipe_data.created_by_user_id:
+        try:
+            exists = await user_client.user_exist(str(recipe_data.created_by_user_id))
+        except ServiceUnavailableError:
+            raise LocalizedHTTPException.service_user_unavailable(request)
+        if not exists:
+            raise LocalizedHTTPException.user_id_not_exists(request)
+    
+
     # Générer le slug à partir du titre
     slug = slugify(recipe_data.title)
     
@@ -46,7 +58,10 @@ async def create_recipe(
         cook_time_minutes=recipe_data.cook_time_minutes,
         servings=recipe_data.servings,
         difficulty=recipe_data.difficulty,
-        origin=recipe_data.origin_recipe,
+        cuisine_origin=recipe_data.cuisine_origin, 
+        origin_recipe=recipe_data.origin_recipe,
+        course_type=recipe_data.course_type, 
+        tags=recipe_data.tags,
         book_name=recipe_data.book_name,
         source_url=recipe_data.source_url,
         image_url=recipe_data.image_url

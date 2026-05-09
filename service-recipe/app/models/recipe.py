@@ -78,7 +78,7 @@ class Recipe(AbstractModel):
     image_url: Mapped[str | None] = mapped_column(String(500))
 
     #metadata
-    created_by_user_id: Mapped[int | None] = mapped_column(Integer)
+    created_by_user_id: Mapped[str | None] = mapped_column(String(36))
     created_at: Mapped[datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         default= func.now(),
