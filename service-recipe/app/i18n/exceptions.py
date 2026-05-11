@@ -6,9 +6,10 @@ class LocalizedHTTPException(HTTPException):
     overload translation for exception
     """
 
-    def __init__(self, status_code: int, translation_key: str, request: Request, **kwargs):
+    def __init__(self, status_code: int, translation_key: str, request: Request, message: str | None = None, **kwargs):
         locale = getattr(request.state, "locale", "fr")
-        detail = t.get(translation_key, locale=locale, **kwargs)
+        base = t.get(translation_key, locale=locale, **kwargs)
+        detail = f"{base} : {message}" if message is not None else base
         super().__init__(status_code=status_code, detail=detail)
 
     #helpers recipe
@@ -36,3 +37,7 @@ class LocalizedHTTPException(HTTPException):
     @staticmethod
     def service_user_unavailable(request: Request) -> HTTPException:
         return LocalizedHTTPException(503, "http_client.service_user.errors.unavailable", request)
+
+    @staticmethod
+    def service_es_failed(request: Request, translation_key: str, e: Exception):
+        return LocalizedHTTPException(500, translation_key=translation_key, message=str(e), request=request)

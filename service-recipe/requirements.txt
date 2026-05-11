@@ -9,4 +9,5 @@ unidecode==1.4.0
 pytest==7.4.3
 pytest-asyncio==0.21.1
 pytest-cov==4.1.0
-httpx==0.25.2  # Pour tester les endpoints FastAPI
+httpx==0.25.2
+elasticsearch[async]==8.11.0
