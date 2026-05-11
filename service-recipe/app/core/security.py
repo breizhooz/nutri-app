@@ -1,3 +1,4 @@
+from jose import jwt
 from app.core.config import settings
 
 def decode_token(token: str) -> dict:
