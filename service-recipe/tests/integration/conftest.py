@@ -7,7 +7,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.main import app
 from app.db.session import get_session
 from app.core.http_client import get_user_client
+from app.core.deps import get_current_user_id
 from app.models.enums import CuisineOrigin, CourseType, DifficultyLevel, RecipeOrigin
+
+TEST_USER_ID = "123e4567-e89b-12d3-a456-426614174000"
+
+
+@pytest.fixture(autouse=True)
+def override_current_user():
+    app.dependency_overrides[get_current_user_id] = lambda: TEST_USER_ID
+    yield
+    app.dependency_overrides.pop(get_current_user_id, None)
 
 
 @pytest.fixture

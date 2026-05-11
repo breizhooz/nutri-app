@@ -53,6 +53,7 @@ def override_user_client_exists():
 async def test_create_recipe_with_valid_user_returns_201(override_db, override_user_client_exists):
     from datetime import datetime
     from unittest.mock import patch, AsyncMock 
+    from app.core.deps import get_current_user_id
 
     async def mock_refresh(obj):
         obj.id = 1
@@ -67,20 +68,19 @@ async def test_create_recipe_with_valid_user_returns_201(override_db, override_u
             obj.tags = {}
     override_db.refresh.side_effect = mock_refresh
 
+    app.dependency_overrides[get_current_user_id] = lambda: "123e4567-e89b-12d3-a456-426614174000"
+
     payload = {
         "title": "Poulet rôti",
         "instructions": "Cuire au four 1h à 180°C.",
-        "recipe_ingredients": [],
-        "created_by_user_id": "123e4567-e89b-12d3-a456-426614174000",
+        "recipe_ingredients": []
     }
 
     # ← Patch ES pour ne pas avoir besoin d'un ES qui tourne
     with patch("app.api.routes.recipes.search_service.index_recipe", new_callable=AsyncMock):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.post("/api/v1/recipe", json=payload)
+    
+    app.dependency_overrides.pop(get_current_user_id, None)
 
     assert response.status_code == 201
-    override_user_client_exists.user_exist.assert_called_once_with(
-        "123e4567-e89b-12d3-a456-426614174000"
-    )
-    

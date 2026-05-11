@@ -12,10 +12,8 @@ class Settings(BaseSettings):
 
     ELASTICSEARCH_URL: str
     ELASTICSEARCH_INDEX_RECIPES: str   
-    #
-    # JWT_SECRET: str
-    # JWT_ALGORITHM: str = "HS256"
-    # JWT_ACCESS_TOKEN_EXPIRES_MINUTES: int = 30
-    # JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    
+    JWT_SECRET: str
+    JWT_ALGORITHM: str = "HS256"
 
 settings = Settings()

@@ -19,12 +19,16 @@ class LocalizedHTTPException(HTTPException):
     
     @staticmethod
     def unauthorized(request: Request) -> HTTPException:
-        return LocalizedHTTPException(403, "recipe.error.unauthorized", request)
+        return LocalizedHTTPException(403, "recipe.errors.unauthorized", request)
     
     #helpers recipe
     @staticmethod
     def ingredient_not_found(request: Request) -> HTTPException:
         return LocalizedHTTPException(404, "ingredient.errors.not_found", request)
+    
+    @staticmethod
+    def slug_too_big(request: Request) -> HTTPException:
+        return LocalizedHTTPException(422, "recipe.errors.slug_too_big", request)
     
     @staticmethod
     def ingredient_already_exist(request: Request) -> HTTPException:
@@ -37,7 +41,7 @@ class LocalizedHTTPException(HTTPException):
     @staticmethod
     def service_user_unavailable(request: Request) -> HTTPException:
         return LocalizedHTTPException(503, "http_client.service_user.errors.unavailable", request)
-
+    
     @staticmethod
     def service_es_failed(request: Request, translation_key: str, e: Exception):
         return LocalizedHTTPException(500, translation_key=translation_key, message=str(e), request=request)
