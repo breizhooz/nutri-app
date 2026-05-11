@@ -2,7 +2,6 @@ import pytest
 from pydantic import ValidationError
 from app.schemas.recipe import RecipeCreate
 from app.models.enums import RecipeOrigin
-
 BASE = {
     "title": "Ma recette",
     "instructions": "Bla bla bla",
@@ -34,5 +33,3 @@ class TestRecipeCreateValidator:
             origin_recipe = RecipeOrigin.PERSONAL,
         )
         assert recipe.book_name is None
-    
-

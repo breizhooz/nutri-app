@@ -52,6 +52,7 @@ def override_user_client_exists():
 @pytest.mark.asyncio
 async def test_create_recipe_with_valid_user_returns_201(override_db, override_user_client_exists):
     from datetime import datetime
+    from unittest.mock import patch, AsyncMock 
 
     async def mock_refresh(obj):
         obj.id = 1
@@ -64,7 +65,7 @@ async def test_create_recipe_with_valid_user_returns_201(override_db, override_u
             obj.course_type = CourseType.MAIN_COURSE
         if obj.tags is None:
             obj.tags = {}
-    override_db.refresh.side_effect = mock_refresh  # ← injecté sur le mock_session
+    override_db.refresh.side_effect = mock_refresh
 
     payload = {
         "title": "Poulet rôti",
@@ -73,10 +74,13 @@ async def test_create_recipe_with_valid_user_returns_201(override_db, override_u
         "created_by_user_id": "123e4567-e89b-12d3-a456-426614174000",
     }
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        response = await client.post("/api/v1/recipe", json=payload)
+    # ← Patch ES pour ne pas avoir besoin d'un ES qui tourne
+    with patch("app.api.routes.recipes.search_service.index_recipe", new_callable=AsyncMock):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post("/api/v1/recipe", json=payload)
 
     assert response.status_code == 201
     override_user_client_exists.user_exist.assert_called_once_with(
         "123e4567-e89b-12d3-a456-426614174000"
     )
+    
