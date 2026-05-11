@@ -14,6 +14,8 @@ from app.core.utils import slugify
 from app.i18n import LocalizedHTTPException
 from app.i18n.loader import t
 from app.services.search_service import search_service
+from app.core.deps import get_current_user_id
+
 
 router = APIRouter()
 
@@ -36,13 +38,16 @@ async def update_recipe(
      recipe_id: int,
      recipe_data: RecipeUpdate,
      request: Request,
-     session: AsyncSession = Depends(get_session)
-
+     session: AsyncSession = Depends(get_session),
+     current_user_id: str = Depends(get_current_user_id)
 ):
     recipe = await session.get(Recipe, recipe_id)
     if not recipe:
         raise LocalizedHTTPException.recipe_not_found(request)
     
+    if recipe.created_by_user_id is None or str(recipe.created_by_user_id) != current_user_id:
+        raise LocalizedHTTPException.unauthorized(request)
+
     update_fields = recipe_data.model_dump(exclude_unset=True, exclude={"recipe_ingredients"})
 
     #renew the slug if change title
@@ -101,15 +106,16 @@ async def create_recipe(
     recipe_data: RecipeCreate,
     request: Request,
     session: AsyncSession = Depends(get_session),
-    user_client: ServicesUserClient = Depends(get_user_client)
+    user_client: ServicesUserClient = Depends(get_user_client),
+    current_user_id: str = Depends(get_current_user_id)
 ):
-    if recipe_data.created_by_user_id:
-        try:
-            exists = await user_client.user_exist(str(recipe_data.created_by_user_id))
-        except ServiceUnavailableError:
-            raise LocalizedHTTPException.service_user_unavailable(request)
-        if not exists:
-            raise LocalizedHTTPException.user_id_not_exists(request)
+    recipe_data.created_by_user_id = current_user_id
+    try:
+        exists = await user_client.user_exist(str(recipe_data.created_by_user_id))
+    except ServiceUnavailableError:
+        raise LocalizedHTTPException.service_user_unavailable(request)
+    if not exists:
+        raise LocalizedHTTPException.user_id_not_exists(request)
     
 
     # Générer le slug à partir du titre
@@ -150,7 +156,8 @@ async def create_recipe(
         tags=recipe_data.tags,
         book_name=recipe_data.book_name,
         source_url=recipe_data.source_url,
-        image_url=recipe_data.image_url
+        image_url=recipe_data.image_url,
+        created_by_user_id=current_user_id
     )
     
     session.add(recipe)
@@ -217,10 +224,14 @@ async def delete_recipe(
     recipe_id: int,
     request: Request,
     session: AsyncSession = Depends(get_session),
+    current_user_id: str = Depends(get_current_user_id)
 ):
     recipe = await session.get(Recipe, recipe_id)
     if not recipe:
         raise LocalizedHTTPException.recipe_not_found(request)
+
+    if recipe.created_by_user_id is None or str(recipe.created_by_user_id) != current_user_id: 
+        raise LocalizedHTTPException.unauthorized(request)
 
     await session.delete(recipe)
     await session.commit()
