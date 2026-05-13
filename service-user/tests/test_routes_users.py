@@ -7,6 +7,8 @@ from app.main import app
 from app.db.session import get_session
 from app.models.user import User
 
+TEST_USER_ID = "550e8400-e29b-41d4-a716-446655440000"
+
 @pytest.fixture
 def mock_session():
     session = AsyncMock(spec=AsyncSession)
@@ -27,11 +29,11 @@ def override_db(mock_session):
 async def test_check_user_exists(override_db):
 
     mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = "1234-1234"
+    mock_result.scalar_one_or_none.return_value = TEST_USER_ID
     override_db.execute.return_value = mock_result
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        response = await client.get("/api/v1/users/1234-1234/exists")
+        response = await client.get(f"/api/v1/users/{TEST_USER_ID}/exists")
 
     assert response.status_code == 200
     assert response.json() == {"exists": True}
@@ -40,7 +42,7 @@ async def test_check_user_exists(override_db):
 async def test_check_user_doesnt_exists(override_db):
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        response = await client.get("/api/v1/users/1234-1234/exists")
+        response = await client.get(f"/api/v1/users/{TEST_USER_ID}/exists")
 
     assert response.status_code == 200
     assert response.json() == {"exists": False}
