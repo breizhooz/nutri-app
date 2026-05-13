@@ -29,11 +29,11 @@ _TestSession = async_sessionmaker(_TEST_ENGINE, expire_on_commit=False)
 def _dispose_engine():
     yield
     import asyncio
-    from app.db.session import engine as app_engine
+    from app.db.session import get_engine
 
     async def _cleanup():
         await _TEST_ENGINE.dispose()
-        await app_engine.dispose()
+        await get_engine().dispose()
 
     asyncio.run(_cleanup())
 

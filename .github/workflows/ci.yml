@@ -26,7 +26,7 @@ jobs:
           pytest --cov=app --cov-report=xml:coverage.xml
       
       - name: SonarScan User
-        uses: SonarSource/sonarcloud-github-action@v3
+        uses: SonarSource/sonarqube-scan-action@v5
         with:
           projectBaseDir: service-user
         env:
@@ -52,7 +52,7 @@ jobs:
           pytest --cov=app --cov-report=xml:coverage.xml
       
       - name: SonarScan Recipe
-        uses: SonarSource/sonarcloud-github-action@v3
+        uses: SonarSource/sonarqube-scan-action@v5
         with:
           projectBaseDir: service-recipe
         env:
@@ -78,7 +78,7 @@ jobs:
           pytest --cov=app --cov-report=xml:coverage.xml
       
       - name: SonarScan Menu
-        uses: SonarSource/sonarcloud-github-action@v3
+        uses: SonarSource/sonarqube-scan-action@v5
         with:
           projectBaseDir: service-menu
         env:
