@@ -1,0 +1,86 @@
+name: Nutri-App CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  analyze-user:
+    if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-user')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with: { python-version: '3.12' }
+
+      - name: Install & Test
+        run: |
+          cd service-user
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+          pytest --cov=app --cov-report=xml:coverage.xml
+      
+      - name: SonarScan User
+        uses: SonarSource/sonarcloud-github-action@v3
+        with:
+          projectBaseDir: service-user
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+  analyze-recipe:
+    if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-recipe')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with: { python-version: '3.12' }
+
+      - name: Install & Test
+        run: |
+          cd service-recipe
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+          pytest --cov=app --cov-report=xml:coverage.xml
+      
+      - name: SonarScan Recipe
+        uses: SonarSource/sonarcloud-github-action@v3
+        with:
+          projectBaseDir: service-recipe
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+  analyze-menu:
+    if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-menu')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with: { python-version: '3.12' }
+
+      - name: Install & Test
+        run: |
+          cd service-menu
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+          pytest --cov=app --cov-report=xml:coverage.xml
+      
+      - name: SonarScan Menu
+        uses: SonarSource/sonarcloud-github-action@v3
+        with:
+          projectBaseDir: service-menu
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
