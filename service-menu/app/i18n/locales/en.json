@@ -1,0 +1,55 @@
+{
+  "enums": {
+  },
+  "recipe": {
+    "errors": {
+      "not_found": "Recipe not found",
+      "invalid_difficulty": "Invalid difficulty level",
+      "missing_title": "Title is required",
+      "missing_ingredients": "At least one ingredient is required",
+      "duplicate_ingredient": "This ingredient is already in the recipe",
+      "user_not_found": "User not found",
+      "unauthorized": "You are not authorized to modify this recipe",
+      "user_not_exists": "User doesn't exist",
+      "slug_too_big": "too many trying for a new slug"
+    },
+    "success": {
+      "created": "Recipe created successfully",
+      "updated": "Recipe updated",
+      "deleted": "Recipe deleted"
+    }
+  },
+  "ingredient": {
+    "errors": {
+      "already_exist": "This ingredient already exists.",
+      "not_found": "Ingredient not found",
+      "invalid_unit": "Invalid unit of measurement",
+      "invalid_allergen": "Invalid allergen"
+    }
+  },
+  "menu": {
+    "errors": {
+      "not_found": "Menu not found",
+      "unauthorized": "You are not authorized to access this menu"
+    }
+  },
+  "validation": {
+    "errors": {
+      "invalid_id": "Invalid ID",
+      "negative_quantity": "Quantity must be positive",
+      "invalid_email": "Invalid email"
+    }
+  },
+  "http_client":{
+    "service_user":{
+      "errors":{
+        "unavailable": "service-user unavailable"
+      }
+    },
+    "recipe":{
+      "errors":{
+        "unavailable": "service-user unavailable"
+      }
+    }
+  }
+}

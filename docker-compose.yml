@@ -40,6 +40,25 @@ services:
     networks:
       - nutriplanner
 
+  postgres-menu:
+    image: postgres:16-alpine
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_MENU_DB}
+      POSTGRES_USER: ${POSTGRES_MENU_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_MENU_PASSWORD}
+    ports:
+      - "5435:5432"
+    volumes:
+      - pgdata-menu:/var/lib/postgresql/data   # données persistantes
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_MENU_USER} -d ${POSTGRES_MENU_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - nutriplanner
+
 # ══════════════════════════════════════════════════════════
 # SERVICE — user
 # ══════════════════════════════════════════════════════════
@@ -88,6 +107,30 @@ services:
       - nutriplanner
 
 # ══════════════════════════════════════════════════════════
+# SERVICE — Recipe linked to postgre
+# ══════════════════════════════════════════════════════════
+  service-menu:
+    build:
+      context: ./service-menu
+    container_name: nutriplanner-service-menu
+    ports:
+      - "8003:8000"
+    volumes:
+      - ./service-menu:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_MENU_USER}:${POSTGRES_MENU_PASSWORD}@postgres-menu:5432/${POSTGRES_MENU_DB}
+      - SERVICE_USER_URL=http://service-user:8000
+      - SERVICE_RECIPE_URL=http://service-recipe:8000
+    env_file:
+      - .env
+      - ./service-menu/conf/.env
+    depends_on:
+      postgres-menu:
+        condition: service_healthy
+    networks:
+      - nutriplanner
+
+# ══════════════════════════════════════════════════════════
 # SEARCH ENGINE
 # ══════════════════════════════════════════════════════════
   elasticsearch:
@@ -115,4 +158,5 @@ networks:
 volumes:
   pgdata-user:
   pgdata-recipe:
+  pgdata-menu:
   es-data:
