@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request, Depends
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import engine
+from app.db.session import get_engine
 from app.core.elasticsearch import init_elasticsearch, close_elasticsearch
 from app.i18n.loader import t
 from app.api.routes import recipes as recipes_router
@@ -25,7 +25,7 @@ app.include_router(search_router.router,     prefix="/api/v1", tags=["search"])
 @app.get("/health")
 async def health():
     try:
-        async with engine.connect() as conn:
+        async with get_engine().connect() as conn:
             await conn.execute(text("SELECT 1"))
         db_status = "ok"
     except Exception as e:

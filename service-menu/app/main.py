@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request, Depends
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import engine
+from app.db.session import get_engine
 from app.i18n.middleware import LocaleMiddleware
 from app.api.routes import shopping_list as shopping_list_router
 from app.api.routes import weekly_menu as weekly_menu_router
@@ -11,7 +11,7 @@ from app.api.routes import weekly_menu as weekly_menu_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     yield
-    await engine.dispose()
+    await get_engine().dispose()
 
 app = FastAPI(title="service-menu", version="0.1.0", lifespan=lifespan)
 
@@ -21,7 +21,7 @@ app.include_router(shopping_list_router.router, prefix="/api/v1/menus", tags=["s
 @app.get("/health")
 async def health():
     try:
-        async with engine.connect() as conn:
+        async with get_engine().connect() as conn:
             await conn.execute(text("SELECT 1"))
         db_status = "ok"
     except Exception as e:

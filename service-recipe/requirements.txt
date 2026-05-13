@@ -12,3 +12,4 @@ pytest-cov==4.1.0
 httpx==0.25.2
 elasticsearch[async]==8.11.0
 python-jose[cryptography]==3.3.0
+aiosqlite==0.20.0

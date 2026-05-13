@@ -31,7 +31,8 @@ async def test_create_recipe_triggers_es_indexation(override_db, override_user_c
 
     assert response.status_code == 201
     mock_es.index.assert_called_once()
-    assert mock_es.index.call_args.kwargs["index"] == "recipes"
+    from app.core.config import settings
+    assert mock_es.index.call_args.kwargs["index"] == settings.ELASTICSEARCH_INDEX_RECIPES
     assert mock_es.index.call_args.kwargs["id"] == mock_recipe.id
 
 
@@ -98,7 +99,8 @@ async def test_delete_recipe_triggers_es_deletion(override_db, mock_es, http_cli
         response = await client.delete(f"{BASE}/id/{mock_recipe.id}")
 
     assert response.status_code == 204
-    mock_es.delete.assert_called_once_with(index="recipes", id=mock_recipe.id)
+    from app.core.config import settings
+    mock_es.delete.assert_called_once_with(index=settings.ELASTICSEARCH_INDEX_RECIPES, id=mock_recipe.id)
 
 
 @pytest.mark.asyncio
