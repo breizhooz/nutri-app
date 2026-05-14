@@ -9,7 +9,7 @@ from app.models.ingredient import Ingredient
 from app.schemas.ingredient import IngredientCreate, IngredientUpdate, IngredientResponse
 from app.i18n import LocalizedHTTPException
 
-router = APIRouter(prefix="/ingredients", tags=["ingredients"])
+router = APIRouter(prefix="", tags=["ingredients"])
 
 @router.post("/", response_model=IngredientResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(get_current_user_id)])
 async def create_ingredient(
@@ -17,7 +17,7 @@ async def create_ingredient(
     request: Request,
     session: AsyncSession = Depends(get_session)
     ):
-
+    
     # Vérification si le nom existe déjà (unique=True dans le modèle)
     result = await session.execute(select(Ingredient).where(Ingredient.name == obj_in.name))
     existing = result.scalar_one_or_none()
@@ -42,7 +42,7 @@ async def read_ingredients(
 
 @router.get("/{ingredient_id}", response_model=IngredientResponse)
 async def read_ingredient(ingredient_id: int, request: Request, session: AsyncSession = Depends(get_session)):
-    db_obj = session.get(Ingredient, ingredient_id)
+    db_obj = await session.get(Ingredient, ingredient_id)
     if not db_obj:
         raise LocalizedHTTPException.ingredient_not_found(request)
     return db_obj

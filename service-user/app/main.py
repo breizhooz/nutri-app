@@ -12,6 +12,13 @@ app.include_router(auth_routes.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(users_routes.router, prefix="/api/v1/users", tags=["users"])
 @app.get("/health")
 async def health():
+    return {
+        "status": "ok",
+        "service": "service-user",
+    }
+
+@app.get("/health/db")
+async def health_db():
     try:
         async with get_engine().connect() as conn:
             await conn.execute(text("SELECT 1"))

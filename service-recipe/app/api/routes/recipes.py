@@ -212,11 +212,11 @@ async def get_recipe_by_id(
     session: AsyncSession = Depends(get_session)
 ):
     """get recipe by id"""
-    recipe = await session.get(Recipe, id)
+    recipe = await _load_with_relations(session, id)
 
     if not recipe:
         raise LocalizedHTTPException.recipe_not_found(request)
-    
+
     return recipe
 
 @router.delete("/id/{recipe_id}", status_code=status.HTTP_204_NO_CONTENT)

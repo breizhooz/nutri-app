@@ -28,7 +28,7 @@ async def test_user_exist_returns_true_when_api_says_exists(mock_httpx_client):
 
     assert result is True
     mock_httpx_client.get.assert_called_once_with(
-        "/users/123e4567-e89b-12d3-a456-426614174000/exists"
+        "/api/v1/users/123e4567-e89b-12d3-a456-426614174000/exists"
     )
 
 @pytest.mark.asyncio

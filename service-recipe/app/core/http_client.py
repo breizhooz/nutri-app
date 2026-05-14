@@ -30,7 +30,7 @@ class ServicesUserClient:
         check if user exist in service-user
         """
         try:
-            response = await self._client.get(f"/users/{user_id}/exists")
+            response = await self._client.get(f"/api/v1/users/{user_id}/exists")
             response.raise_for_status()
             return response.json().get("exists", False)
         except httpx.HTTPStatusError as e:
