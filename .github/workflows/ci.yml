@@ -13,7 +13,7 @@ jobs:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-user')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with: { fetch-depth: 0 }
       
       - name: Setup Python
@@ -43,7 +43,7 @@ jobs:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-recipe')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with: { fetch-depth: 0 }
       
       - name: Setup Python
@@ -75,9 +75,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with: { fetch-depth: 0 }
-      
+
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with: { python-version: '3.12' }
 
       - name: Install & Test
@@ -98,3 +98,50 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  smoke-tests:
+      needs: [analyze-user, analyze-recipe, analyze-menu]
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v5
+
+        - name: Create .env file
+          run: |
+            echo "POSTGRES_USER_DB=${{ secrets.USER_DB_NAME }}" >> .env
+            echo "POSTGRES_USER_USER=${{ secrets.POSTGRES_USER }}" >> .env
+            echo "POSTGRES_USER_PASSWORD=${{ secrets.POSTGRES_USER_PASSWORD }}" >> .env
+
+            echo "POSTGRES_RECIPE_DB=${{ secrets.RECIPE_DB_NAME }}" >> .env
+            echo "POSTGRES_RECIPE_USER=${{ secrets.POSTGRES_USER }}" >> .env
+            echo "POSTGRES_RECIPE_PASSWORD=${{ secrets.POSTGRES_RECIPE_PASSWORD }}" >> .env
+            
+            echo "POSTGRES_MENU_DB=${{ secrets.MENU_DB_NAME }}" >> .env
+            echo "POSTGRES_MENU_USER=${{ secrets.POSTGRES_USER }}" >> .env
+            echo "POSTGRES_MENU_PASSWORD=${{ secrets.POSTGRES_MENU_PASSWORD }}" >> .env
+
+            mkdir -p service-user/conf
+            mkdir -p service-recipe/conf
+            mkdir -p service-menu/conf
+
+            cp .env service-user/conf/.env
+            cp .env service-recipe/conf/.env
+            cp .env service-menu/conf/.env
+
+
+        - name: Spin up containers
+          run: docker compose up -d
+
+        - name: Wait for services (Healthchecks)
+          run: |
+            # On laisse un peu de temps au démarrage si nécessaire 
+            # (même si depends_on + healthcheck dans ton compose s'en occupent)
+            sleep 15 
+
+        - name: Install dependencies for Smoke Tests
+          run: |
+            pip install httpx pytest
+
+        - name: Run Smoke Tests
+          run: |
+            # On lance les tests qui sont à la racine
+            pytest tests/smoke_test.py

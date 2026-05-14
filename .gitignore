@@ -29,10 +29,13 @@ htmlcov/
 .env.*
 !.env.example
 !.env.*.example
-
+.secrets
 #  Docker (optionnel si tu en as)
 *.log
 docker-compose.override.yml
+
+#tests ci
+bin/
 
 #  OS
 .DS_Store

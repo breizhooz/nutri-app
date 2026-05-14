@@ -48,10 +48,10 @@ class Ingredient(Base):
         
         return tags_list
     
-    free_tags: Mapped[dict[str, Any]] = mapped_column(
+    free_tags: Mapped[list[str]] = mapped_column(
         JSON, 
-        default={}, 
-        server_default="{}"
+        default=[], 
+        server_default="[]"
     )
 
     calories_per_100g: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
