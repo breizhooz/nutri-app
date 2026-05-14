@@ -78,6 +78,12 @@ services:
     depends_on:
       postgres-user:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
     networks:
       - nutriplanner
 
@@ -103,6 +109,14 @@ services:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
+      service-user:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
     networks:
       - nutriplanner
 
@@ -127,6 +141,16 @@ services:
     depends_on:
       postgres-menu:
         condition: service_healthy
+      service-user:
+        condition: service_healthy
+      service-recipe:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
     networks:
       - nutriplanner
 

@@ -126,22 +126,74 @@ jobs:
             cp .env service-user/conf/.env
             cp .env service-recipe/conf/.env
             cp .env service-menu/conf/.env
+        
+        - name: Verify .env file
+          run: |
+            echo "=== Root .env ==="
+            cat .env
+            echo ""
+            echo "=== service-user/.env ==="
+            cat service-user/conf/.env
 
-
+        # ⬇️ CETTE STEP MANQUAIT !!!
         - name: Spin up containers
           run: docker compose up -d
-
-        - name: Wait for services (Healthchecks)
+        
+        - name: Force check service-user logs
           run: |
-            # On laisse un peu de temps au démarrage si nécessaire 
-            # (même si depends_on + healthcheck dans ton compose s'en occupent)
-            sleep 15 
+            echo "Waiting 20s for service-user to fail..."
+            sleep 20
+            echo "=== Service User Logs ==="
+            docker compose logs service-user --tail=300
+            echo ""
+            echo "=== Container inspect ==="
+            docker inspect nutriplanner-service-user --format='{{.State.Health.Log}}'
 
+        - name: Show container status immediately
+          run: |
+            echo "=== Container Status ==="
+            docker compose ps
+            echo ""
+            echo "=== Service User Logs ==="
+            docker compose logs service-user --tail=100
+            echo ""
+            echo "=== Service Recipe Logs ==="
+            docker compose logs service-recipe --tail=100
+            echo ""
+            echo "=== Service Menu Logs ==="
+            docker compose logs service-menu --tail=100
+
+        - name: Wait for services to be healthy
+          run: |
+            echo "🔍 Waiting for service-user on localhost:8001..."
+            timeout 60 bash -c 'until curl -f http://localhost:8001/health 2>/dev/null; do sleep 2; done'
+            
+            echo "🔍 Waiting for service-recipe on localhost:8002..."
+            timeout 60 bash -c 'until curl -f http://localhost:8002/health 2>/dev/null; do sleep 2; done'
+            
+            echo "🔍 Waiting for service-menu on localhost:8003..."
+            timeout 60 bash -c 'until curl -f http://localhost:8003/health 2>/dev/null; do sleep 2; done'
+            
+            echo "✅ All services are ready!"
+
+        - name: Show running containers
+          run: docker compose ps
+        
         - name: Install dependencies for Smoke Tests
           run: |
             pip install httpx pytest
 
         - name: Run Smoke Tests
+          run: pytest tests/smoke_test.py
+
+        - name: Debug - Show service logs on failure
+          if: failure()
           run: |
-            # On lance les tests qui sont à la racine
-            pytest tests/smoke_test.py
+            echo "=== Service User Logs ==="
+            docker compose logs service-user
+            echo ""
+            echo "=== Service Recipe Logs ==="
+            docker compose logs service-recipe
+            echo ""
+            echo "=== Service Menu Logs ==="
+            docker compose logs service-menu
