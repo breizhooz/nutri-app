@@ -85,6 +85,6 @@ class Recipe(AbstractModel):
         onupdate= func.now()
     )
 
-    recipe_ingredients: Mapped[list["RecipeIngredient"]] = relationship(back_populates="recipe")
+    recipe_ingredients: Mapped[list["RecipeIngredient"]] = relationship(back_populates="recipe", passive_deletes=True)
 
 
