@@ -1,0 +1,32 @@
+{
+  "crawl_source": {
+    "not_found": "Source introuvable.",
+    "created": "Source ajoutée avec succès.",
+    "updated": "Source mise à jour.",
+    "deleted": "Source supprimée.",
+    "crawl_queued": "Crawl déclenché, en attente de traitement."
+  },
+  "crawl_result": {
+    "not_found": "Résultat introuvable.",
+    "updated": "Résultat modifié.",
+    "validated": "Résultat validé et envoyé vers service-recipe.",
+    "rejected": "Résultat rejeté."
+  },
+  "enums": {
+    "crawl_type": {
+      "web": "Web",
+      "instagram": "Instagram",
+      "youtube": "YouTube"
+    },
+    "crawl_status": {
+      "waitting": "En attente",
+      "valid": "Validé",
+      "rejected": "Rejeté"
+    }
+  },
+  "errors": {
+    "internal": "Erreur interne du serveur.",
+    "service_recipe_unavailable": "Le service de recettes est indisponible. Veuillez réessayer.",
+    "url_already_crawled": "Cette URL a déjà été traitée."
+  }
+}
