@@ -99,8 +99,39 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  analyze-crawler:
+    if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-crawler')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 0 }
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+
+      - name: Install & Test
+        run: |
+          cd service-crawler
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+          pytest --cov=app --cov-report=xml:coverage.xml
+      
+      - name: SonarScan crawler
+        uses: SonarSource/sonarqube-scan-action@v6
+        with:
+          projectBaseDir: service-crawler
+          args: 
+            -Dsonar.organization=sonar-nutri-app
+            -Dsonar.projectKey=nutri-app-service-crawler
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
   smoke-tests:
-      needs: [analyze-user, analyze-recipe, analyze-menu]
+      needs: [analyze-user, analyze-recipe, analyze-menu, analyze-crawler]
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v5
@@ -118,18 +149,35 @@ jobs:
             echo "POSTGRES_MENU_DB=${{ secrets.MENU_DB_NAME }}" >> .env
             echo "POSTGRES_MENU_USER=${{ secrets.POSTGRES_USER }}" >> .env
             echo "POSTGRES_MENU_PASSWORD=${{ secrets.POSTGRES_MENU_PASSWORD }}" >> .env
+
+            echo "POSTGRES_CRAWLER_DB=${{ secrets.CRAWLER_DB_NAME }}" >> .env
+            echo "POSTGRES_CRAWLER_USER=${{ secrets.POSTGRES_CRAWLER }}" >> .env
+            echo "POSTGRES_CRAWLER_PASSWORD=${{ secrets.POSTGRES_MENU_CRAWLER }}" >> .env
             
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
             echo "ELASTICSEARCH_URL=http://elasticsearch:9200" >> .env
             echo "ELASTICSEARCH_INDEX_RECIPES=recipes" >> .env
 
+            echo "MINIO_ROOT_USER=${{ secrets.MINIO_ROOT_USER }}" >> .env
+            echo "MINIO_ROOT_PASSWORD=${{ secrets.MINIO_ROOT_PASSWORD }}" >> .env
+            echo "MINIO_ENDPOINT=minio:9000" >> .env
+            echo "MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}" >> .env
+            echo "MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}" >> .env
+            echo "MINIO_BUCKET_CRAWLER=crawler-media" >> .env
+            echo "MINIO_SECURE=False" >> .env
+            echo "SERVICE_RECIPE_URL=http://service-recipe:8000" >> .env
+            echo "CELERY_BROKER_URL=redis://redis:6379/0" >> .env
+            echo "CELERY_RESULT_BACKEND=redis://redis:6379/1" >> .env
+
             mkdir -p service-user/conf
             mkdir -p service-recipe/conf
             mkdir -p service-menu/conf
+            mkdir -p service-crawler/conf
 
             cp .env service-user/conf/.env
             cp .env service-recipe/conf/.env
             cp .env service-menu/conf/.env
+            cp .env service-crawler/conf/.env
         
         - name: Verify .env file
           run: |
@@ -165,6 +213,9 @@ jobs:
             echo ""
             echo "=== Service Menu Logs ==="
             docker compose logs service-menu --tail=100
+            echo ""
+            echo "=== Service Menu Logs ==="
+            docker compose logs service-crawler --tail=100
 
         - name: Wait for services to be healthy
           run: |
@@ -176,6 +227,9 @@ jobs:
             
             echo "🔍 Waiting for service-menu on localhost:8003..."
             timeout 60 bash -c 'until curl -f http://localhost:8003/health 2>/dev/null; do sleep 2; done'
+
+            echo "🔍 Waiting for service-crawler on localhost:8004..."
+            timeout 60 bash -c 'until curl -f http://localhost:8004/health 2>/dev/null; do sleep 2; done'
             
             echo "✅ All services are ready!"
 
@@ -200,3 +254,6 @@ jobs:
             echo ""
             echo "=== Service Menu Logs ==="
             docker compose logs service-menu
+            echo ""
+            echo "=== Service crawler Logs ==="
+            docker compose logs service-crawler

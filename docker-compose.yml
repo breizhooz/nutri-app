@@ -58,6 +58,25 @@ services:
       retries: 10
     networks:
       - nutriplanner
+  
+  postgres-crawler:
+    image: postgres:16-alpine
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_CRAWLER_DB}
+      POSTGRES_USER: ${POSTGRES_CRAWLER_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_CRAWLER_PASSWORD}
+    ports:
+      - "5436:5432"
+    volumes:
+      - pgdata-crawler:/var/lib/postgresql/data   # données persistantes
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_CRAWLER_USER} -d ${POSTGRES_CRAWLER_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - nutriplanner
 
 # ══════════════════════════════════════════════════════════
 # SERVICE — user
@@ -153,6 +172,34 @@ services:
       start_period: 20s
     networks:
       - nutriplanner
+  
+# ══════════════════════════════════════════════════════════
+# SERVICE — Recipe linked to postgre
+# ══════════════════════════════════════════════════════════
+  service-crawler:
+    build:
+      context: ./service-crawler
+    container_name: nutriplanner-service-crawler
+    ports:
+      - "8004:8000"
+    volumes:
+      - ./service-crawler:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres-crawler:5432/${POSTGRES_CRAWLER_DB}
+    env_file:
+      - .env
+      - ./service-crawler/conf/.env
+    depends_on:
+      postgres-crawler:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - nutriplanner
 
 # ══════════════════════════════════════════════════════════
 # SEARCH ENGINE
@@ -175,6 +222,66 @@ services:
       retries: 10
     networks:
       - nutriplanner
+  
+  redis:
+    image: redis:7-alpine
+    container_name: nutriplanner-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - nutriplanner
+# ══════════════════════════════════════════════════════════
+# ASYNC SCHEDULER — Celery Beat
+# ══════════════════════════════════════════════════════════
+  celery-beat:
+    build:
+      context: ./service-crawler
+    container_name: nutriplanner-celery-beat
+    command: celery -A celery_app beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres-crawler:5432/${POSTGRES_CRAWLER_DB}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    env_file:
+      - .env
+      - ./service-crawler/conf/.env
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres-crawler:
+        condition: service_healthy
+      service-crawler:
+        condition: service_started
+    networks:
+      - nutriplanner
+# ══════════════════════════════════════════════════════════
+# OBJECT STORAGE — MinIO
+# ══════════════════════════════════════════════════════════
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: nutriplanner-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"   # API S3 (utilisée par le code Python)
+      - "9001:9001"   # Console web d'administration
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nutriplanner
 
 networks:
   nutriplanner:
@@ -183,4 +290,7 @@ volumes:
   pgdata-user:
   pgdata-recipe:
   pgdata-menu:
+  pgdata-crawler:
   es-data:
+  redis-data:
+  minio-data:

@@ -335,3 +335,122 @@ def test_seven_day_menu_has_21_slots(auth_token, seven_day_menu_setup):
         data = response.json()
         assert len(data["slots"]) == 21
 
+# ══════════════════════════════════════════════════════════
+# SERVICE — Crawler
+# ══════════════════════════════════════════════════════════
+SERVICE_CRAWLER_URL = "http://localhost:8004"
+
+
+@pytest.fixture()
+def source_setup():
+    with httpx.Client() as client:
+        response = client.post(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources", json={
+            "type": "web",
+            "url": "https://smoke-test.example.com",
+            "frequency_hours": 24,
+        })
+        assert response.status_code == 201, f"Erreur création source: {response.text}"
+        source_id = response.json()["id"]
+
+    yield source_id
+
+    with httpx.Client() as client:
+        client.delete(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}")
+
+
+def test_crawler_health():
+    with httpx.Client() as client:
+        response = client.get(f"{SERVICE_CRAWLER_URL}/health")
+        assert response.status_code == 200
+        assert response.json()["status"] == "ok"
+        assert response.json()["service"] == "service-crawler"
+
+
+def test_crawler_health_db():
+    with httpx.Client() as client:
+        response = client.get(f"{SERVICE_CRAWLER_URL}/health/db")
+        assert response.status_code == 200
+        assert response.json()["database"] == "ok"
+
+
+def test_create_web_source():
+    with httpx.Client() as client:
+        response = client.post(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources", json={
+            "type": "web",
+            "url": "https://create-test.example.com",
+        })
+        assert response.status_code == 201
+        body = response.json()
+        assert body["url"] == "https://create-test.example.com"
+        assert body["type"] == "web"
+        assert body["actif"] is True
+        assert "id" in body
+
+        # Nettoyage
+        client.delete(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{body['id']}")
+
+
+def test_source_lifecycle(source_setup):
+    source_id = source_setup
+    with httpx.Client() as client:
+        # Lecture
+        get = client.get(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}")
+        assert get.status_code == 200
+        assert get.json()["id"] == source_id
+
+        # Mise à jour
+        patch = client.patch(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}",
+            json={"actif": False, "frequency_hours": 48},
+        )
+        assert patch.status_code == 200
+        assert patch.json()["actif"] is False
+        assert patch.json()["frequency_hours"] == 48
+
+
+def test_list_sources_contains_created(source_setup):
+    source_id = source_setup
+    with httpx.Client() as client:
+        response = client.get(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources")
+        assert response.status_code == 200
+        ids = [s["id"] for s in response.json()]
+        assert source_id in ids
+
+
+def test_trigger_crawl_queued(source_setup):
+    source_id = source_setup
+    with httpx.Client() as client:
+        response = client.post(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}/crawl")
+        assert response.status_code == 202
+        assert "source_id" in response.json()
+
+
+def test_get_source_not_found():
+    with httpx.Client() as client:
+        response = client.get(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/00000000-0000-0000-0000-000000000000")
+        assert response.status_code == 404
+
+
+def test_list_results_returns_200():
+    with httpx.Client() as client:
+        response = client.get(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/results")
+        assert response.status_code == 200
+        assert isinstance(response.json(), list)
+
+
+def test_get_result_not_found():
+    with httpx.Client() as client:
+        response = client.get(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/results/00000000-0000-0000-0000-000000000000")
+        assert response.status_code == 404
+
+
+def test_validate_result_not_found():
+    with httpx.Client() as client:
+        response = client.patch(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/results/00000000-0000-0000-0000-000000000000/validate")
+        assert response.status_code == 404
+
+
+def test_reject_result_not_found():
+    with httpx.Client() as client:
+        response = client.patch(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/results/00000000-0000-0000-0000-000000000000/reject")
+        assert response.status_code == 404

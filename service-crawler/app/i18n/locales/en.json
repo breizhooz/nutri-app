@@ -1,0 +1,32 @@
+{
+  "crawl_source": {
+    "not_found": "Source not found.",
+    "created": "Source added successfully.",
+    "updated": "Source updated.",
+    "deleted": "Source deleted.",
+    "crawl_queued": "Crawl triggered, waiting for processing."
+  },
+  "crawl_result": {
+    "not_found": "Result not found.",
+    "updated": "Result updated.",
+    "validated": "Result validated and sent to service-recipe.",
+    "rejected": "Result rejected."
+  },
+  "enums": {
+    "crawl_type": {
+      "web": "Web",
+      "instagram": "Instagram",
+      "youtube": "YouTube"
+    },
+    "crawl_status": {
+      "waiting": "Pending",
+      "valid": "Validated",
+      "rejected": "Rejected"
+    }
+  },
+  "errors": {
+    "internal": "Internal server error.",
+    "service_recipe_unavailable": "Recipe service is unavailable. Please try again.",
+    "url_already_crawled": "This URL has already been processed."
+  }
+}
