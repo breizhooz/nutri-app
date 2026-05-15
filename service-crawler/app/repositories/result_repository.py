@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,7 +29,7 @@ class ResultRepository:
     async def list_pending(self) -> list[CrawlResult]:
         result = await self.session.execute(
             select(CrawlResult)
-            .where(CrawlResult.statut == CrawlStatus.EN_ATTENTE)
+            .where(CrawlResult.status == CrawlStatus.WAITING)
             .order_by(CrawlResult.created_at.desc())
         )
         return list(result.scalars().all())
@@ -42,21 +42,21 @@ class ResultRepository:
         return crawl_result
 
     async def validate(self, crawl_result: CrawlResult, validated_by: uuid.UUID) -> CrawlResult:
-        crawl_result.statut = CrawlStatus.VALIDE
-        crawl_result.valide_par = validated_by
-        crawl_result.valide_le = datetime.utcnow()
+        crawl_result.status = CrawlStatus.VALID
+        crawl_result.validate_by = validated_by
+        crawl_result.validate_date = datetime.now(timezone.utc)
         await self.session.commit()
         await self.session.refresh(crawl_result)
         return crawl_result
 
     async def reject(self, crawl_result: CrawlResult) -> CrawlResult:
-        crawl_result.statut = CrawlStatus.REJETE
+        crawl_result.status = CrawlStatus.REJECTED
         await self.session.commit()
         await self.session.refresh(crawl_result)
         return crawl_result
 
     async def url_exists(self, url: str) -> bool:
         result = await self.session.execute(
-            select(CrawlResult.id).where(CrawlResult.url_origine == url)
+            select(CrawlResult.id).where(CrawlResult.url_origin == url)
         )
         return result.scalar_one_or_none() is not None

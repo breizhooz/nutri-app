@@ -7,8 +7,8 @@ from app.models.enums import CrawlStatus, CrawlType
 
 
 class CrawlResultUpdate(BaseModel):
-    titre: str | None = None
-    contenu_brut: str | None = None
+    title: str | None = None
+    raw_content: str | None = None
     images: list[str] | None = None
     video_url: str | None = None
 

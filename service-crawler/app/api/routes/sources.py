@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_session
+from app.i18n.loader import t
 from app.repositories.source_repository import SourceRepository
 from app.schemas.crawl_source import CrawlSourceCreate, CrawlSourceResponse, CrawlSourceUpdate
 
@@ -33,7 +34,7 @@ async def get_source(source_id: uuid.UUID, session: AsyncSession = Depends(get_s
     repo = SourceRepository(session)
     source = await repo.get_by_id(source_id)
     if not source:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="crawl_source.not_found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=t.get("crawl_source.not_found"))
     return source
 
 
@@ -46,7 +47,7 @@ async def update_source(
     repo = SourceRepository(session)
     source = await repo.get_by_id(source_id)
     if not source:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="crawl_source.not_found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=t.get("crawl_source.not_found"))
     return await repo.update(source, data)
 
 
@@ -55,7 +56,7 @@ async def delete_source(source_id: uuid.UUID, session: AsyncSession = Depends(ge
     repo = SourceRepository(session)
     source = await repo.get_by_id(source_id)
     if not source:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="crawl_source.not_found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=t.get("crawl_source.not_found"))
     await repo.delete(source)
 
 
@@ -64,6 +65,6 @@ async def trigger_crawl(source_id: uuid.UUID, session: AsyncSession = Depends(ge
     repo = SourceRepository(session)
     source = await repo.get_by_id(source_id)
     if not source:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="crawl_source.not_found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=t.get("crawl_source.not_found"))
     # TODO Phase 3 : envoyer la tâche Celery selon source.type
-    return {"detail": "crawl_source.crawl_queued", "source_id": str(source_id)}
+    return {"detail": t.get("crawl_source.crawl_queued"), "source_id": str(source_id)}

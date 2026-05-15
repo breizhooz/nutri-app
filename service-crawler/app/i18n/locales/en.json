@@ -19,7 +19,7 @@
       "youtube": "YouTube"
     },
     "crawl_status": {
-      "waitting": "Pending",
+      "waiting": "Pending",
       "valid": "Validated",
       "rejected": "Rejected"
     }

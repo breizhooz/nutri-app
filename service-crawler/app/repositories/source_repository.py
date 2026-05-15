@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,7 +46,7 @@ class SourceRepository:
         await self.session.commit()
 
     async def mark_crawled(self, source: CrawlSource) -> None:
-        source.dernier_crawl = datetime.utcnow()
+        source.last_crawl = datetime.now(timezone.utc)
         await self.session.commit()
 
     async def list_active_by_type(self, type: CrawlType) -> list[CrawlSource]:

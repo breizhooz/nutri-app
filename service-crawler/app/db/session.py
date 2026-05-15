@@ -13,14 +13,14 @@ from app.core.config import settings
 def get_engine() -> AsyncEngine:
     return create_async_engine(
         settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://"),
-        echo=settings.DEBUG
-        pool_pre_pring=True
+        echo=settings.DEBUG,
+        pool_pre_ping=True,
     )
 
 @lru_cache(maxsize=1)
 def _session_factory() -> async_sessionmaker:
-    return async_sessionmaker(get_engine, expire_on_commit=False)
+    return async_sessionmaker(get_engine(), expire_on_commit=False)
 
 async def get_session() -> AsyncSession:
-    async with _session_factory()() as sesion:
+    async with _session_factory()() as session:
         yield session

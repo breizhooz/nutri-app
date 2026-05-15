@@ -3,7 +3,7 @@ from datetime import datetime, time
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.enums import CrawlType, CrawStatus
+from app.models.enums import CrawlType
 
 class CrawlSourceCreate(BaseModel):
     type: CrawlType

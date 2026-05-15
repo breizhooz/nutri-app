@@ -31,7 +31,7 @@ class CrawlResult(Base):
     video_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     status: Mapped[CrawlStatus] = mapped_column(
         SQLEnum(CrawlStatus, native_enum=False, length=20),
-        default=CrawlStatus.EN_ATTENTE,
+        default=CrawlStatus.WAITING,
         nullable=False,
     )
     validate_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)

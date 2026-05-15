@@ -1,5 +1,5 @@
-from .enums import CrawlType, CrawStatus
+from .enums import CrawlType, CrawlStatus
 __all__ = [
     "CrawlType", 
-    "CrawStatus"
+    "CrawlStatus"
 ]
