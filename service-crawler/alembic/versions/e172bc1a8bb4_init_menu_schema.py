@@ -42,7 +42,7 @@ def upgrade() -> None:
     sa.Column('raw_content', sa.Text(), nullable=True),
     sa.Column('images', postgresql.ARRAY(sa.String()), server_default='{}', nullable=False),
     sa.Column('video_url', sa.String(length=1000), nullable=True),
-    sa.Column('status', sa.Enum('WAITTING', 'VALID', 'REJECTED', name='crawlstatus', native_enum=False, length=20), nullable=False),
+    sa.Column('status', sa.Enum('waiting', 'valid', 'rejected', name='crawlstatus', native_enum=False, length=20), nullable=False),
     sa.Column('validate_by', sa.UUID(), nullable=True),
     sa.Column('validate_date', sa.DateTime(timezone=True), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.crawl_result import CrawlResult
@@ -60,3 +60,27 @@ class ResultRepository:
             select(CrawlResult.id).where(CrawlResult.url_origin == url)
         )
         return result.scalar_one_or_none() is not None
+    
+    async def list_by_filters(
+        self,
+        status: CrawlStatus | None = None,
+        source_id: uuid.UUID | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[CrawlResult], int]:
+        base = select(CrawlResult)
+        if status is not None:
+            base = base.where(CrawlResult.status == status)
+        if source_id is not None:
+            base = base.where(CrawlResult.source_id == source_id)
+
+        count_row = await self.session.execute(
+            select(func.count()).select_from(base.subquery())
+        )
+        total: int = count_row.scalar_one()
+
+        offset = (page - 1) * page_size
+        data_rows = await self.session.execute(
+            base.order_by(CrawlResult.created_at.desc()).offset(offset).limit(page_size)
+        )
+        return list(data_rows.scalars().all()), total

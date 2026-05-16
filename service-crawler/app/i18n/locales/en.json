@@ -10,7 +10,12 @@
     "not_found": "Result not found.",
     "updated": "Result updated.",
     "validated": "Result validated and sent to service-recipe.",
-    "rejected": "Result rejected."
+    "rejected": "Result rejected.",
+    "errors": {
+      "not_editable": "This result cannot be edited (current status is not WAITING).",
+      "already_rejected": "This result has already been rejected.",
+      "already_validated": "This result has already been validated."
+    }
   },
   "enums": {
     "crawl_type": {
