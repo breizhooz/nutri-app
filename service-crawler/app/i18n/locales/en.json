@@ -27,6 +27,7 @@
   "errors": {
     "internal": "Internal server error.",
     "service_recipe_unavailable": "Recipe service is unavailable. Please try again.",
-    "url_already_crawled": "This URL has already been processed."
+    "url_already_crawled": "This URL has already been processed.",
+    "crawl_type_not_supported": "This source type is not yet supported."
   }
 }

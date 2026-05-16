@@ -422,8 +422,26 @@ def test_trigger_crawl_queued(source_setup):
     with httpx.Client() as client:
         response = client.post(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}/crawl")
         assert response.status_code == 202
-        assert "source_id" in response.json()
+        body = response.json()
+        assert "source_id" in body
+        assert "task_id" in body
 
+def test_trigger_crawl_unsupported_type():
+    with httpx.Client() as client:
+        # Créer une source Instagram
+        create = client.post(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources", json={
+            "type": "instagram",
+            "url": "@smoke_test_account",
+        })
+        assert create.status_code == 201
+        source_id = create.json()["id"]
+
+        # Déclencher → doit retourner 400
+        response = client.post(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}/crawl")
+        assert response.status_code == 400
+
+        # Nettoyage
+        client.delete(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}")
 
 def test_get_source_not_found():
     with httpx.Client() as client:
@@ -454,3 +472,35 @@ def test_reject_result_not_found():
     with httpx.Client() as client:
         response = client.patch(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/results/00000000-0000-0000-0000-000000000000/reject")
         assert response.status_code == 404
+
+def test_crawler_settings_get():
+    with httpx.Client() as client:
+        response = client.get(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/settings")
+        assert response.status_code == 200
+        body = response.json()
+        assert "js_detection_threshold" in body
+        assert isinstance(body["js_detection_threshold"], int)
+
+
+def test_crawler_settings_update():
+    with httpx.Client() as client:
+        # Lire la valeur courante
+        original = client.get(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/settings").json()["js_detection_threshold"]
+
+        # Mettre à jour
+        response = client.patch(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/settings", json={"js_detection_threshold": 300})
+        assert response.status_code == 200
+        assert response.json()["js_detection_threshold"] == 300
+
+        # Vérifier la lecture reflète le changement
+        get = client.get(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/settings")
+        assert get.json()["js_detection_threshold"] == 300
+
+        # Restaurer
+        client.patch(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/settings", json={"js_detection_threshold": original})
+
+
+def test_crawler_settings_rejects_invalid_threshold():
+    with httpx.Client() as client:
+        response = client.patch(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/settings", json={"js_detection_threshold": 5})
+        assert response.status_code == 422

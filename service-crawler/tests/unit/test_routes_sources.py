@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 from httpx import AsyncClient
 
 from app.models.enums import CrawlType
@@ -88,10 +89,13 @@ async def test_delete_source_not_found(client: AsyncClient):
 async def test_trigger_crawl(client: AsyncClient):
     create = await client.post("/api/v1/crawler/sources", json={"type": CrawlType.WEB.value, "url": "https://e.com"})
     source_id = create.json()["id"]
-    response = await client.post(f"/api/v1/crawler/sources/{source_id}/crawl")
+    with patch("app.api.routes.sources.crawl_url") as mock_task:
+        mock_task.delay.return_value.id = "fake-task-id"
+        response = await client.post(f"/api/v1/crawler/sources/{source_id}/crawl")
     assert response.status_code == 202
-    assert "crawl_queued" in response.json()["detail"] or response.json()["detail"] == "Crawl déclenché, en attente de traitement."
-
+    assert response.json()["detail"] == "Crawl déclenché, en attente de traitement."
+    assert response.json()["task_id"] == "fake-task-id"
+    mock_task.delay.assert_called_once()
 
 @pytest.mark.asyncio
 async def test_trigger_crawl_not_found(client: AsyncClient):
@@ -104,3 +108,11 @@ async def test_health(client: AsyncClient):
     response = await client.get("/health")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+
+@pytest.mark.asyncio
+async def test_trigger_crawl_unsupported_type(client: AsyncClient):
+    create = await client.post("/api/v1/crawler/sources", json={"type": CrawlType.INSTAGRAM.value, "url": "@compte"})
+    source_id = create.json()["id"]
+    response = await client.post(f"/api/v1/crawler/sources/{source_id}/crawl")
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Ce type de source n'est pas encore pris en charge."

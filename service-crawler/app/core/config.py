@@ -20,4 +20,7 @@ class Settings(BaseSettings):
 
     SERVICE_RECIPE_URL: str
 
+    JS_DETECTION_THRESHOLD: int = 200
+
+
 settings = Settings()

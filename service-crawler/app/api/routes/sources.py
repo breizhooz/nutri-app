@@ -6,7 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_session
 from app.i18n.loader import t
 from app.repositories.source_repository import SourceRepository
+from app.models.enums import CrawlType
 from app.schemas.crawl_source import CrawlSourceCreate, CrawlSourceResponse, CrawlSourceUpdate
+from tasks.web import crawl_url
 
 router = APIRouter()
 
@@ -66,5 +68,10 @@ async def trigger_crawl(source_id: uuid.UUID, session: AsyncSession = Depends(ge
     source = await repo.get_by_id(source_id)
     if not source:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=t.get("crawl_source.not_found"))
-    # TODO Phase 3 : envoyer la tâche Celery selon source.type
-    return {"detail": t.get("crawl_source.crawl_queued"), "source_id": str(source_id)}
+    if source.type != CrawlType.WEB:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=t.get("errors.crawl_type_not_supported"),
+        )
+    task = crawl_url.delay(str(source.id), source.url)
+    return {"detail": t.get("crawl_source.crawl_queued"), "source_id": str(source_id), "task_id": task.id}
