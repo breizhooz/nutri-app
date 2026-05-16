@@ -10,7 +10,12 @@
     "not_found": "Résultat introuvable.",
     "updated": "Résultat modifié.",
     "validated": "Résultat validé et envoyé vers service-recipe.",
-    "rejected": "Résultat rejeté."
+    "rejected": "Résultat rejeté.",
+    "errors": {
+      "not_editable": "Ce résultat ne peut pas être modifié (statut actuel différent de EN_ATTENTE).",
+      "already_rejected": "Ce résultat a déjà été rejeté.",
+      "already_validated": "Ce résultat a déjà été validé."
+    }
   },
   "enums": {
     "crawl_type": {
