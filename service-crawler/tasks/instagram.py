@@ -27,6 +27,9 @@ def crawl_instagram(self, source_id: str, account: str):
 
 
 async def _do_crawl(task, source_id: str, account: str) -> None:
+    new_count = 0
+    user_id = None
+
     factory = _make_session_factory()
     async with factory() as session:
         result_repo = ResultRepository(session)
@@ -51,7 +54,6 @@ async def _do_crawl(task, source_id: str, account: str) -> None:
             logger.error("Échec du crawl Instagram pour %s : %s", account, exc)
             raise task.retry(exc=exc)
 
-        new_count = 0
         for post in posts:
             if await result_repo.url_exists(post.url):
                 logger.debug("Post déjà indexé, ignoré : %s", post.url)
@@ -74,4 +76,13 @@ async def _do_crawl(task, source_id: str, account: str) -> None:
             "Crawl Instagram terminé pour %s : %d nouveaux posts",
             account,
             new_count,
+        )
+
+    if new_count > 0 and user_id:
+        from tasks.notifications import send_crawl_notification
+        send_crawl_notification.delay(
+            str(user_id),
+            CrawlType.INSTAGRAM.value,
+            new_count,
+            account,
         )

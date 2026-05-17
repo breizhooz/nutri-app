@@ -29,6 +29,10 @@
     "sync_complete": "Planning Beat synchronisé depuis la base de données.",
     "db_error": "Erreur lors de la synchronisation du planning depuis la base de données."
   },
+  "notifications": {
+    "subscribed": "Push notification subscription registered.",
+    "unsubscribed": "Subscription removed."
+  },
   "enums": {
     "crawl_type": {
       "web": "Web",
@@ -39,6 +43,10 @@
       "waiting": "En attente",
       "valid": "Validé",
       "rejected": "Rejeté"
+    },
+    "push_channel": {
+      "web_push": "Browser (Web Push)",
+      "expo": "Mobile app (Expo)"
     }
   },
   "errors": {
