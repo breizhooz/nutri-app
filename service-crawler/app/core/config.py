@@ -19,10 +19,12 @@ class Settings(BaseSettings):
     MINIO_SECURE: bool = False
 
     SERVICE_RECIPE_URL: str
-    # Pre-signed JWT for service-to-service calls to service-recipe
     SERVICE_RECIPE_TOKEN: str = ""
 
     JS_DETECTION_THRESHOLD: int = 200
+
+    JWT_SECRET: str
+    JWT_ALGORITHM: str = "HS256"
 
 
 settings = Settings()

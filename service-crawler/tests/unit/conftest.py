@@ -1,4 +1,6 @@
 import os
+import uuid
+
 import pytest
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
@@ -14,7 +16,9 @@ os.environ.setdefault("MINIO_SECRET_KEY", "test-secret-key")
 os.environ.setdefault("MINIO_BUCKET_CRAWLER", "crawler-test")
 os.environ.setdefault("SERVICE_RECIPE_URL", "http://service-recipe-test:8000")
 os.environ.setdefault("SERVICE_RECIPE_TOKEN", "test-service-token")
+os.environ.setdefault("JWT_SECRET", "test-jwt-secret-for-unit-tests")
 
+from app.core.deps import get_current_user_id
 from app.db.base import Base
 from app.db.session import get_session
 from app.main import app
@@ -22,6 +26,8 @@ from app.models.crawl_source import CrawlSource  # noqa: F401
 
 DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 _SQLITE_TABLES = [CrawlSource.__table__]
+
+TEST_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 
 
 @compiles(PG_UUID, "sqlite")
@@ -52,7 +58,14 @@ async def client(db_session: AsyncSession):
     async def override_get_session():
         yield db_session
 
+    async def override_get_current_user_id() -> uuid.UUID:
+        return TEST_USER_ID
+
     app.dependency_overrides[get_session] = override_get_session
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    app.dependency_overrides[get_current_user_id] = override_get_current_user_id
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+    ) as ac:
         yield ac
     app.dependency_overrides.clear()

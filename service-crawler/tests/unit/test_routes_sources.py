@@ -111,7 +111,7 @@ async def test_health(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_trigger_crawl_unsupported_type(client: AsyncClient):
-    create = await client.post("/api/v1/crawler/sources", json={"type": CrawlType.INSTAGRAM.value, "url": "@compte"})
+    create = await client.post("/api/v1/crawler/sources", json={"type": CrawlType.YOUTUBE.value, "url": "https://youtube.com/@chef"})
     source_id = create.json()["id"]
     response = await client.post(f"/api/v1/crawler/sources/{source_id}/crawl")
     assert response.status_code == 400
