@@ -6,11 +6,22 @@ import pytest
 from fastapi import HTTPException
 from httpx import ASGITransport, AsyncClient
 
-from app.api.routes.results import ResultServiceFactory
+from app.api.routes.results import RecipeMapperFactory, ResultServiceFactory
 from app.main import app
 from app.models.enums import CrawlStatus, CrawlType
 from app.schemas.crawl_result import PaginatedCrawlResultResponse
 
+@pytest.fixture
+def mock_mapper() -> AsyncMock:
+    return AsyncMock()
+
+@pytest.fixture
+async def results_client(mock_service: AsyncMock, mock_mapper: AsyncMock):
+    app.dependency_overrides[ResultServiceFactory.inject] = lambda: mock_service
+    app.dependency_overrides[RecipeMapperFactory.inject] = lambda: mock_mapper
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        yield c, mock_service
+    app.dependency_overrides.clear()
 
 class CrawlResultFactory:
     @staticmethod
@@ -211,6 +222,26 @@ class TestValidateResult:
         _, kwargs = service.validate_result.call_args
         assert kwargs["validated_by"] == uuid.UUID("00000000-0000-0000-0000-000000000001")
 
+    async def test_mapper_kwarg_passed_to_service(self, results_client):
+        client, service = results_client
+        r = CrawlResultFactory.make()
+        validated = CrawlResultFactory.make(result_id=r.id, status=CrawlStatus.VALID)
+        service.validate_result.return_value = validated
+        await client.patch(f"/api/v1/crawler/results/{r.id}/validate")
+        _, kwargs = service.validate_result.call_args
+        assert "mapper" in kwargs
+        assert kwargs["mapper"] is not None
+
+    async def test_service_recipe_unavailable_returns_503(self, results_client):
+        client, service = results_client
+        service.validate_result.side_effect = HTTPException(
+            status_code=503, detail="service indisponible"
+        )
+        r = CrawlResultFactory.make()
+        response = await client.patch(f"/api/v1/crawler/results/{r.id}/validate")
+        assert response.status_code == 503
+    
+
 
 class TestRejectResult:
     async def test_reject_success_returns_200(self, results_client):
@@ -236,3 +267,5 @@ class TestRejectResult:
         r = CrawlResultFactory.make()
         response = await client.patch(f"/api/v1/crawler/results/{r.id}/reject")
         assert response.status_code == 409
+
+    

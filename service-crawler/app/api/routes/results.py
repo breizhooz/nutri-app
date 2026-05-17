@@ -12,16 +12,27 @@ from app.schemas.crawl_result import (
     CrawlResultUpdate,
     PaginatedCrawlResultResponse,
 )
+from app.services.recipe_mapper import RecipeMapper
+from app.services.recipe_service_client import RecipeServiceClient
 from app.services.result_service import ResultService
 
 router = APIRouter()
 
+# TODO Phase 6: replace with JWT-authenticated user id
 _STUB_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
+
 
 class ResultServiceFactory:
     @staticmethod
     def inject(session: AsyncSession = Depends(get_session)) -> ResultService:
         return ResultService(ResultRepository(session))
+
+
+class RecipeMapperFactory:
+    @staticmethod
+    def inject() -> RecipeMapper:
+        return RecipeMapper(RecipeServiceClient())
+
 
 @router.get("", response_model=PaginatedCrawlResultResponse)
 async def list_results(
@@ -61,9 +72,11 @@ async def update_result(
 async def validate_result(
     result_id: uuid.UUID,
     service: ResultService = Depends(ResultServiceFactory.inject),
+    mapper: RecipeMapper = Depends(RecipeMapperFactory.inject),
 ) -> CrawlResultResponse:
-    # Phase 5 : remplacer _STUB_USER_ID par l'utilisateur JWT authentifié
-    return await service.validate_result(result_id, validated_by=_STUB_USER_ID)
+    return await service.validate_result(
+        result_id, validated_by=_STUB_USER_ID, mapper=mapper
+    )
 
 
 @router.patch("/{result_id}/reject", response_model=CrawlResultResponse)
