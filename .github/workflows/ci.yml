@@ -25,7 +25,7 @@ jobs:
           cd service-user
           pip install -r requirements.txt
           pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
       
       - name: SonarScan User
         uses: SonarSource/sonarqube-scan-action@v6
@@ -55,7 +55,7 @@ jobs:
           cd service-recipe
           pip install -r requirements.txt
           pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
       
       - name: SonarScan Recipe
         uses: SonarSource/sonarqube-scan-action@v6
@@ -85,7 +85,7 @@ jobs:
           cd service-menu
           pip install -r requirements.txt
           pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
       
       - name: SonarScan Menu
         uses: SonarSource/sonarqube-scan-action@v6
@@ -115,7 +115,7 @@ jobs:
           cd service-crawler
           pip install -r requirements.txt
           pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
       
       - name: SonarScan crawler
         uses: SonarSource/sonarqube-scan-action@v6
@@ -240,8 +240,17 @@ jobs:
           run: |
             pip install httpx pytest
 
-        - name: Run Smoke Tests
-          run: pytest tests/smoke_test.py
+        - name: Run Smoke Tests — service-user
+          run: pytest service-user/tests/smoke_test.py --noconftest -m smoke -v
+
+        - name: Run Smoke Tests — service-recipe
+          run: pytest service-recipe/tests/smoke_test.py --noconftest -m smoke -v
+
+        - name: Run Smoke Tests — service-menu
+          run: pytest service-menu/tests/smoke_test.py --noconftest -m smoke -v
+
+        - name: Run Smoke Tests — service-crawler
+          run: pytest service-crawler/tests/smoke_test.py --noconftest -m smoke -v
 
         - name: Debug - Show service logs on failure
           if: failure()
