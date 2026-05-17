@@ -77,6 +77,7 @@ class RecipeSearchService:
     
     async def search_recipes(
         self,
+        user_id: str,
         query: Optional[str] = None,
         difficulty: Optional[str] = None,
         cuisine_origin: Optional[str] = None,
@@ -88,9 +89,9 @@ class RecipeSearchService:
         limit: int = 10,
         offset: int = 0,
     ) -> dict:
-        """fulltext without filter."""
+        """Fulltext search scoped to the authenticated user."""
         must_queries = []
-        filter_queries = []
+        filter_queries = [{"term": {"created_by_user_id": user_id}}]
         must_not_queries = []
 
         if query:
@@ -145,7 +146,11 @@ class RecipeSearchService:
 
         hits = response["hits"]["hits"]
         results = [
-            {"id": int(hit["_id"]), "score": hit["_score"], **hit["_source"]}
+            {
+                "id": int(hit["_id"]),
+                "score": hit["_score"],
+                **{k: v for k, v in hit["_source"].items() if k != "created_by_user_id"},
+            }
             for hit in hits
         ]
 

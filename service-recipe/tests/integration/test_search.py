@@ -1,4 +1,5 @@
 import pytest
+from .conftest import TEST_USER_ID
 
 SEARCH_BASE = "/api/v1/search/recipes"
 
@@ -16,7 +17,7 @@ def _es_hit(recipe_id, title, score=1.0, **extra):
             "cuisine_origin": "enums.cuisine.french", "origin_recipe": "enums.origin.personal",
             "course_type": "enums.course.main", "prep_time_minutes": 20,
             "cook_time_minutes": 30, "servings": 4, "ingredient_names": [],
-            "allergens": [], "created_by_user_id": None,
+            "allergens": [], "created_by_user_id": TEST_USER_ID,
             "created_at": "2026-01-01T12:00:00", **extra,
         },
     }
@@ -117,3 +118,28 @@ async def test_search_limit_max_returns_422(mock_es, http_client):
     async with http_client as client:
         response = await client.get(SEARCH_BASE, params={"limit": 200})
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+@pytest.mark.integration
+async def test_search_always_filters_by_user_id(mock_es, http_client):
+    """La query ES doit toujours contenir un filtre term sur created_by_user_id."""
+    mock_es.search.return_value = _es_response()
+    async with http_client as client:
+        await client.get(SEARCH_BASE)
+    filters = mock_es.search.call_args.kwargs["query"]["bool"]["filter"]
+    assert {"term": {"created_by_user_id": TEST_USER_ID}} in filters
+
+
+@pytest.mark.asyncio
+@pytest.mark.integration
+async def test_search_results_do_not_expose_user_id(mock_es, http_client):
+    """created_by_user_id ne doit jamais apparaître dans les résultats retournés au client."""
+    mock_es.search.return_value = _es_response(
+        hits=[_es_hit(1, "Tarte aux pommes")], total=1
+    )
+    async with http_client as client:
+        response = await client.get(SEARCH_BASE)
+    assert response.status_code == 200
+    result = response.json()["results"][0]
+    assert "created_by_user_id" not in result
