@@ -17,6 +17,11 @@
       "already_validated": "This result has already been validated."
     }
   },
+  "instagram": {
+    "account_not_found": "Instagram account not found.",
+    "private_profile": "This Instagram account is private.",
+    "crawl_queued": "Instagram crawl triggered."
+  },
   "enums": {
     "crawl_type": {
       "web": "Web",
@@ -33,6 +38,7 @@
     "internal": "Internal server error.",
     "service_recipe_unavailable": "Recipe service is unavailable. Please try again.",
     "url_already_crawled": "This URL has already been processed.",
-    "crawl_type_not_supported": "This source type is not yet supported."
+    "crawl_type_not_supported": "This source type is not yet supported.",
+    "forbidden": "Access to this resource is forbidden."
   }
 }
