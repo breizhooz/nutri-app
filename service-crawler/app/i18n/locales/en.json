@@ -22,6 +22,13 @@
     "private_profile": "This Instagram account is private.",
     "crawl_queued": "Instagram crawl triggered."
   },
+  "scheduler": {
+    "source_added": "Source added to Beat schedule.",
+    "source_removed": "Source removed from Beat schedule.",
+    "source_updated": "Source schedule updated.",
+    "sync_complete": "Beat schedule synced from database.",
+    "db_error": "Error syncing Beat schedule from database."
+  },
   "enums": {
     "crawl_type": {
       "web": "Web",

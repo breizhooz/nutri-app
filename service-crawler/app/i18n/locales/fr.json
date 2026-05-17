@@ -22,6 +22,13 @@
     "private_profile": "Ce compte Instagram est privé.",
     "crawl_queued": "Crawl Instagram déclenché."
   },
+  "scheduler": {
+    "source_added": "Source ajoutée au planning Beat.",
+    "source_removed": "Source retirée du planning Beat.",
+    "source_updated": "Planning de la source mis à jour.",
+    "sync_complete": "Planning Beat synchronisé depuis la base de données.",
+    "db_error": "Erreur lors de la synchronisation du planning depuis la base de données."
+  },
   "enums": {
     "crawl_type": {
       "web": "Web",
@@ -40,6 +47,5 @@
     "url_already_crawled": "Cette URL a déjà été traitée.",
     "crawl_type_not_supported": "Ce type de source n'est pas encore pris en charge.",
     "forbidden": "Accès interdit à cette ressource."
-
   }
 }
