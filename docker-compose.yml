@@ -210,7 +210,8 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+    mem_limit: 512m
     ports:
       - "9200:9200"
     volumes:
@@ -230,6 +231,7 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+    mem_limit: 64m
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -251,6 +253,7 @@ services:
     env_file:
       - .env
       - ./service-crawler/conf/.env
+    mem_limit: 128m
     depends_on:
       redis:
         condition: service_healthy
@@ -275,6 +278,7 @@ services:
       - "9001:9001"   # Console web d'administration
     volumes:
       - minio-data:/data
+    mem_limit: 256m
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
       interval: 10s
