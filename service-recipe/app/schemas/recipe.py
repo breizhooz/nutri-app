@@ -1,6 +1,5 @@
-import uuid
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from typing import Optional, Any,  List
+from typing import Optional, Any, List
 from datetime import datetime
 from .recipe_ingredient import RecipeIngredientBase, RecipeIngredientResponse
 from app.models.enums import (
@@ -23,7 +22,6 @@ class RecipeBase(BaseModel):
     book_name: Optional[str] = None
     source_url: Optional[str] = None
     image_url: Optional[str] = None
-    created_by_user_id: Optional[uuid.UUID] = None
 
 class RecipeCreate(RecipeBase):
     # Pour la création, on s'attend à recevoir une liste d'ingrédients (ID + quantité)

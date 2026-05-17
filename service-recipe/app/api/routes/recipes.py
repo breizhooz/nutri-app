@@ -109,9 +109,8 @@ async def create_recipe(
     user_client: ServicesUserClient = Depends(get_user_client),
     current_user_id: str = Depends(get_current_user_id)
 ):
-    recipe_data.created_by_user_id = current_user_id
     try:
-        exists = await user_client.user_exist(str(recipe_data.created_by_user_id))
+        exists = await user_client.user_exist(current_user_id)
     except ServiceUnavailableError:
         raise LocalizedHTTPException.service_user_unavailable(request)
     if not exists:

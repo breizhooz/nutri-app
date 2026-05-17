@@ -26,7 +26,6 @@ async def test_create_recipe_triggers_es_indexation(override_db, override_user_c
             "title": "Poulet rôti",
             "instructions": "Cuire au four 1h.",
             "recipe_ingredients": [],
-            "created_by_user_id": "123e4567-e89b-12d3-a456-426614174000",
         })
 
     assert response.status_code == 201
@@ -113,6 +112,19 @@ async def test_delete_nonexistent_recipe_returns_404(override_db, mock_es, http_
 
     assert response.status_code == 404
     mock_es.delete.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.integration
+async def test_indexed_document_contains_user_id(mock_es):
+    """Le document indexé dans ES doit contenir created_by_user_id issu du JWT."""
+    from app.services.search_service import search_service
+    from .conftest import TEST_USER_ID
+
+    recipe = make_mock_recipe()
+    doc = search_service._build_document(recipe)
+
+    assert doc["created_by_user_id"] == TEST_USER_ID
 
 
 @pytest.mark.asyncio

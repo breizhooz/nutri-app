@@ -26,5 +26,8 @@ class Settings(BaseSettings):
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
 
-
+    VAPID_PRIVATE_KEY: str = ""
+    VAPID_CLAIMS_EMAIL: str = "admin@nutriplanner.app"
+    EXPO_PUSH_API_URL: str = "https://exp.host/--/api/v2/push/send"
+    
 settings = Settings()
