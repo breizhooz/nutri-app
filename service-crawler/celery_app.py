@@ -8,6 +8,7 @@ celery_app = Celery(
     include=[
         "tasks.web",
         "tasks.instagram",
+        "tasks.notifications",
     ],
 )
 
@@ -20,7 +21,6 @@ celery_app.conf.update(
     task_track_started=True,
     task_acks_late=True,
     worker_prefetch_multiplier=1,
-    # Scheduler DB-backed — recharge les sources actives sans redémarrage.
     beat_scheduler="tasks.scheduler:DatabaseBackedScheduler",
     beat_max_loop_interval=5,
 )

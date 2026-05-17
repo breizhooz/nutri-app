@@ -10,3 +10,7 @@ class CrawlStatus(str, PyEnum):
     VALID = "valid"
     REJECTED = "rejected"
 
+class PushChannel(str, PyEnum):
+    """Canal de livraison des notifications push."""
+    WEB_PUSH = "web_push"  # VAPID / Service Worker navigateur
+    EXPO = "expo"          # Expo Push Notifications (iOS + Android)

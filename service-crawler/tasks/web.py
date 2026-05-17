@@ -25,7 +25,10 @@ def crawl_url(self, source_id: str | None, url: str):
     asyncio.run(_do_crawl(self, source_id, url))
 
 
-async def _do_crawl(task, source_id: str | None, url: str):
+async def _do_crawl(task, source_id: str | None, url: str) -> None:
+    user_id = None
+    crawled = False
+
     factory = _make_session_factory()
     async with factory() as session:
         result_repo = ResultRepository(session)
@@ -36,7 +39,6 @@ async def _do_crawl(task, source_id: str | None, url: str):
             return
 
         source = None
-        user_id = None
         if source_id:
             source = await source_repo.get_by_id(UUID(source_id))
             if source:
@@ -59,6 +61,16 @@ async def _do_crawl(task, source_id: str | None, url: str):
             "video_url": data.get("video_url"),
             "status": CrawlStatus.WAITING,
         })
+        crawled = True
 
         if source:
             await source_repo.mark_crawled(source)
+
+    if crawled and user_id:
+        from tasks.notifications import send_crawl_notification
+        send_crawl_notification.delay(
+            str(user_id),
+            CrawlType.WEB.value,
+            1,
+            url,
+        )
