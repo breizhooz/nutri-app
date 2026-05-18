@@ -21,13 +21,12 @@ class Settings(BaseSettings):
     SERVICE_RECIPE_URL: str
     SERVICE_RECIPE_TOKEN: str = ""
 
+    SERVICE_NOTIFICATION_URL: str
+    SERVICE_NOTIFICATION_TOKEN: str = ""
+
     JS_DETECTION_THRESHOLD: int = 200
 
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
 
-    VAPID_PRIVATE_KEY: str = ""
-    VAPID_CLAIMS_EMAIL: str = "admin@nutriplanner.app"
-    EXPO_PUSH_API_URL: str = "https://exp.host/--/api/v2/push/send"
-    
 settings = Settings()
