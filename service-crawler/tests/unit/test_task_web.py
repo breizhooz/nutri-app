@@ -43,6 +43,7 @@ async def test_do_crawl_nominal():
     source_repo.get_by_id = AsyncMock(return_value=fake_source)
     source_repo.mark_crawled = AsyncMock()
 
+    mock_notif_client = AsyncMock()
     task = MagicMock()
     mock_session = _make_session_ctx()
 
@@ -51,6 +52,7 @@ async def test_do_crawl_nominal():
         patch("tasks.web.ResultRepository", return_value=result_repo),
         patch("tasks.web.SourceRepository", return_value=source_repo),
         patch("tasks.web.WebService") as mock_ws_cls,
+        patch("tasks.web.NotificationClient", return_value=mock_notif_client),
     ):
         mock_factory.return_value.return_value = mock_session
         mock_ws = AsyncMock()
@@ -71,6 +73,9 @@ async def test_do_crawl_nominal():
     assert payload["source_id"] == uuid.UUID(_FAKE_SOURCE_ID)
 
     source_repo.mark_crawled.assert_called_once_with(fake_source)
+    mock_notif_client.notify_crawl_done.assert_called_once_with(
+        str(_FAKE_USER_ID), CrawlType.WEB.value, 1, _FAKE_URL
+    )
 
 
 @pytest.mark.asyncio
@@ -78,6 +83,7 @@ async def test_do_crawl_skips_duplicate_url():
     result_repo = AsyncMock()
     result_repo.url_exists = AsyncMock(return_value=True)
     source_repo = AsyncMock()
+    mock_notif_client = AsyncMock()
     task = MagicMock()
     mock_session = _make_session_ctx()
 
@@ -85,6 +91,7 @@ async def test_do_crawl_skips_duplicate_url():
         patch("tasks.web._make_session_factory") as mock_factory,
         patch("tasks.web.ResultRepository", return_value=result_repo),
         patch("tasks.web.SourceRepository", return_value=source_repo),
+        patch("tasks.web.NotificationClient", return_value=mock_notif_client),
     ):
         mock_factory.return_value.return_value = mock_session
 
@@ -93,6 +100,7 @@ async def test_do_crawl_skips_duplicate_url():
 
     result_repo.create.assert_not_called()
     source_repo.mark_crawled.assert_not_called()
+    mock_notif_client.notify_crawl_done.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -103,6 +111,7 @@ async def test_do_crawl_retries_on_fetch_error():
     source_repo = AsyncMock()
     source_repo.get_by_id = AsyncMock(return_value=_make_fake_source())
 
+    mock_notif_client = AsyncMock()
     task = MagicMock()
     task.retry = MagicMock(side_effect=RuntimeError("retry called"))
     mock_session = _make_session_ctx()
@@ -112,6 +121,7 @@ async def test_do_crawl_retries_on_fetch_error():
         patch("tasks.web.ResultRepository", return_value=result_repo),
         patch("tasks.web.SourceRepository", return_value=source_repo),
         patch("tasks.web.WebService") as mock_ws_cls,
+        patch("tasks.web.NotificationClient", return_value=mock_notif_client),
     ):
         mock_factory.return_value.return_value = mock_session
         mock_ws = AsyncMock()
@@ -135,6 +145,7 @@ async def test_do_crawl_no_source_id():
     result_repo.create = AsyncMock()
 
     source_repo = AsyncMock()
+    mock_notif_client = AsyncMock()
     task = MagicMock()
     mock_session = _make_session_ctx()
 
@@ -143,6 +154,7 @@ async def test_do_crawl_no_source_id():
         patch("tasks.web.ResultRepository", return_value=result_repo),
         patch("tasks.web.SourceRepository", return_value=source_repo),
         patch("tasks.web.WebService") as mock_ws_cls,
+        patch("tasks.web.NotificationClient", return_value=mock_notif_client),
     ):
         mock_factory.return_value.return_value = mock_session
         mock_ws = AsyncMock()
@@ -158,3 +170,4 @@ async def test_do_crawl_no_source_id():
 
     source_repo.get_by_id.assert_not_called()
     source_repo.mark_crawled.assert_not_called()
+    mock_notif_client.notify_crawl_done.assert_not_called()

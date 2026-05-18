@@ -11,6 +11,8 @@ from app.repositories.result_repository import ResultRepository
 from app.repositories.source_repository import SourceRepository
 from app.services.instagram_service import InstagramService
 from celery_app import celery_app
+from app.services.notification_client import NotificationClient
+
 
 logger = logging.getLogger(__name__)
 
@@ -79,10 +81,6 @@ async def _do_crawl(task, source_id: str, account: str) -> None:
         )
 
     if new_count > 0 and user_id:
-        from tasks.notifications import send_crawl_notification
-        send_crawl_notification.delay(
-            str(user_id),
-            CrawlType.INSTAGRAM.value,
-            new_count,
-            account,
+        await NotificationClient().notify_crawl_done(
+            str(user_id), CrawlType.INSTAGRAM.value, new_count, account
         )

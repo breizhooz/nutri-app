@@ -11,6 +11,7 @@ from app.models.enums import CrawlType, CrawlStatus
 from app.repositories.result_repository import ResultRepository
 from app.repositories.source_repository import SourceRepository
 from app.services.web_service import WebService
+from app.services.notification_client import NotificationClient
 
 logger = logging.getLogger(__name__)
 
@@ -67,10 +68,6 @@ async def _do_crawl(task, source_id: str | None, url: str) -> None:
             await source_repo.mark_crawled(source)
 
     if crawled and user_id:
-        from tasks.notifications import send_crawl_notification
-        send_crawl_notification.delay(
-            str(user_id),
-            CrawlType.WEB.value,
-            1,
-            url,
+        await NotificationClient().notify_crawl_done(
+            str(user_id), CrawlType.WEB.value, 1, url
         )
