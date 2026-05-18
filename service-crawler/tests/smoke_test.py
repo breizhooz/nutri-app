@@ -2,10 +2,42 @@ import time
 import httpx
 import pytest
 
+SERVICE_USER_URL = "http://localhost:8001"
 SERVICE_CRAWLER_URL = "http://localhost:8004"
 _NULL_UUID = "00000000-0000-0000-0000-000000000000"
 _RESULTS_URL = f"{SERVICE_CRAWLER_URL}/api/v1/crawler/results"
 
+_CRAWLER_USER = {"email": "smoke_crawler@test.internal", "password": "SmokeTest!99"}
+
+
+# ── Fixtures user / auth ─────────────────────────────────────────────────────────
+
+@pytest.fixture()
+def create_user():
+    with httpx.Client() as client:
+        resp = client.post(f"{SERVICE_USER_URL}/api/v1/users", json=_CRAWLER_USER)
+        assert resp.status_code == 201, f"Création user échouée: {resp.text}"
+        user = resp.json()
+        user["password"] = _CRAWLER_USER["password"]
+        yield user
+        login = client.post(f"{SERVICE_USER_URL}/api/v1/auth/login", json=_CRAWLER_USER)
+        if login.status_code == 200:
+            token = login.json()["access_token"]
+            client.delete(
+                f"{SERVICE_USER_URL}/api/v1/users/{user['id']}",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
+
+@pytest.fixture()
+def auth_token(create_user):
+    with httpx.Client() as client:
+        resp = client.post(f"{SERVICE_USER_URL}/api/v1/auth/login", json=_CRAWLER_USER)
+        assert resp.status_code == 200
+        return resp.json()["access_token"]
+
+
+# ── Helpers ──────────────────────────────────────────────────────────────────────
 
 class ResultsSmokeHelper:
     @staticmethod
@@ -46,48 +78,65 @@ class ResultsSmokeHelper:
         return None
 
 
+# ── Fixtures sources ─────────────────────────────────────────────────────────────
+
 @pytest.fixture()
-def source_setup():
+def source_setup(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        response = client.post(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources", json={
-            "type": "web",
-            "url": "https://smoke-test.example.com",
-            "frequency_hours": 24,
-        })
+        response = client.post(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources",
+            json={"type": "web", "url": "https://smoke-test.example.com", "frequency_hours": 24},
+            headers=headers,
+        )
         assert response.status_code == 201, f"Erreur création source: {response.text}"
         source_id = response.json()["id"]
 
     yield source_id
 
     with httpx.Client() as client:
-        client.delete(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}")
+        client.delete(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}",
+            headers=headers,
+        )
 
 
 @pytest.fixture()
-def crawled_result_setup():
+def crawled_result_setup(auth_token):
     import uuid as _uuid
+    headers = {"Authorization": f"Bearer {auth_token}"}
     unique_url = f"https://www.marmiton.org/recettes/recette_tarte-aux-pommes_12372.aspx?smoke={_uuid.uuid4().hex}"
 
     with httpx.Client(timeout=60.0) as client:
         create = client.post(
             f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources",
             json={"type": "web", "url": unique_url},
+            headers=headers,
         )
         assert create.status_code == 201, f"Création source échouée: {create.text}"
         source_id = create.json()["id"]
 
-        trigger = client.post(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}/crawl")
+        trigger = client.post(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}/crawl",
+            headers=headers,
+        )
         assert trigger.status_code == 202, f"Trigger crawl échoué: {trigger.text}"
 
         result = ResultsSmokeHelper.poll_for_result(client, source_id, timeout=60)
 
         if result is None:
-            client.delete(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}")
+            client.delete(
+                f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}",
+                headers=headers,
+            )
             pytest.skip("Worker Celery injoignable ou crawl échoué — stack incomplète")
 
         yield result
 
-        client.delete(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}")
+        client.delete(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}",
+            headers=headers,
+        )
 
 
 # ── Health ─────────────────────────────────────────────────────────────────────
@@ -112,12 +161,14 @@ def test_crawler_health_db():
 # ── Sources ────────────────────────────────────────────────────────────────────
 
 @pytest.mark.smoke
-def test_create_web_source():
+def test_create_web_source(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        response = client.post(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources", json={
-            "type": "web",
-            "url": "https://create-test.example.com",
-        })
+        response = client.post(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources",
+            json={"type": "web", "url": "https://create-test.example.com"},
+            headers=headers,
+        )
         assert response.status_code == 201
         body = response.json()
         assert body["url"] == "https://create-test.example.com"
@@ -125,20 +176,28 @@ def test_create_web_source():
         assert body["actif"] is True
         assert "id" in body
 
-        client.delete(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{body['id']}")
+        client.delete(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{body['id']}",
+            headers=headers,
+        )
 
 
 @pytest.mark.smoke
-def test_source_lifecycle(source_setup):
+def test_source_lifecycle(auth_token, source_setup):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     source_id = source_setup
     with httpx.Client() as client:
-        get = client.get(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}")
+        get = client.get(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}",
+            headers=headers,
+        )
         assert get.status_code == 200
         assert get.json()["id"] == source_id
 
         patch = client.patch(
             f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}",
             json={"actif": False, "frequency_hours": 48},
+            headers=headers,
         )
         assert patch.status_code == 200
         assert patch.json()["actif"] is False
@@ -146,20 +205,28 @@ def test_source_lifecycle(source_setup):
 
 
 @pytest.mark.smoke
-def test_list_sources_contains_created(source_setup):
+def test_list_sources_contains_created(auth_token, source_setup):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     source_id = source_setup
     with httpx.Client() as client:
-        response = client.get(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources")
+        response = client.get(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources",
+            headers=headers,
+        )
     assert response.status_code == 200
     ids = [s["id"] for s in response.json()]
     assert source_id in ids
 
 
 @pytest.mark.smoke
-def test_trigger_crawl_queued(source_setup):
+def test_trigger_crawl_queued(auth_token, source_setup):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     source_id = source_setup
     with httpx.Client() as client:
-        response = client.post(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}/crawl")
+        response = client.post(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}/crawl",
+            headers=headers,
+        )
     assert response.status_code == 202
     body = response.json()
     assert "source_id" in body
@@ -167,25 +234,37 @@ def test_trigger_crawl_queued(source_setup):
 
 
 @pytest.mark.smoke
-def test_trigger_crawl_unsupported_type():
+def test_trigger_crawl_unsupported_type(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        create = client.post(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources", json={
-            "type": "instagram",
-            "url": "@smoke_test_account",
-        })
+        create = client.post(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources",
+            json={"type": "instagram", "url": "@smoke_test_account"},
+            headers=headers,
+        )
         assert create.status_code == 201
         source_id = create.json()["id"]
 
-        response = client.post(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}/crawl")
+        response = client.post(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}/crawl",
+            headers=headers,
+        )
         assert response.status_code == 400
 
-        client.delete(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}")
+        client.delete(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}",
+            headers=headers,
+        )
 
 
 @pytest.mark.smoke
-def test_get_source_not_found():
+def test_get_source_not_found(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        response = client.get(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{_NULL_UUID}")
+        response = client.get(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{_NULL_UUID}",
+            headers=headers,
+        )
     assert response.status_code == 404
 
 
