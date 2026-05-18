@@ -1,0 +1,17 @@
+{
+  "subscription": {
+    "created": "Notifications enabled on this device.",
+    "deleted": "Notifications disabled.",
+    "not_found": "Subscription not found."
+  },
+  "notification": {
+    "sent": "Notification sent.",
+    "failed": "Failed to send notification.",
+    "not_found": "Notification not found."
+  },
+  "errors": {
+    "invalid_payload": "Invalid notification payload.",
+    "user_not_found": "No active subscription found for this user.",
+    "forbidden": "Access denied."
+  }
+}

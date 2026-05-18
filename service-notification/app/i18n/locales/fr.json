@@ -1,0 +1,17 @@
+{
+  "subscription": {
+    "created": "Notifications activées sur cet appareil.",
+    "deleted": "Notifications désactivées.",
+    "not_found": "Abonnement introuvable."
+  },
+  "notification": {
+    "sent": "Notification envoyée.",
+    "failed": "Échec de l'envoi de la notification.",
+    "not_found": "Notification introuvable."
+  },
+  "errors": {
+    "invalid_payload": "Payload de notification invalide.",
+    "user_not_found": "Aucun abonnement actif pour cet utilisateur.",
+    "forbidden": "Accès refusé."
+  }
+}
