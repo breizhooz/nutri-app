@@ -77,6 +77,25 @@ services:
       retries: 10
     networks:
       - nutriplanner
+  
+  postgres-notification:
+    image: postgres:16-alpine
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_NOTIFICATION_DB}
+      POSTGRES_USER: ${POSTGRES_NOTIFICATION_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_NOTIFICATION_PASSWORD}
+    ports:
+      - "5437:5432"
+    volumes:
+      - pgdata-notification:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_NOTIFICATION_USER} -d ${POSTGRES_NOTIFICATION_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - nutriplanner
 
 # ══════════════════════════════════════════════════════════
 # SERVICE — user
@@ -140,7 +159,7 @@ services:
       - nutriplanner
 
 # ══════════════════════════════════════════════════════════
-# SERVICE — Recipe linked to postgre
+# SERVICE — Menu linked to postgre
 # ══════════════════════════════════════════════════════════
   service-menu:
     build:
@@ -174,7 +193,7 @@ services:
       - nutriplanner
   
 # ══════════════════════════════════════════════════════════
-# SERVICE — Recipe linked to postgre
+# SERVICE — crawler linked to postgre
 # ══════════════════════════════════════════════════════════
   service-crawler:
     build:
@@ -197,6 +216,34 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+      start_period: 20s
+    networks:
+      - nutriplanner
+
+# ══════════════════════════════════════════════════════════
+# SERVICE — notification linked to postgre
+# ══════════════════════════════════════════════════════════
+  service-notification:
+    build:
+      context: ./service-notification
+    container_name: nutriplanner-service-notification
+    ports:
+      - "8006:8000"
+    volumes:
+      - ./service-notification:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NOTIFICATION_USER}:${POSTGRES_NOTIFICATION_PASSWORD}@postgres-notification:5432/${POSTGRES_NOTIFICATION_DB}
+    env_file:
+      - .env
+      - ./service-notification/conf/.env
+    depends_on:
+      postgres-notification:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
       start_period: 20s
     networks:
       - nutriplanner
@@ -298,3 +345,5 @@ volumes:
   es-data:
   redis-data:
   minio-data:
+  pgdata-notification:
+
