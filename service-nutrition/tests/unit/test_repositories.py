@@ -66,27 +66,6 @@ class TestNutritionItemRepository:
     async def test_get_by_ciqual_id_not_found(self, db_session):
         assert await NutritionItemRepository(db_session).get_by_ciqual_id("XXXX") is None
 
-    @pytest.mark.unit
-    async def test_get_not_enriched_excludes_enriched(self, db_session):
-        repo = NutritionItemRepository(db_session)
-        i1 = await _create_item(db_session, "Farine", "E001")
-        i2 = await _create_item(db_session, "Beurre", "E002")
-        await repo.update(i1, nutritionix_enriched=True)
-
-        not_enriched = await repo.get_not_enriched()
-        slugs = [i.slug for i in not_enriched]
-        assert i2.slug in slugs
-        assert i1.slug not in slugs
-
-    @pytest.mark.unit
-    async def test_update_changes_fields(self, db_session):
-        item = await _create_item(db_session)
-        updated = await NutritionItemRepository(db_session).update(
-            item, nom_en="Buckwheat flour", nutritionix_enriched=True
-        )
-        assert updated.nom_en == "Buckwheat flour"
-        assert updated.nutritionix_enriched is True
-
 
 class TestMacroErrorRepository:
     @pytest.mark.unit

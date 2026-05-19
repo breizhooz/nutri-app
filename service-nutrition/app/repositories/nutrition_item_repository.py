@@ -23,7 +23,6 @@ class NutritionItemRepository:
         nom_en: str | None = None,
         fibres: float | None = None,
         ciqual_id: str | None = None,
-        nutritionix_id: str | None = None,
     ) -> NutritionItem:
         slug = await self._unique_slug(nom_fr)
         item = NutritionItem(
@@ -37,8 +36,6 @@ class NutritionItemRepository:
             fibres=fibres,
             source=source,
             ciqual_id=ciqual_id,
-            nutritionix_id=nutritionix_id,
-            nutritionix_enriched=False,
         )
         self._session.add(item)
         await self._session.commit()
@@ -56,14 +53,6 @@ class NutritionItemRepository:
             select(NutritionItem).where(NutritionItem.ciqual_id == ciqual_id)
         )
         return result.scalar_one_or_none()
-
-    async def get_not_enriched(self, limit: int = 100) -> list[NutritionItem]:
-        result = await self._session.execute(
-            select(NutritionItem)
-            .where(NutritionItem.nutritionix_enriched.is_(False))
-            .limit(limit)
-        )
-        return list(result.scalars().all())
 
     async def update(self, item: NutritionItem, **kwargs) -> NutritionItem:
         for key, value in kwargs.items():

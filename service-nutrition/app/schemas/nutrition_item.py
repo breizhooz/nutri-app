@@ -18,8 +18,8 @@ class NutritionItemResponse(BaseModel):
     fibres: float | None
     source: NutritionSource
     ciqual_id: int | None
-    nutritionix_id: str | None
-    nutritionix_enriched: bool
+    off_id: str | None
+    off_enriched: bool
     created_at: datetime
     updated_at: datetime
 

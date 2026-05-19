@@ -48,10 +48,6 @@ class NutritionItem(Base):
     off_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     off_enriched: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    # Nutritionix enrichment
-    nutritionix_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    nutritionix_enriched: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

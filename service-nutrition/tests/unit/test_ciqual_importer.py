@@ -1,155 +1,145 @@
-import csv
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import patch
 
 import pytest
+from sqlalchemy import select
 
+from app.models.ciqual_archive import CiqualArchive
+from app.models.nutrition_item import NutritionItem
 from app.services.ciqual_importer import CiqualImporter
+from app.services.ciqual_xml_parser import AlimRecord, CiqualXmlParser
 
 
-def _write_csv(rows: list[dict], path: Path) -> None:
-    fieldnames = [
-        "alim_code", "alim_nom_fr", "energie_kcal",
-        "proteines_g", "glucides_g", "lipides_g", "fibres_g",
-    ]
-    with open(path, "w", newline="", encoding="utf-8-sig") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=";")
-        writer.writeheader()
-        for row in rows:
-            writer.writerow(row)
+def _alim(code: int, nom_fr: str = "Tomate", nom_eng: str = "Tomato") -> AlimRecord:
+    return AlimRecord(
+        alim_code=code,
+        nom_fr=nom_fr,
+        nom_eng=nom_eng,
+        nom_sci=None,
+        alim_grp_code=None,
+        alim_ssgrp_code=None,
+        alim_ssssgrp_code=None,
+    )
 
 
-def _row(code="1001", nom="Farine de sarrasin", energie="340", prot="13",
-         gluc="71", lipid="3", fibres="6") -> dict:
-    return {
-        "alim_code": code, "alim_nom_fr": nom,
-        "energie_kcal": energie, "proteines_g": prot,
-        "glucides_g": gluc, "lipides_g": lipid, "fibres_g": fibres,
+def _macros(**overrides) -> dict:
+    base = {
+        "calories": 20.0,
+        "proteines": 1.0,
+        "glucides": 4.0,
+        "lipides": 0.2,
+        "fibres": 1.2,
+        "code_confiance": "A",
     }
+    return {**base, **overrides}
+
+
+def _patch_parser(aliments: dict, macros: dict):
+    return (
+        patch("app.services.ciqual_importer.CiqualXmlParser.parse_aliments", return_value=aliments),
+        patch("app.services.ciqual_importer.CiqualXmlParser.parse_compo", return_value=macros),
+    )
 
 
 class TestCiqualImporter:
-    @pytest.fixture
-    def mock_lookup(self) -> MagicMock:
-        m = MagicMock()
-        m.index_item = AsyncMock()
-        return m
+    @pytest.mark.unit
+    async def test_import_archive_creates_items(self, db_session):
+        """import_archive crée un NutritionItem par aliment."""
+        aliments = {1001: _alim(1001, "Tomate"), 1002: _alim(1002, "Beurre")}
+        macros = {1001: _macros(calories=20.0), 1002: _macros(calories=717.0)}
+
+        pa, pc = _patch_parser(aliments, macros)
+        with pa, pc:
+            count = await CiqualImporter(db_session).import_archive("/fake", "sha1", "ciqual_2024_01_01.7z")
+
+        assert count == 2
 
     @pytest.mark.unit
-    def test_column_names_are_class_attributes(self):
-        """Colonnes CSV définies comme attributs de classe."""
-        assert CiqualImporter._COL_ID == "alim_code"
-        assert CiqualImporter._COL_NOM_FR == "alim_nom_fr"
-        assert CiqualImporter._COL_ENERGIE == "energie_kcal"
+    async def test_import_archive_slug_includes_code(self, db_session):
+        """Le slug généré contient le code aliment."""
+        aliments = {2001: _alim(2001, "Poulet rôti")}
+        macros = {2001: _macros()}
 
-    @pytest.mark.unit
-    async def test_import_valid_two_rows(self, db_session, mock_lookup, tmp_path):
-        """CSV valide à 2 lignes → created=2, skipped=0."""
-        p = tmp_path / "ciqual.csv"
-        _write_csv([_row("1001", "Farine sarrasin"), _row("1002", "Beurre")], p)
+        pa, pc = _patch_parser(aliments, macros)
+        with pa, pc:
+            await CiqualImporter(db_session).import_archive("/fake", "sha2", "ciqual_2024_01_01.7z")
 
-        importer = CiqualImporter(db_session, lookup=mock_lookup)
-        created, skipped = await importer.import_csv(p)
-
-        assert created == 2
-        assert skipped == 0
-        assert mock_lookup.index_item.call_count == 2
-
-    @pytest.mark.unit
-    async def test_import_skips_row_without_name(self, db_session, mock_lookup, tmp_path):
-        """Ligne sans nom → skipped."""
-        p = tmp_path / "ciqual.csv"
-        _write_csv([_row("1001", "")], p)
-
-        importer = CiqualImporter(db_session, lookup=mock_lookup)
-        created, skipped = await importer.import_csv(p)
-
-        assert created == 0
-        assert skipped == 1
-
-    @pytest.mark.unit
-    async def test_import_skips_row_without_code(self, db_session, mock_lookup, tmp_path):
-        """Ligne sans code → skipped."""
-        p = tmp_path / "ciqual.csv"
-        _write_csv([_row("", "Farine")], p)
-
-        importer = CiqualImporter(db_session, lookup=mock_lookup)
-        _, skipped = await importer.import_csv(p)
-        assert skipped == 1
-
-    @pytest.mark.unit
-    async def test_import_skips_duplicate_ciqual_id(self, db_session, mock_lookup, tmp_path):
-        """Même ciqual_id au 2e import → skipped."""
-        p = tmp_path / "ciqual.csv"
-        _write_csv([_row("9999", "Tomate")], p)
-
-        importer = CiqualImporter(db_session, lookup=mock_lookup)
-        c1, s1 = await importer.import_csv(p)
-        c2, s2 = await importer.import_csv(p)
-
-        assert c1 == 1 and s1 == 0
-        assert c2 == 0 and s2 == 1
-
-    @pytest.mark.unit
-    async def test_import_slug_generated_from_name(self, db_session, mock_lookup, tmp_path):
-        """Le slug créé contient le nom slugifié."""
-        p = tmp_path / "ciqual.csv"
-        _write_csv([_row("2001", "Poulet rôti")], p)
-
-        importer = CiqualImporter(db_session, lookup=mock_lookup)
-        await importer.import_csv(p)
-
-        from app.repositories.nutrition_item_repository import NutritionItemRepository
-        item = await NutritionItemRepository(db_session).get_by_ciqual_id("2001")
+        result = await db_session.execute(
+            select(NutritionItem).where(NutritionItem.ciqual_id == 2001)
+        )
+        item = result.scalar_one_or_none()
         assert item is not None
-        assert item.slug == "poulet-roti"
+        assert "poulet" in item.slug
+        assert "2001" in item.slug
 
     @pytest.mark.unit
-    async def test_import_comma_decimal_parsed(self, db_session, mock_lookup, tmp_path):
-        """Valeur avec virgule décimale parsée correctement."""
-        p = tmp_path / "ciqual.csv"
-        _write_csv([_row("3001", "Lait", energie="42,5", prot="3,3", gluc="4,8", lipid="1,2")], p)
+    async def test_import_archive_updates_existing_item(self, db_session):
+        """Un second import avec le même ciqual_id met à jour l'item."""
+        aliments = {3001: _alim(3001, "Riz")}
+        importer = CiqualImporter(db_session)
 
-        importer = CiqualImporter(db_session, lookup=mock_lookup)
-        await importer.import_csv(p)
+        pa, pc = _patch_parser(aliments, {3001: _macros(calories=130.0)})
+        with pa, pc:
+            await importer.import_archive("/fake", "sha3a", "ciqual_2024_01_01.7z")
 
-        from app.repositories.nutrition_item_repository import NutritionItemRepository
-        item = await NutritionItemRepository(db_session).get_by_ciqual_id("3001")
-        assert item.calories == pytest.approx(42.5)
+        pa, pc = _patch_parser(aliments, {3001: _macros(calories=135.0)})
+        with pa, pc:
+            await importer.import_archive("/fake", "sha3b", "ciqual_2024_02_01.7z")
+
+        result = await db_session.execute(
+            select(NutritionItem).where(NutritionItem.ciqual_id == 3001)
+        )
+        item = result.scalar_one()
+        assert item.calories == pytest.approx(135.0)
 
     @pytest.mark.unit
-    async def test_import_indexes_each_created_item(self, db_session, mock_lookup, tmp_path):
-        """index_item() appelé pour chaque item créé."""
-        p = tmp_path / "ciqual.csv"
-        _write_csv([_row("4001", "A"), _row("4002", "B"), _row("4003", "C")], p)
+    async def test_import_archive_records_archive_entry(self, db_session):
+        """import_archive enregistre une ligne dans ciqual_archives."""
+        pa, pc = _patch_parser({}, {})
+        with pa, pc:
+            await CiqualImporter(db_session).import_archive("/fake", "sha-arc", "ciqual_2024_06_01.7z")
 
-        importer = CiqualImporter(db_session, lookup=mock_lookup)
-        await importer.import_csv(p)
+        result = await db_session.execute(
+            select(CiqualArchive).where(CiqualArchive.sha256 == "sha-arc")
+        )
+        archive = result.scalar_one_or_none()
+        assert archive is not None
+        assert archive.version == "ciqual_2024_06_01"
+        assert archive.item_count == 0
 
-        assert mock_lookup.index_item.call_count == 3
+    @pytest.mark.unit
+    async def test_already_imported_false_initially(self, db_session):
+        assert await CiqualImporter(db_session).already_imported("unknown-sha") is False
+
+    @pytest.mark.unit
+    async def test_already_imported_true_after_import(self, db_session):
+        pa, pc = _patch_parser({}, {})
+        with pa, pc:
+            await CiqualImporter(db_session).import_archive("/fake", "sha-known", "ciqual_2024_01_01.7z")
+
+        assert await CiqualImporter(db_session).already_imported("sha-known") is True
 
 
-class TestCiqualParseFloat:
+class TestCiqualXmlParserToFloat:
     @pytest.mark.unit
     def test_comma_decimal(self):
-        assert CiqualImporter._parse_float("13,5") == pytest.approx(13.5)
+        assert CiqualXmlParser._to_float("13,5") == pytest.approx(13.5)
 
     @pytest.mark.unit
     def test_lt_prefix(self):
-        assert CiqualImporter._parse_float("<0.5") == pytest.approx(0.5)
+        assert CiqualXmlParser._to_float("<0.5") == pytest.approx(0.5)
 
     @pytest.mark.unit
-    def test_dash_returns_zero(self):
-        assert CiqualImporter._parse_float("-") == pytest.approx(0.0)
+    def test_dash_returns_none(self):
+        assert CiqualXmlParser._to_float("-") is None
 
     @pytest.mark.unit
-    def test_empty_returns_zero(self):
-        assert CiqualImporter._parse_float("") == pytest.approx(0.0)
+    def test_empty_returns_none(self):
+        assert CiqualXmlParser._to_float("") is None
 
     @pytest.mark.unit
-    def test_none_returns_zero(self):
-        assert CiqualImporter._parse_float(None) == pytest.approx(0.0)
+    def test_none_returns_none(self):
+        assert CiqualXmlParser._to_float(None) is None
 
     @pytest.mark.unit
-    def test_traces_returns_zero(self):
-        assert CiqualImporter._parse_float("traces") == pytest.approx(0.0)
+    def test_traces_returns_none(self):
+        assert CiqualXmlParser._to_float("traces") is None
