@@ -1,0 +1,181 @@
+import pytest
+import httpx
+from unittest.mock import AsyncMock, MagicMock
+
+from app.services.open_food_facts_client import OpenFoodFactsClient, OFFProduct
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _make_search_response(products: list[dict]) -> MagicMock:
+    resp = MagicMock()
+    resp.raise_for_status = MagicMock()
+    resp.json.return_value = {"products": products, "count": len(products)}
+    return resp
+
+
+def _make_product_response(status: int, product: dict) -> MagicMock:
+    resp = MagicMock()
+    resp.raise_for_status = MagicMock()
+    resp.json.return_value = {"status": status, "product": product}
+    return resp
+
+
+POULET_PRODUCT = {
+    "code": "1234567890123",
+    "product_name": "Poulet rôti",
+    "nutriments": {
+        "energy-kcal_100g": 165.0,
+        "proteins_100g": 31.0,
+        "carbohydrates_100g": 0.0,
+        "fat_100g": 4.0,
+        "fiber_100g": 0.0,
+    },
+}
+
+
+class TestOpenFoodFactsClientSearch:
+    async def test_search_returns_best_match(self):
+        mock_client = AsyncMock(spec=httpx.AsyncClient)
+        mock_client.get = AsyncMock(return_value=_make_search_response([POULET_PRODUCT]))
+
+        client = OpenFoodFactsClient(http_client=mock_client)
+        result = await client.search("poulet")
+
+        assert result is not None
+        assert isinstance(result, OFFProduct)
+        assert result.nom_fr == "Poulet rôti"
+        assert result.off_id == "1234567890123"
+        assert result.calories == 165.0
+        assert result.proteines == 31.0
+        assert result.glucides == 0.0
+        assert result.lipides == 4.0
+        assert result.fibres == 0.0
+
+    async def test_search_passes_french_locale(self):
+        mock_client = AsyncMock(spec=httpx.AsyncClient)
+        mock_client.get = AsyncMock(return_value=_make_search_response([POULET_PRODUCT]))
+
+        client = OpenFoodFactsClient(http_client=mock_client)
+        await client.search("poulet")
+
+        call_kwargs = mock_client.get.call_args
+        params = call_kwargs[1]["params"]
+        assert params["lc"] == "fr"
+        assert params["json"] == "1"
+
+    async def test_search_empty_returns_none(self):
+        mock_client = AsyncMock(spec=httpx.AsyncClient)
+        mock_client.get = AsyncMock(return_value=_make_search_response([]))
+
+        client = OpenFoodFactsClient(http_client=mock_client)
+        result = await client.search("zzzyyyxxx")
+
+        assert result is None
+
+    async def test_search_http_error_returns_none(self):
+        mock_client = AsyncMock(spec=httpx.AsyncClient)
+        mock_client.get = AsyncMock(side_effect=httpx.ConnectError("timeout"))
+
+        client = OpenFoodFactsClient(http_client=mock_client)
+        result = await client.search("poulet")
+
+        assert result is None
+
+    async def test_search_product_without_name_skipped(self):
+        product_no_name = {**POULET_PRODUCT, "product_name": ""}
+        mock_client = AsyncMock(spec=httpx.AsyncClient)
+        mock_client.get = AsyncMock(return_value=_make_search_response([product_no_name]))
+
+        client = OpenFoodFactsClient(http_client=mock_client)
+        result = await client.search("poulet")
+
+        assert result is None
+
+    async def test_search_missing_nutriments_returns_none_fields(self):
+        product = {
+            "code": "0000000000001",
+            "product_name": "Aliment sans data",
+            "nutriments": {},
+        }
+        mock_client = AsyncMock(spec=httpx.AsyncClient)
+        mock_client.get = AsyncMock(return_value=_make_search_response([product]))
+
+        client = OpenFoodFactsClient(http_client=mock_client)
+        result = await client.search("aliment")
+
+        assert result is not None
+        assert result.calories is None
+        assert result.proteines is None
+
+
+class TestOpenFoodFactsClientBarcode:
+    async def test_get_by_barcode_found(self):
+        mock_client = AsyncMock(spec=httpx.AsyncClient)
+        mock_client.get = AsyncMock(
+            return_value=_make_product_response(1, POULET_PRODUCT)
+        )
+
+        client = OpenFoodFactsClient(http_client=mock_client)
+        result = await client.get_by_barcode("1234567890123")
+
+        assert result is not None
+        assert result.off_id == "1234567890123"
+        assert result.nom_fr == "Poulet rôti"
+
+    async def test_get_by_barcode_not_found(self):
+        mock_client = AsyncMock(spec=httpx.AsyncClient)
+        mock_client.get = AsyncMock(
+            return_value=_make_product_response(0, {})
+        )
+
+        client = OpenFoodFactsClient(http_client=mock_client)
+        result = await client.get_by_barcode("9999999999999")
+
+        assert result is None
+
+    async def test_get_by_barcode_http_error_returns_none(self):
+        mock_client = AsyncMock(spec=httpx.AsyncClient)
+        mock_client.get = AsyncMock(side_effect=httpx.TimeoutException("timeout"))
+
+        client = OpenFoodFactsClient(http_client=mock_client)
+        result = await client.get_by_barcode("1234567890123")
+
+        assert result is None
+
+    async def test_get_by_barcode_calls_correct_endpoint(self):
+        mock_client = AsyncMock(spec=httpx.AsyncClient)
+        mock_client.get = AsyncMock(
+            return_value=_make_product_response(1, POULET_PRODUCT)
+        )
+
+        client = OpenFoodFactsClient(http_client=mock_client)
+        await client.get_by_barcode("1234567890123")
+
+        call_args = mock_client.get.call_args
+        assert "1234567890123" in call_args[0][0]
+
+
+class TestOpenFoodFactsClientParseProduct:
+    def test_parse_complete_product(self):
+        result = OpenFoodFactsClient._parse_product(POULET_PRODUCT)
+        assert result is not None
+        assert result.calories == 165.0
+        assert result.proteines == 31.0
+
+    def test_parse_empty_name_returns_none(self):
+        product = {**POULET_PRODUCT, "product_name": "  "}
+        result = OpenFoodFactsClient._parse_product(product)
+        assert result is None
+
+    def test_parse_invalid_float_in_nutriments(self):
+        product = {
+            "code": "123",
+            "product_name": "Test",
+            "nutriments": {"energy-kcal_100g": "n/a"},
+        }
+        result = OpenFoodFactsClient._parse_product(product)
+        assert result is not None
+        assert result.calories is None

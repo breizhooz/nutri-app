@@ -1,0 +1,31 @@
+{
+  "nutrition_item": {
+    "not_found": "Aliment introuvable dans notre référentiel.",
+    "updated": "Données nutritionnelles mises à jour.",
+    "errors": {
+      "invalid_macros": "Les valeurs nutritionnelles saisies sont invalides."
+    }
+  },
+  "macro_error": {
+    "not_found": "Erreur nutritionnelle introuvable.",
+    "resolved": "Ingrédient résolu avec succès.",
+    "errors": {
+      "already_resolved": "Cet ingrédient a déjà été résolu."
+    }
+  },
+  "extraction": {
+    "no_ingredients": "Aucun ingrédient détecté dans ce texte.",
+    "partial": "Certains ingrédients n'ont pas pu être résolus."
+  },
+  "admin": {
+    "reindex_queued": "Indexation {source} planifiée.",
+    "errors": {
+      "invalid_source": "Source d'indexation invalide."
+    }
+  },
+  "errors": {
+    "invalid_payload": "Payload invalide.",
+    "forbidden": "Accès refusé.",
+    "service_notification_unavailable": "Le service de notification est indisponible."
+  }
+}
