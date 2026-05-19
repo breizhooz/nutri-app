@@ -1,19 +1,18 @@
 from __future__ import annotations
 
-import io
+import hashlib
 import os
-import zipfile
+import tempfile
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import httpx
+import py7zr
 
 from app.core.config import settings
 
 
 class CiqualDownloader:
-    _DOWNLOAD_URL: str = settings.CIQUAL_DOWNLOAD_URL
-    _CACHE_PATH: str = settings.CIQUAL_CACHE_PATH
-
     def __init__(self, http_client: httpx.AsyncClient | None = None) -> None:
         self._injected_client = http_client
 
@@ -25,28 +24,30 @@ class CiqualDownloader:
         async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
             yield client
 
-    async def download(self) -> str:
+    async def download(self) -> tuple[str, str, str]:
         """
-        Télécharge le ZIP Ciqual depuis l'ANSES, extrait le premier CSV trouvé,
-        le sauvegarde à CIQUAL_CACHE_PATH et retourne ce chemin.
+        Télécharge l'archive .7z Ciqual.
+        Retourne (extract_dir, sha256, filename).
         """
+        url = settings.CIQUAL_DOWNLOAD_URL
+        filename = url.split("/")[-1]
+
+        extract_dir = tempfile.mkdtemp(prefix="ciqual_")
+        archive_path = os.path.join(extract_dir, filename)
+        hasher = hashlib.sha256()
+
         async with self._client() as client:
-            resp = await client.get(self._DOWNLOAD_URL)
-            resp.raise_for_status()
+            async with client.stream("GET", url) as resp:
+                resp.raise_for_status()
+                with open(archive_path, "wb") as f:
+                    async for chunk in resp.aiter_bytes(chunk_size=65536):
+                        f.write(chunk)
+                        hasher.update(chunk)
 
-        csv_content = self._extract_csv(resp.content)
-        self._write(csv_content)
-        return self._CACHE_PATH
+        sha256 = hasher.hexdigest()
 
-    @staticmethod
-    def _extract_csv(zip_bytes: bytes) -> bytes:
-        with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
-            csv_names = [n for n in zf.namelist() if n.lower().endswith(".csv")]
-            if not csv_names:
-                raise ValueError("Aucun fichier CSV trouvé dans le ZIP Ciqual")
-            return zf.read(csv_names[0])
+        with py7zr.SevenZipFile(archive_path, mode="r") as z:
+            z.extractall(path=extract_dir)
 
-    def _write(self, content: bytes) -> None:
-        os.makedirs(os.path.dirname(self._CACHE_PATH) or ".", exist_ok=True)
-        with open(self._CACHE_PATH, "wb") as f:
-            f.write(content)
+        os.remove(archive_path)
+        return extract_dir, sha256, filename

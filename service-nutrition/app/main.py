@@ -16,32 +16,29 @@ logger = logging.getLogger(__name__)
 
 
 async def _bootstrap_ciqual() -> None:
-    """
-    Au démarrage : si aucun aliment Ciqual n'est en base,
-    déclenche le téléchargement + import en tâche de fond.
-    La tâche Celery est autonome, elle ne bloque pas le démarrage.
-    """
     try:
+        from app.core.config import settings
+        from app.models.ciqual_archive import CiqualArchive
+        from app.db.session import get_engine
+        from sqlalchemy import select
         from sqlalchemy.ext.asyncio import AsyncSession
 
+        filename = settings.CIQUAL_DOWNLOAD_URL.split("/")[-1]
         engine = get_engine()
         async with AsyncSession(engine) as session:
             result = await session.execute(
-                select(func.count()).where(
-                    NutritionItem.source == NutritionSource.ciqual
-                )
+                select(CiqualArchive).where(CiqualArchive.filename == filename)
             )
-            count = result.scalar_one()
+            already_done = result.scalar_one_or_none() is not None
 
-        if count == 0:
-            logger.info("Aucune donnée Ciqual en base — déclenchement de l'import initial.")
+        if not already_done:
+            logger.info("Archive '%s' non importée — déclenchement import.", filename)
             from app.tasks.nutrition_task import import_ciqual
             import_ciqual.delay()
         else:
-            logger.info("Données Ciqual présentes (%d items) — import ignoré.", count)
-
+            logger.info("Archive '%s' déjà importée — rien à faire.", filename)
     except Exception:
-        logger.exception("Erreur lors du bootstrap Ciqual — le service démarre quand même.")
+        logger.exception("Erreur bootstrap Ciqual — le service démarre quand même.")
 
 
 @asynccontextmanager

@@ -1,84 +1,83 @@
 from __future__ import annotations
 
-import csv
 import logging
-from pathlib import Path
+import shutil
+import uuid
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.enums.enums import NutritionSource
-from app.repositories.nutrition_item_repository import NutritionItemRepository
-from app.services.lookup_service import LookupService
+from app.models.ciqual_archive import CiqualArchive
+from app.models.nutrition_item import NutritionItem, NutritionSource
+from app.services.ciqual_xml_parser import CiqualXmlParser
+
 
 logger = logging.getLogger(__name__)
 
 
 class CiqualImporter:
-    """Parse le CSV Ciqual (ANSES) et importe les NutritionItem en base."""
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
 
-    _COL_ID = "alim_code"
-    _COL_NOM_FR = "alim_nom_fr"
-    _COL_ENERGIE = "energie_kcal"
-    _COL_PROTEINES = "proteines_g"
-    _COL_GLUCIDES = "glucides_g"
-    _COL_LIPIDES = "lipides_g"
-    _COL_FIBRES = "fibres_g"
+    async def already_imported(self, sha256: str) -> bool:
+        result = await self._session.execute(
+            select(CiqualArchive).where(CiqualArchive.sha256 == sha256)
+        )
+        return result.scalar_one_or_none() is not None
 
-    def __init__(
-        self,
-        session: AsyncSession,
-        lookup: LookupService | None = None,
-    ) -> None:
-        self._repo = NutritionItemRepository(session)
-        self._lookup = lookup or LookupService()
-
-    async def import_csv(self, path: str | Path) -> tuple[int, int]:
-        """Importe le CSV. Retourne (created, skipped)."""
-        created, skipped = 0, 0
-        with open(path, newline="", encoding="utf-8-sig") as f:
-            reader = csv.DictReader(f, delimiter=";")
-            if reader.fieldnames:
-                reader.fieldnames = [h.strip().lower() for h in reader.fieldnames]
-
-            for row in reader:
-                try:
-                    ciqual_id = row.get(self._COL_ID, "").strip()
-                    nom_fr = row.get(self._COL_NOM_FR, "").strip()
-
-                    if not ciqual_id or not nom_fr:
-                        skipped += 1
-                        continue
-
-                    if await self._repo.get_by_ciqual_id(ciqual_id):
-                        skipped += 1
-                        continue
-
-                    item = await self._repo.create(
-                        nom_fr=nom_fr,
-                        calories=self._parse_float(row.get(self._COL_ENERGIE)),
-                        proteines=self._parse_float(row.get(self._COL_PROTEINES)),
-                        glucides=self._parse_float(row.get(self._COL_GLUCIDES)),
-                        lipides=self._parse_float(row.get(self._COL_LIPIDES)),
-                        fibres=self._parse_float(row.get(self._COL_FIBRES)) or None,
-                        source=NutritionSource.CIQUAL,
-                        ciqual_id=ciqual_id,
-                    )
-                    await self._lookup.index_item(item)
-                    created += 1
-                except Exception as exc:
-                    logger.warning("Ciqual row skipped: %s — %s", row, exc)
-                    skipped += 1
-
-        return created, skipped
-
-    @staticmethod
-    def _parse_float(value: str | None) -> float:
-        if not value:
-            return 0.0
-        cleaned = value.replace(",", ".").replace("<", "").strip()
-        if cleaned in ("-", "", "traces"):
-            return 0.0
+    async def import_archive(
+        self, extract_dir: str, sha256: str, filename: str
+    ) -> int:
         try:
-            return float(cleaned)
-        except ValueError:
-            return 0.0
+            aliments = CiqualXmlParser.parse_aliments(extract_dir)
+            macros = CiqualXmlParser.parse_compo(extract_dir)
+
+            count = 0
+            for alim_code, alim in aliments.items():
+                nutriments = macros.get(alim_code, {})
+                existing = await self._session.execute(
+                    select(NutritionItem).where(NutritionItem.ciqual_id == alim_code)
+                )
+                item = existing.scalar_one_or_none()
+                if item is None:
+                    item = NutritionItem(
+                        id=uuid.uuid4(),
+                        ciqual_id=alim_code,
+                        source=NutritionSource.ciqual,
+                    )
+                    self._session.add(item)
+
+                item.nom_fr = alim.nom_fr
+                item.nom_en = alim.nom_eng
+                item.nom_sci = alim.nom_sci
+                item.alim_grp_code = alim.alim_grp_code
+                item.alim_ssgrp_code = alim.alim_ssgrp_code
+                item.alim_ssssgrp_code = alim.alim_ssssgrp_code
+                item.slug = _slugify(alim.nom_fr, alim_code)
+                item.calories = nutriments.get("calories")
+                item.proteines = nutriments.get("proteines")
+                item.glucides = nutriments.get("glucides")
+                item.lipides = nutriments.get("lipides")
+                item.fibres = nutriments.get("fibres")
+                item.code_confiance = nutriments.get("code_confiance")
+                count += 1
+
+            version = filename.replace(".7z", "")
+            self._session.add(CiqualArchive(
+                sha256=sha256,
+                filename=filename,
+                version=version,
+                item_count=count,
+            ))
+            await self._session.commit()
+            logger.info("Import Ciqual terminé : %d items", count)
+            return count
+        finally:
+            shutil.rmtree(extract_dir, ignore_errors=True)
+
+
+def _slugify(nom_fr: str, alim_code: int) -> str:
+    import re
+    slug = nom_fr.lower()
+    slug = re.sub(r"[^a-z0-9]+", "-", slug).strip("-")
+    return f"{slug}-{alim_code}"

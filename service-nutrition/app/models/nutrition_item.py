@@ -24,6 +24,12 @@ class NutritionItem(Base):
     nom_fr: Mapped[str] = mapped_column(String(512), nullable=False, index=True)
     nom_en: Mapped[str | None] = mapped_column(String(512), nullable=True)
 
+    nom_sci: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    alim_grp_code: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
+    alim_ssgrp_code: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    alim_ssssgrp_code: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    code_confiance: Mapped[str | None] = mapped_column(String(1), nullable=True)
+
     calories: Mapped[float | None] = mapped_column(Float, nullable=True)
     proteines: Mapped[float | None] = mapped_column(Float, nullable=True)
     glucides: Mapped[float | None] = mapped_column(Float, nullable=True)

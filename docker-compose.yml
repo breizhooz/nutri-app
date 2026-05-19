@@ -390,6 +390,30 @@ services:
           condition: service_started
       networks:
         - nutriplanner
+  
+  celery-worker-nutrition:
+    build:
+      context: ./service-nutrition
+    container_name: nutriplanner-celery-worker-nutrition
+    command: celery -A celery_app worker --loglevel=info -Q celery
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NUTRITION_USER}:${POSTGRES_NUTRITION_PASSWORD}@postgres-nutrition:5432/${POSTGRES_NUTRITION_DB}
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    env_file:
+      - .env
+      - ./service-nutrition/conf/.env
+    mem_limit: 1g
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres-nutrition:
+        condition: service_healthy
+      service-nutrition:
+        condition: service_started
+    networks:
+      - nutriplanner
 # ══════════════════════════════════════════════════════════
 # OBJECT STORAGE — MinIO
 # ══════════════════════════════════════════════════════════

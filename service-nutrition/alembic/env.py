@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from app.db.base import Base
-from app.models import nutrition_item, macro_error, unit_conversion  # noqa: F401
+from app.models import nutrition_item, macro_error, unit_conversion, ciqual_archive  # noqa: F401
 
 config = context.config
 

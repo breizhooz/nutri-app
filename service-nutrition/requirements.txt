@@ -13,6 +13,7 @@ fr-core-news-md @ https://github.com/explosion/spacy-models/releases/download/fr
 openai==1.0.0
 celery==5.3.6
 redis==5.0.1
+py7zr==1.1.0
 python-slugify==8.0.1
 pytest==7.4.3
 pytest-asyncio==0.21.1

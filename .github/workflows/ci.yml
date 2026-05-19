@@ -158,6 +158,36 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+  analyze-nutrition:
+    if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-notification')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 0 }
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+
+      - name: Install & Test
+        run: |
+          cd service-nutrition
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+      
+      - name: SonarScan nutrition
+        uses: SonarSource/sonarqube-scan-action@v6
+        with:
+          projectBaseDir: service-nutrition
+          args: 
+            -Dsonar.organization=sonar-nutri-app
+            -Dsonar.projectKey=nutri-app-service-nutrition
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
   smoke-tests:
@@ -204,12 +234,14 @@ jobs:
             mkdir -p service-menu/conf
             mkdir -p service-crawler/conf
             mkdir -p service-notification/conf
+            mkdir -p service-nutrition/conf
 
             cp .env service-user/conf/.env
             cp .env service-recipe/conf/.env
             cp .env service-menu/conf/.env
             cp .env service-crawler/conf/.env
             cp .env service-notification/conf/.env
+            cp .env service-nutrition/conf/.env
         
         - name: Verify .env file
           run: |
