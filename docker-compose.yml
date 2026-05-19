@@ -96,6 +96,25 @@ services:
       retries: 10
     networks:
       - nutriplanner
+  
+  postgres-nutrition:
+    image: postgres:16-alpine
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_NUTRITION_DB}
+      POSTGRES_USER: ${POSTGRES_NUTRITION_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_NUTRITION_PASSWORD}
+    ports:
+      - "5438:5432"
+    volumes:
+      - pgdata-nutrition:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_NUTRITION_USER} -d ${POSTGRES_NUTRITION_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - nutriplanner
 
 # ══════════════════════════════════════════════════════════
 # SERVICE — user
@@ -249,6 +268,44 @@ services:
       - nutriplanner
 
 # ══════════════════════════════════════════════════════════
+# SERVICE — nutrition
+# ══════════════════════════════════════════════════════════
+  service-nutrition:
+    build:
+      context: ./service-nutrition
+    container_name: nutriplanner-service-nutrition
+    ports:
+      - "8005:8000"
+    volumes:
+      - ./service-nutrition:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NUTRITION_USER}:${POSTGRES_NUTRITION_PASSWORD}@postgres-nutrition:5432/${POSTGRES_NUTRITION_DB}
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - SERVICE_NOTIFICATION_URL=http://service-notification:8006
+    env_file:
+      - .env
+      - ./service-nutrition/conf/.env
+    depends_on:
+      postgres-nutrition:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      service-notification:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+    networks:
+      - nutriplanner
+
+# ══════════════════════════════════════════════════════════
 # SEARCH ENGINE
 # ══════════════════════════════════════════════════════════
   elasticsearch:
@@ -310,6 +367,29 @@ services:
         condition: service_started
     networks:
       - nutriplanner
+
+  celery-beat-nutrition:
+      build:
+        context: ./service-nutrition
+      container_name: nutriplanner-celery-beat-nutrition
+      command: celery -A celery_app beat --loglevel=info
+      environment:
+        - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NUTRITION_USER}:${POSTGRES_NUTRITION_PASSWORD}@postgres-nutrition:5432/${POSTGRES_NUTRITION_DB}
+        - CELERY_BROKER_URL=redis://redis:6379/0
+        - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      env_file:
+        - .env
+        - ./service-nutrition/conf/.env
+      mem_limit: 128m
+      depends_on:
+        redis:
+          condition: service_healthy
+        postgres-nutrition:
+          condition: service_healthy
+        service-nutrition:
+          condition: service_started
+      networks:
+        - nutriplanner
 # ══════════════════════════════════════════════════════════
 # OBJECT STORAGE — MinIO
 # ══════════════════════════════════════════════════════════
@@ -346,4 +426,5 @@ volumes:
   redis-data:
   minio-data:
   pgdata-notification:
+  pgdata-nutrition:
 

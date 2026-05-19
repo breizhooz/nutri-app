@@ -1,0 +1,31 @@
+{
+  "nutrition_item": {
+    "not_found": "Food item not found in our reference database.",
+    "updated": "Nutritional data updated.",
+    "errors": {
+      "invalid_macros": "The nutritional values entered are invalid."
+    }
+  },
+  "macro_error": {
+    "not_found": "Nutritional error not found.",
+    "resolved": "Ingredient resolved successfully.",
+    "errors": {
+      "already_resolved": "This ingredient has already been resolved."
+    }
+  },
+  "extraction": {
+    "no_ingredients": "No ingredients detected in this text.",
+    "partial": "Some ingredients could not be resolved."
+  },
+  "admin": {
+    "reindex_queued": "{source} indexing queued.",
+    "errors": {
+      "invalid_source": "Invalid indexing source."
+    }
+  },
+  "errors": {
+    "invalid_payload": "Invalid payload.",
+    "forbidden": "Access denied.",
+    "service_notification_unavailable": "The notification service is unavailable."
+  }
+}
