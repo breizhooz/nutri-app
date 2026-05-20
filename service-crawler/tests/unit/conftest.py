@@ -17,6 +17,9 @@ os.environ.setdefault("MINIO_BUCKET_CRAWLER", "crawler-test")
 os.environ.setdefault("SERVICE_RECIPE_URL", "http://service-recipe-test:8000")
 os.environ.setdefault("SERVICE_RECIPE_TOKEN", "test-service-token")
 os.environ.setdefault("JWT_SECRET", "test-jwt-secret-for-unit-tests")
+os.environ.setdefault("INSTAGRAM_USERNAME", "")
+os.environ.setdefault("INSTAGRAM_PASSWORD", "")
+os.environ.setdefault("INSTAGRAM_SESSION_FILE", "/tmp/test_instagram_session")
 
 from app.core.deps import get_current_user_id
 from app.db.base import Base
