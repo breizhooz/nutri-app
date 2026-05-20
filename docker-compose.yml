@@ -115,6 +115,25 @@ services:
       retries: 10
     networks:
       - nutriplanner
+  
+  postgres-profile:
+    image: postgres:16-alpine
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_PROFILE_DB}
+      POSTGRES_USER: ${POSTGRES_PROFILE_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PROFILE_PASSWORD}
+    ports:
+      - "5439:5432"
+    volumes:
+      - pgdata-profile:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_PROFILE_USER} -d ${POSTGRES_PROFILE_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - nutriplanner
 
 # ══════════════════════════════════════════════════════════
 # SERVICE — user
@@ -306,6 +325,34 @@ services:
       - nutriplanner
 
 # ══════════════════════════════════════════════════════════
+# SERVICE — profile linked to postgre
+# ══════════════════════════════════════════════════════════
+  service-profile:
+    build:
+      context: ./service-profile
+    container_name: nutriplanner-service-profile
+    ports:
+      - "8007:8000"
+    volumes:
+      - ./service-profile:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_PROFILE_USER}:${POSTGRES_PROFILE_PASSWORD}@postgres-PROFILE:5432/${POSTGRES_PROFILE_DB}
+    env_file:
+      - .env
+      - ./service-profile/conf/.env
+    depends_on:
+      postgres-profile:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+    networks:
+      - nutriplanner
+
+# ══════════════════════════════════════════════════════════
 # SEARCH ENGINE
 # ══════════════════════════════════════════════════════════
   elasticsearch:
@@ -451,4 +498,5 @@ volumes:
   minio-data:
   pgdata-notification:
   pgdata-nutrition:
+  pgdata-profile:
 

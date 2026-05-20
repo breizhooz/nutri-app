@@ -1,0 +1,84 @@
+{
+  "profile": {
+    "not_found": "Profile not found",
+    "already_exists": "A profile already exists for this user",
+    "missing_data_calc": "Insufficient data: age, weight, height and biological sex are required"
+  },
+  "injury": { "not_found": "Injury not found" },
+  "condition": { "not_found": "Medical condition not found" },
+  "allergy": { "not_found": "Allergy not found" },
+  "medication": { "not_found": "Medication not found" },
+  "composition": { "not_found": "Body composition record not found" },
+  "measurement": { "not_found": "Body measurement record not found" },
+  "performance": { "not_found": "Performance metric not found" },
+  "excluded_food": { "not_found": "Excluded food not found" },
+  "sports_profile": { "not_found": "Sports profile not configured" },
+  "lifestyle": { "not_found": "Lifestyle profile not configured" },
+  "nutrition": { "not_found": "Nutritional preferences not configured" },
+  "biological_sex": {
+    "male": "Male",
+    "female": "Female",
+    "not_specified": "Not specified"
+  },
+  "practice_level": {
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced",
+    "competitive": "Competitive athlete"
+  },
+  "activity_level": {
+    "sedentary": "Sedentary (desk job)",
+    "light": "Lightly active",
+    "moderate": "Moderately active",
+    "heavy": "Very active",
+    "very_heavy": "Extremely active"
+  },
+  "stress_level": { "low": "Low", "moderate": "Moderate", "high": "High" },
+  "chronotype": {
+    "morning": "Morning chronotype",
+    "intermediate": "Intermediate chronotype",
+    "evening": "Evening chronotype"
+  },
+  "alcohol_frequency": {
+    "never": "Never",
+    "occasional": "Occasional",
+    "moderate": "Moderate",
+    "regular": "Regular"
+  },
+  "diet_type": {
+    "omnivore": "Omnivore",
+    "vegetarian": "Vegetarian",
+    "vegan": "Vegan",
+    "pescatarian": "Pescatarian",
+    "keto": "Keto / Ketogenic",
+    "halal": "Halal",
+    "kosher": "Kosher",
+    "no_pork": "No pork",
+    "other": "Other"
+  },
+  "main_goal": {
+    "weight_loss": "Weight loss",
+    "muscle_gain": "Muscle gain",
+    "body_recomposition": "Body recomposition",
+    "sports_performance": "Sports performance",
+    "maintenance": "Maintenance / Overall health"
+  },
+  "cooking_level": { "beginner": "Beginner", "intermediate": "Intermediate", "advanced": "Expert" },
+  "cooking_time": { "quick": "Quick (< 30 min)", "moderate": "Moderate (30–60 min)", "extended": "Extended (> 60 min)" },
+  "cooking_for": { "solo": "Just me", "couple": "For two", "family": "Family", "meal_prep": "Batch cooking" },
+  "medical_category": {
+    "metabolic": "Metabolic", "digestive": "Digestive",
+    "cardiovascular": "Cardiovascular", "hormonal": "Hormonal", "other": "Other"
+  },
+  "allergy_severity": { "intolerance": "Intolerance", "allergy": "Allergy" },
+  "bmi_category": {
+    "severe_malnutrition": "Severe malnutrition",
+    "moderate_malnutrition": "Moderate malnutrition",
+    "underweight": "Underweight",
+    "normal": "Normal weight",
+    "overweight": "Overweight",
+    "moderate_obesity": "Moderate obesity",
+    "severe_obesity": "Severe obesity",
+    "morbid_obesity": "Morbid obesity"
+  }
+}
