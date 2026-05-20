@@ -4,14 +4,13 @@ from datetime import datetime, timezone
 
 import instaloader
 
-logger = logging.getLogger(__name__)
+from app.core.config import settings
 
-INSTAGRAM_POST_URL = "https://www.instagram.com/p/{shortcode}/"
+logger = logging.getLogger(__name__)
 
 
 @dataclass
 class InstagramPost:
-    """Représentation normalisée d'un post Instagram."""
     shortcode: str
     url: str
     title: str
@@ -22,10 +21,14 @@ class InstagramPost:
 
 
 class InstagramService:
-    """Extraction de posts Instagram via Instaloader."""
+    POST_URL = "https://www.instagram.com/p/{shortcode}/"
 
     def __init__(self, loader: instaloader.Instaloader | None = None):
-        self._loader = loader or instaloader.Instaloader(
+        self._loader = loader or self._make_authenticated_loader()
+
+    @classmethod
+    def _make_authenticated_loader(cls) -> instaloader.Instaloader:
+        loader = instaloader.Instaloader(
             download_pictures=False,
             download_videos=False,
             download_video_thumbnails=False,
@@ -35,34 +38,40 @@ class InstagramService:
             compress_json=False,
             quiet=True,
         )
+        if settings.INSTAGRAM_USERNAME:
+            cls._ensure_session(
+                loader,
+                settings.INSTAGRAM_USERNAME,
+                settings.INSTAGRAM_PASSWORD,
+                settings.INSTAGRAM_SESSION_FILE,
+            )
+        return loader
+
+    @staticmethod
+    def _ensure_session(
+        loader: instaloader.Instaloader,
+        username: str,
+        password: str,
+        session_file: str,
+    ) -> None:
+        try:
+            loader.load_session_from_file(username, session_file)
+        except FileNotFoundError:
+            loader.login(user=username, passwd=password)
+            loader.save_session_to_file(session_file)
 
     @staticmethod
     def normalize_account(account: str) -> str:
-        """Retire le préfixe @ si présent."""
         return account.lstrip("@")
 
     def fetch_posts(self, account: str) -> list[InstagramPost]:
-        """
-        Récupère tous les posts d'un compte public Instagram.
-
-        Raises:
-            instaloader.exceptions.ProfileNotExistsException: compte introuvable.
-            instaloader.exceptions.PrivateProfileNotFollowedException: compte privé.
-        """
         username = self.normalize_account(account)
         profile = instaloader.Profile.from_username(self._loader.context, username)
         return [self._normalize_post(post) for post in profile.get_posts()]
 
     def fetch_new_posts(self, account: str, since: datetime) -> list[InstagramPost]:
-        """
-        Récupère uniquement les posts publiés après `since`.
-
-        Instaloader retourne les posts du plus récent au plus ancien ;
-        on s'arrête dès qu'on dépasse la date limite.
-        """
         username = self.normalize_account(account)
         profile = instaloader.Profile.from_username(self._loader.context, username)
-        # Instaloader expose des dates UTC naïves
         since_naive = since.replace(tzinfo=None)
         posts: list[InstagramPost] = []
         for post in profile.get_posts():
@@ -71,14 +80,12 @@ class InstagramService:
             posts.append(self._normalize_post(post))
         return posts
 
-    @staticmethod
-    def _normalize_post(post: instaloader.Post) -> InstagramPost:
-        """Transforme un Post Instaloader en InstagramPost normalisé."""
+    @classmethod
+    def _normalize_post(cls, post: instaloader.Post) -> InstagramPost:
         images: list[str] = []
         video_url: str | None = None
 
         if post.typename == "GraphSidecar":
-            # Carousel : image ou vidéo pour chaque nœud
             for node in post.get_sidecar_nodes():
                 images.append(node.display_url)
                 if node.is_video and video_url is None:
@@ -94,11 +101,10 @@ class InstagramService:
 
         return InstagramPost(
             shortcode=post.shortcode,
-            url=INSTAGRAM_POST_URL.format(shortcode=post.shortcode),
+            url=cls.POST_URL.format(shortcode=post.shortcode),
             title=title,
             caption=caption,
             images=images[:20],
             video_url=video_url,
-            # Instaloader retourne des datetimes UTC naïves — on les rend aware
             timestamp=post.date_utc.replace(tzinfo=timezone.utc),
         )

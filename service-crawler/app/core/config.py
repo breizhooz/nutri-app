@@ -29,4 +29,9 @@ class Settings(BaseSettings):
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
 
+    INSTAGRAM_USERNAME: str = ""
+    INSTAGRAM_PASSWORD: str = ""
+    INSTAGRAM_SESSION_FILE: str = "/data/instagram_session"
+
+
 settings = Settings()

@@ -1,338 +1,262 @@
-"""Tests unitaires — tâche Celery crawl_instagram (Phase 6)."""
-import uuid
+"""Tests unitaires — InstagramService."""
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
+import instaloader.exceptions as il_exc
 import pytest
 
-from app.models.enums import CrawlStatus, CrawlType
-from app.services.instagram_service import InstagramPost
-from tasks.instagram import _do_crawl
+from app.services.instagram_service import InstagramPost, InstagramService
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
-
-def _make_post(shortcode: str = "abc123", url: str | None = None) -> InstagramPost:
-    return InstagramPost(
-        shortcode=shortcode,
-        url=url or f"https://www.instagram.com/p/{shortcode}/",
-        title=f"Post {shortcode}",
-        caption="Test caption",
-        images=["https://cdn.ig.com/img.jpg"],
-        video_url=None,
-        timestamp=datetime.now(timezone.utc),
-    )
+class _MockSidecarNode:
+    def __init__(self, display_url: str, is_video: bool = False, video_url: str | None = None):
+        self.display_url = display_url
+        self.is_video = is_video
+        self.video_url = video_url
 
 
-def _make_source(last_crawl: datetime | None = None) -> MagicMock:
-    source = MagicMock()
-    source.id = uuid.uuid4()
-    source.user_id = uuid.uuid4()
-    source.last_crawl = last_crawl
-    return source
+class _MockPost:
+    def __init__(
+        self,
+        shortcode: str = "abc123",
+        caption: str | None = "Test caption",
+        url: str = "https://cdn.instagram.com/image.jpg",
+        is_video: bool = False,
+        video_url: str | None = None,
+        typename: str = "GraphImage",
+        date_utc: datetime | None = None,
+        sidecar_nodes: list[_MockSidecarNode] | None = None,
+    ):
+        self.shortcode = shortcode
+        self.caption = caption
+        self.url = url
+        self.is_video = is_video
+        self.video_url = video_url
+        self.typename = typename
+        self.date_utc = date_utc or datetime(2024, 6, 1, 12, 0, 0)
+        self._sidecar_nodes = sidecar_nodes or []
+
+    def get_sidecar_nodes(self) -> list[_MockSidecarNode]:
+        return self._sidecar_nodes
 
 
-def _build_session_factory() -> tuple[MagicMock, AsyncMock]:
-    """Retourne (factory_mock, session_mock) pour patcher _make_session_factory."""
-    mock_session = AsyncMock()
-    session_cm = AsyncMock()
-    session_cm.__aenter__.return_value = mock_session
-    session_cm.__aexit__.return_value = None
-    factory = MagicMock()
-    factory.return_value = session_cm
-    return factory, mock_session
+def _mock_profile(posts: list[_MockPost]) -> MagicMock:
+    profile = MagicMock()
+    profile.get_posts.return_value = posts
+    return profile
 
 
-def _patch_all(result_repo, source_repo, ig_service, factory):
-    """Retourne un tuple de context managers pour patcher toutes les dépendances."""
-    return (
-        patch("tasks.instagram.ResultRepository", return_value=result_repo),
-        patch("tasks.instagram.SourceRepository", return_value=source_repo),
-        patch("tasks.instagram.InstagramService", return_value=ig_service),
-        patch("tasks.instagram._make_session_factory", return_value=factory),
-    )
+# ─── normalize_account ────────────────────────────────────────────────────────
+
+def test_normalize_account_strips_at_prefix():
+    assert InstagramService.normalize_account("@johndoe") == "johndoe"
 
 
-# ─── Tests ────────────────────────────────────────────────────────────────────
+def test_normalize_account_without_at_unchanged():
+    assert InstagramService.normalize_account("johndoe") == "johndoe"
 
 
-@pytest.mark.anyio
-async def test_initial_crawl_calls_fetch_posts():
-    """Sans last_crawl, on appelle fetch_posts, pas fetch_new_posts."""
-    source = _make_source(last_crawl=None)
-    post = _make_post()
-    factory, _ = _build_session_factory()
-
-    result_repo = AsyncMock()
-    result_repo.url_exists.return_value = False
-    source_repo = AsyncMock()
-    source_repo.get_by_id.return_value = source
-
-    ig_service = MagicMock()
-    ig_service.fetch_posts.return_value = [post]
-
-    with patch("tasks.instagram.ResultRepository", return_value=result_repo), \
-     patch("tasks.instagram.SourceRepository", return_value=source_repo), \
-     patch("tasks.instagram.InstagramService", return_value=ig_service), \
-     patch("tasks.instagram._make_session_factory", return_value=factory):
-        await _do_crawl(MagicMock(), str(source.id), "@testuser")
-
-    ig_service.fetch_posts.assert_called_once_with("@testuser")
-    ig_service.fetch_new_posts.assert_not_called()
+def test_normalize_account_strips_multiple_at():
+    assert InstagramService.normalize_account("@@johndoe") == "johndoe"
 
 
-@pytest.mark.anyio
-async def test_incremental_crawl_calls_fetch_new_posts():
-    """Avec last_crawl défini, on appelle fetch_new_posts."""
+# ─── _ensure_session ──────────────────────────────────────────────────────────
+
+def test_ensure_session_loads_existing_session():
+    mock_loader = MagicMock()
+    InstagramService._ensure_session(mock_loader, "user", "pass", "/tmp/session")
+    mock_loader.load_session_from_file.assert_called_once_with("user", "/tmp/session")
+    mock_loader.login.assert_not_called()
+
+
+def test_ensure_session_logs_in_when_no_session_file():
+    mock_loader = MagicMock()
+    mock_loader.load_session_from_file.side_effect = FileNotFoundError
+    InstagramService._ensure_session(mock_loader, "user", "pass", "/tmp/session")
+    mock_loader.login.assert_called_once_with(user="user", passwd="pass")
+    mock_loader.save_session_to_file.assert_called_once_with("/tmp/session")
+
+
+def test_ensure_session_saves_after_login():
+    mock_loader = MagicMock()
+    mock_loader.load_session_from_file.side_effect = FileNotFoundError
+    InstagramService._ensure_session(mock_loader, "user", "pass", "/tmp/s")
+    assert mock_loader.save_session_to_file.call_count == 1
+
+
+# ─── _make_authenticated_loader ───────────────────────────────────────────────
+
+def test_make_authenticated_loader_calls_ensure_session_when_configured():
+    with patch("app.services.instagram_service.settings") as mock_settings:
+        mock_settings.INSTAGRAM_USERNAME = "mybot"
+        mock_settings.INSTAGRAM_PASSWORD = "secret"
+        mock_settings.INSTAGRAM_SESSION_FILE = "/data/session"
+        with patch("app.services.instagram_service.instaloader.Instaloader") as mock_il:
+            with patch.object(InstagramService, "_ensure_session") as mock_ensure:
+                InstagramService._make_authenticated_loader()
+            mock_ensure.assert_called_once_with(
+                mock_il.return_value, "mybot", "secret", "/data/session"
+            )
+
+
+def test_make_authenticated_loader_skips_auth_when_no_username():
+    with patch("app.services.instagram_service.settings") as mock_settings:
+        mock_settings.INSTAGRAM_USERNAME = ""
+        with patch("app.services.instagram_service.instaloader.Instaloader"):
+            with patch.object(InstagramService, "_ensure_session") as mock_ensure:
+                InstagramService._make_authenticated_loader()
+            mock_ensure.assert_not_called()
+
+
+# ─── _normalize_post ──────────────────────────────────────────────────────────
+
+def test_normalize_post_image_post():
+    post = _MockPost(shortcode="img01", url="https://cdn.ig.com/img.jpg", is_video=False)
+    result = InstagramService._normalize_post(post)
+    assert result.shortcode == "img01"
+    assert result.url == InstagramService.POST_URL.format(shortcode="img01")
+    assert result.images == ["https://cdn.ig.com/img.jpg"]
+    assert result.video_url is None
+
+
+def test_normalize_post_video_post():
+    post = _MockPost(shortcode="vid01", is_video=True, video_url="https://cdn.ig.com/video.mp4", typename="GraphVideo")
+    result = InstagramService._normalize_post(post)
+    assert result.video_url == "https://cdn.ig.com/video.mp4"
+
+
+def test_normalize_post_sidecar_images_only():
+    nodes = [_MockSidecarNode("https://cdn.ig.com/img1.jpg"), _MockSidecarNode("https://cdn.ig.com/img2.jpg")]
+    post = _MockPost(shortcode="side01", typename="GraphSidecar", sidecar_nodes=nodes)
+    result = InstagramService._normalize_post(post)
+    assert result.images == ["https://cdn.ig.com/img1.jpg", "https://cdn.ig.com/img2.jpg"]
+    assert result.video_url is None
+
+
+def test_normalize_post_sidecar_with_video_node():
+    nodes = [
+        _MockSidecarNode("https://cdn.ig.com/img1.jpg"),
+        _MockSidecarNode("https://cdn.ig.com/thumb.jpg", is_video=True, video_url="https://cdn.ig.com/vid.mp4"),
+    ]
+    post = _MockPost(shortcode="side02", typename="GraphSidecar", sidecar_nodes=nodes)
+    result = InstagramService._normalize_post(post)
+    assert result.video_url == "https://cdn.ig.com/vid.mp4"
+
+
+def test_normalize_post_sidecar_keeps_only_first_video_url():
+    nodes = [
+        _MockSidecarNode("t1.jpg", is_video=True, video_url="https://cdn.ig.com/v1.mp4"),
+        _MockSidecarNode("t2.jpg", is_video=True, video_url="https://cdn.ig.com/v2.mp4"),
+    ]
+    post = _MockPost(typename="GraphSidecar", sidecar_nodes=nodes)
+    result = InstagramService._normalize_post(post)
+    assert result.video_url == "https://cdn.ig.com/v1.mp4"
+
+
+def test_normalize_post_title_uses_first_line_of_caption():
+    post = _MockPost(caption="Première ligne\nDeuxième ligne")
+    result = InstagramService._normalize_post(post)
+    assert result.title == "Première ligne"
+
+
+def test_normalize_post_long_caption_title_truncated_at_100():
+    post = _MockPost(caption="A" * 150)
+    result = InstagramService._normalize_post(post)
+    assert result.title == "A" * 100
+
+
+def test_normalize_post_none_caption_fallback_title():
+    post = _MockPost(shortcode="xyz99", caption=None)
+    result = InstagramService._normalize_post(post)
+    assert result.title == "Post xyz99"
+    assert result.caption == ""
+
+
+def test_normalize_post_empty_string_caption_fallback_title():
+    post = _MockPost(shortcode="xyz98", caption="")
+    result = InstagramService._normalize_post(post)
+    assert result.title == "Post xyz98"
+
+
+def test_normalize_post_images_capped_at_20():
+    nodes = [_MockSidecarNode(f"https://cdn.ig.com/img{i}.jpg") for i in range(25)]
+    post = _MockPost(typename="GraphSidecar", sidecar_nodes=nodes)
+    result = InstagramService._normalize_post(post)
+    assert len(result.images) == 20
+
+
+def test_normalize_post_timestamp_is_utc_aware():
+    post = _MockPost(date_utc=datetime(2024, 3, 15, 10, 30, 0))
+    result = InstagramService._normalize_post(post)
+    assert result.timestamp.tzinfo == timezone.utc
+
+
+# ─── fetch_posts ──────────────────────────────────────────────────────────────
+
+def test_fetch_posts_returns_all_posts():
+    posts = [_MockPost(shortcode=f"p{i}") for i in range(3)]
+    profile = _mock_profile(posts)
+    with patch("app.services.instagram_service.instaloader.Profile.from_username", return_value=profile):
+        result = InstagramService(loader=MagicMock()).fetch_posts("@testuser")
+    assert len(result) == 3
+    assert all(isinstance(p, InstagramPost) for p in result)
+
+
+def test_fetch_posts_strips_at_from_username():
+    profile = _mock_profile([])
+    with patch("app.services.instagram_service.instaloader.Profile.from_username", return_value=profile) as mock_fn:
+        InstagramService(loader=MagicMock()).fetch_posts("@myaccount")
+    _, called_username = mock_fn.call_args[0]
+    assert called_username == "myaccount"
+
+
+def test_fetch_posts_empty_account_returns_empty():
+    profile = _mock_profile([])
+    with patch("app.services.instagram_service.instaloader.Profile.from_username", return_value=profile):
+        result = InstagramService(loader=MagicMock()).fetch_posts("emptyaccount")
+    assert result == []
+
+
+def test_fetch_posts_propagates_profile_not_found():
+    with patch(
+        "app.services.instagram_service.instaloader.Profile.from_username",
+        side_effect=il_exc.ProfileNotExistsException("notfound"),
+    ):
+        with pytest.raises(il_exc.ProfileNotExistsException):
+            InstagramService(loader=MagicMock()).fetch_posts("notfound")
+
+
+# ─── fetch_new_posts ──────────────────────────────────────────────────────────
+
+def test_fetch_new_posts_returns_only_recent():
     since = datetime(2024, 6, 1, 0, 0, 0, tzinfo=timezone.utc)
-    source = _make_source(last_crawl=since)
-    post = _make_post()
-    factory, _ = _build_session_factory()
-
-    result_repo = AsyncMock()
-    result_repo.url_exists.return_value = False
-    source_repo = AsyncMock()
-    source_repo.get_by_id.return_value = source
-
-    ig_service = MagicMock()
-    ig_service.fetch_new_posts.return_value = [post]
-
-    with patch("tasks.instagram.ResultRepository", return_value=result_repo), \
-         patch("tasks.instagram.SourceRepository", return_value=source_repo), \
-         patch("tasks.instagram.InstagramService", return_value=ig_service), \
-         patch("tasks.instagram._make_session_factory", return_value=factory):
-        await _do_crawl(MagicMock(), str(source.id), "@testuser")
-
-    ig_service.fetch_new_posts.assert_called_once_with("@testuser", since)
-    ig_service.fetch_posts.assert_not_called()
+    posts = [
+        _MockPost(shortcode="new1", date_utc=datetime(2024, 6, 5)),
+        _MockPost(shortcode="new2", date_utc=datetime(2024, 6, 3)),
+        _MockPost(shortcode="old1", date_utc=datetime(2024, 5, 30)),
+    ]
+    profile = _mock_profile(posts)
+    with patch("app.services.instagram_service.instaloader.Profile.from_username", return_value=profile):
+        result = InstagramService(loader=MagicMock()).fetch_new_posts("@testuser", since)
+    assert len(result) == 2
+    assert {p.shortcode for p in result} == {"new1", "new2"}
 
 
-@pytest.mark.anyio
-async def test_new_post_is_stored_with_correct_fields():
-    """Un nouveau post est persisté avec les bons champs."""
-    source = _make_source()
-    post = _make_post("xyz123")
-    factory, _ = _build_session_factory()
-
-    result_repo = AsyncMock()
-    result_repo.url_exists.return_value = False
-    source_repo = AsyncMock()
-    source_repo.get_by_id.return_value = source
-
-    ig_service = MagicMock()
-    ig_service.fetch_posts.return_value = [post]
-
-    with patch("tasks.instagram.ResultRepository", return_value=result_repo), \
-         patch("tasks.instagram.SourceRepository", return_value=source_repo), \
-         patch("tasks.instagram.InstagramService", return_value=ig_service), \
-         patch("tasks.instagram._make_session_factory", return_value=factory):
-        await _do_crawl(MagicMock(), str(source.id), "@testuser")
-
-    result_repo.create.assert_called_once()
-    payload = result_repo.create.call_args[0][0]
-    assert payload["url_origin"] == post.url
-    assert payload["type"] == CrawlType.INSTAGRAM
-    assert payload["status"] == CrawlStatus.WAITING
-    assert payload["source_id"] == source.id
-    assert payload["user_id"] == source.user_id
+def test_fetch_new_posts_all_old_returns_empty():
+    since = datetime(2024, 6, 1, 0, 0, 0, tzinfo=timezone.utc)
+    posts = [_MockPost(date_utc=datetime(2024, 5, 1))]
+    profile = _mock_profile(posts)
+    with patch("app.services.instagram_service.instaloader.Profile.from_username", return_value=profile):
+        result = InstagramService(loader=MagicMock()).fetch_new_posts("@testuser", since)
+    assert result == []
 
 
-@pytest.mark.anyio
-async def test_duplicate_post_is_skipped():
-    """Un post dont l'URL existe déjà n'est pas re-créé."""
-    source = _make_source()
-    post = _make_post()
-    factory, _ = _build_session_factory()
-
-    result_repo = AsyncMock()
-    result_repo.url_exists.return_value = True
-    source_repo = AsyncMock()
-    source_repo.get_by_id.return_value = source
-
-    ig_service = MagicMock()
-    ig_service.fetch_posts.return_value = [post]
-
-    with patch("tasks.instagram.ResultRepository", return_value=result_repo), \
-         patch("tasks.instagram.SourceRepository", return_value=source_repo), \
-         patch("tasks.instagram.InstagramService", return_value=ig_service), \
-         patch("tasks.instagram._make_session_factory", return_value=factory):
-        await _do_crawl(MagicMock(), str(source.id), "@testuser")
-
-    result_repo.create.assert_not_called()
-
-
-@pytest.mark.anyio
-async def test_source_marked_crawled_after_success():
-    """mark_crawled est appelé même quand il n'y a pas de nouveaux posts."""
-    source = _make_source()
-    factory, _ = _build_session_factory()
-
-    result_repo = AsyncMock()
-    source_repo = AsyncMock()
-    source_repo.get_by_id.return_value = source
-
-    ig_service = MagicMock()
-    ig_service.fetch_posts.return_value = []
-
-    with patch("tasks.instagram.ResultRepository", return_value=result_repo), \
-         patch("tasks.instagram.SourceRepository", return_value=source_repo), \
-         patch("tasks.instagram.InstagramService", return_value=ig_service), \
-         patch("tasks.instagram._make_session_factory", return_value=factory):
-        await _do_crawl(MagicMock(), str(source.id), "@testuser")
-
-    source_repo.mark_crawled.assert_called_once_with(source)
-
-
-@pytest.mark.anyio
-async def test_source_not_found_returns_early():
-    """Si la source est introuvable, on quitte sans rien créer."""
-    factory, _ = _build_session_factory()
-
-    result_repo = AsyncMock()
-    source_repo = AsyncMock()
-    source_repo.get_by_id.return_value = None
-    ig_service = MagicMock()
-
-    with patch("tasks.instagram.ResultRepository", return_value=result_repo), \
-         patch("tasks.instagram.SourceRepository", return_value=source_repo), \
-         patch("tasks.instagram.InstagramService", return_value=ig_service), \
-         patch("tasks.instagram._make_session_factory", return_value=factory):
-        await _do_crawl(MagicMock(), str(uuid.uuid4()), "@testuser")
-
-    ig_service.fetch_posts.assert_not_called()
-    result_repo.create.assert_not_called()
-    source_repo.mark_crawled.assert_not_called()
-
-
-@pytest.mark.anyio
-async def test_instagram_exception_triggers_retry():
-    """Une exception de fetch déclenche task.retry."""
-    source = _make_source()
-    factory, _ = _build_session_factory()
-
-    result_repo = AsyncMock()
-    source_repo = AsyncMock()
-    source_repo.get_by_id.return_value = source
-
-    ig_service = MagicMock()
-    ig_service.fetch_posts.side_effect = RuntimeError("Network error")
-
-    mock_task = MagicMock()
-    mock_task.retry.side_effect = RuntimeError("retry triggered")
-
-    with patch("tasks.instagram.ResultRepository", return_value=result_repo), \
-         patch("tasks.instagram.SourceRepository", return_value=source_repo), \
-         patch("tasks.instagram.InstagramService", return_value=ig_service), \
-         patch("tasks.instagram._make_session_factory", return_value=factory):
-        with pytest.raises(RuntimeError, match="retry triggered"):
-            await _do_crawl(mock_task, str(source.id), "@testuser")
-
-    mock_task.retry.assert_called_once()
-    # mark_crawled ne doit PAS être appelé si le fetch a échoué
-    source_repo.mark_crawled.assert_not_called()
-
-
-@pytest.mark.anyio
-async def test_multiple_new_posts_all_stored():
-    """Plusieurs nouveaux posts sont tous persistés."""
-    source = _make_source()
-    posts = [_make_post(f"post{i}") for i in range(5)]
-    factory, _ = _build_session_factory()
-
-    result_repo = AsyncMock()
-    result_repo.url_exists.return_value = False
-    source_repo = AsyncMock()
-    source_repo.get_by_id.return_value = source
-
-    ig_service = MagicMock()
-    ig_service.fetch_posts.return_value = posts
-
-    with patch("tasks.instagram.ResultRepository", return_value=result_repo), \
-         patch("tasks.instagram.SourceRepository", return_value=source_repo), \
-         patch("tasks.instagram.InstagramService", return_value=ig_service), \
-         patch("tasks.instagram._make_session_factory", return_value=factory):
-        await _do_crawl(MagicMock(), str(source.id), "@testuser")
-
-    assert result_repo.create.call_count == 5
-
-
-@pytest.mark.anyio
-async def test_mixed_new_and_duplicate_posts():
-    """Seuls les posts dont l'URL est inconnue sont créés."""
-    source = _make_source()
-    posts = [_make_post(f"post{i}") for i in range(4)]
-    existing_urls = {posts[0].url, posts[2].url}
-    factory, _ = _build_session_factory()
-
-    result_repo = AsyncMock()
-    result_repo.url_exists.side_effect = lambda url: url in existing_urls
-    source_repo = AsyncMock()
-    source_repo.get_by_id.return_value = source
-
-    ig_service = MagicMock()
-    ig_service.fetch_posts.return_value = posts
-
-    with patch("tasks.instagram.ResultRepository", return_value=result_repo), \
-         patch("tasks.instagram.SourceRepository", return_value=source_repo), \
-         patch("tasks.instagram.InstagramService", return_value=ig_service), \
-         patch("tasks.instagram._make_session_factory", return_value=factory):
-        await _do_crawl(MagicMock(), str(source.id), "@testuser")
-
-    assert result_repo.create.call_count == 2
-
-
-@pytest.mark.anyio
-async def test_video_post_stores_video_url():
-    """Un post vidéo est stocké avec son video_url."""
-    source = _make_source()
-    post = InstagramPost(
-        shortcode="vid99",
-        url="https://www.instagram.com/p/vid99/",
-        title="Video",
-        caption="Caption",
-        images=["https://cdn.ig.com/thumb.jpg"],
-        video_url="https://cdn.ig.com/video.mp4",
-        timestamp=datetime.now(timezone.utc),
-    )
-    factory, _ = _build_session_factory()
-
-    result_repo = AsyncMock()
-    result_repo.url_exists.return_value = False
-    source_repo = AsyncMock()
-    source_repo.get_by_id.return_value = source
-
-    ig_service = MagicMock()
-    ig_service.fetch_posts.return_value = [post]
-
-    with patch("tasks.instagram.ResultRepository", return_value=result_repo), \
-         patch("tasks.instagram.SourceRepository", return_value=source_repo), \
-         patch("tasks.instagram.InstagramService", return_value=ig_service), \
-         patch("tasks.instagram._make_session_factory", return_value=factory):
-        await _do_crawl(MagicMock(), str(source.id), "@testuser")
-
-    payload = result_repo.create.call_args[0][0]
-    assert payload["video_url"] == "https://cdn.ig.com/video.mp4"
-
-
-@pytest.mark.anyio
-async def test_no_posts_no_create_but_mark_crawled():
-    """Aucun post → aucun create, mais mark_crawled est quand même appelé."""
-    source = _make_source()
-    factory, _ = _build_session_factory()
-
-    result_repo = AsyncMock()
-    source_repo = AsyncMock()
-    source_repo.get_by_id.return_value = source
-
-    ig_service = MagicMock()
-    ig_service.fetch_posts.return_value = []
-
-    with patch("tasks.instagram.ResultRepository", return_value=result_repo), \
-         patch("tasks.instagram.SourceRepository", return_value=source_repo), \
-         patch("tasks.instagram.InstagramService", return_value=ig_service), \
-         patch("tasks.instagram._make_session_factory", return_value=factory):
-        await _do_crawl(MagicMock(), str(source.id), "@testuser")
-
-    result_repo.create.assert_not_called()
-    source_repo.mark_crawled.assert_called_once()
+def test_fetch_new_posts_all_new_returns_all():
+    since = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    posts = [_MockPost(shortcode=f"p{i}", date_utc=datetime(2024, 6, i + 1)) for i in range(3)]
+    profile = _mock_profile(posts)
+    with patch("app.services.instagram_service.instaloader.Profile.from_username", return_value=profile):
+        result = InstagramService(loader=MagicMock()).fetch_new_posts("@testuser", since)
+    assert len(result) == 3

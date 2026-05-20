@@ -1,8 +1,11 @@
 import pytest
-from unittest.mock import patch
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
+from unittest.mock import patch
 
+from app.models.crawl_source import CrawlSource
 from app.models.enums import CrawlType
+from tests.unit.conftest import TEST_USER_ID
 
 
 @pytest.mark.asyncio
@@ -29,7 +32,8 @@ async def test_list_sources_empty(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_list_sources_after_create(client: AsyncClient):
     await client.post("/api/v1/crawler/sources", json={"type": CrawlType.WEB.value, "url": "https://a.com"})
-    await client.post("/api/v1/crawler/sources", json={"type": CrawlType.INSTAGRAM.value, "url": "@compte"})
+    with patch("app.api.routes.sources.crawl_instagram"):
+        await client.post("/api/v1/crawler/sources", json={"type": CrawlType.INSTAGRAM.value, "account": "@compte"})
     response = await client.get("/api/v1/crawler/sources")
     assert response.status_code == 200
     assert len(response.json()) == 2
@@ -97,6 +101,7 @@ async def test_trigger_crawl(client: AsyncClient):
     assert response.json()["task_id"] == "fake-task-id"
     mock_task.delay.assert_called_once()
 
+
 @pytest.mark.asyncio
 async def test_trigger_crawl_not_found(client: AsyncClient):
     response = await client.post("/api/v1/crawler/sources/00000000-0000-0000-0000-000000000099/crawl")
@@ -109,10 +114,12 @@ async def test_health(client: AsyncClient):
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
 
+
 @pytest.mark.asyncio
-async def test_trigger_crawl_unsupported_type(client: AsyncClient):
-    create = await client.post("/api/v1/crawler/sources", json={"type": CrawlType.YOUTUBE.value, "url": "https://youtube.com/@chef"})
-    source_id = create.json()["id"]
-    response = await client.post(f"/api/v1/crawler/sources/{source_id}/crawl")
+async def test_trigger_crawl_unsupported_type(client: AsyncClient, db_session: AsyncSession):
+    source = CrawlSource(user_id=TEST_USER_ID, type=CrawlType.YOUTUBE, url="https://youtube.com/@chef")
+    db_session.add(source)
+    await db_session.commit()
+    response = await client.post(f"/api/v1/crawler/sources/{source.id}/crawl")
     assert response.status_code == 400
     assert response.json()["detail"] == "Ce type de source n'est pas encore pris en charge."

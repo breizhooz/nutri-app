@@ -1,13 +1,10 @@
-# service-crawler/tests/unit/conftest.py
 import os
 import uuid
-from datetime import datetime, timedelta, timezone
 
 import pytest
 from httpx import AsyncClient, ASGITransport
-from jose import jwt
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.compiler import compiles
 
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
@@ -19,10 +16,14 @@ os.environ.setdefault("MINIO_SECRET_KEY", "test-secret-key")
 os.environ.setdefault("MINIO_BUCKET_CRAWLER", "crawler-test")
 os.environ.setdefault("SERVICE_RECIPE_URL", "http://service-recipe-test:8000")
 os.environ.setdefault("SERVICE_RECIPE_TOKEN", "test-service-token")
-os.environ.setdefault("SERVICE_NOTIFICATION_URL", "http://service-notification-test:8006")
+os.environ.setdefault("SERVICE_NOTIFICATION_URL", "http://service-notification-test:8000")
 os.environ.setdefault("SERVICE_NOTIFICATION_TOKEN", "test-notification-token")
 os.environ.setdefault("JWT_SECRET", "test-jwt-secret-for-unit-tests")
+os.environ.setdefault("INSTAGRAM_USERNAME", "")
+os.environ.setdefault("INSTAGRAM_PASSWORD", "")
+os.environ.setdefault("INSTAGRAM_SESSION_FILE", "/tmp/test_instagram_session")
 
+from app.core.deps import get_current_user_id
 from app.db.base import Base
 from app.db.session import get_session
 from app.main import app
@@ -32,22 +33,11 @@ DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 _SQLITE_TABLES = [CrawlSource.__table__]
 
 TEST_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
-_JWT_SECRET = "test-jwt-secret-for-unit-tests"
 
 
 @compiles(PG_UUID, "sqlite")
 def _compile_pg_uuid_sqlite(element, compiler, **kw):
     return "CHAR(32)"
-
-
-def make_test_token(user_id: uuid.UUID = TEST_USER_ID) -> str:
-    """Génère un token JWT valide pour les tests."""
-    payload = {
-        "sub": str(user_id),
-        "type": "access",
-        "exp": datetime.now(timezone.utc) + timedelta(hours=1),
-    }
-    return jwt.encode(payload, _JWT_SECRET, algorithm="HS256")
 
 
 @pytest.fixture(scope="session")
@@ -73,12 +63,14 @@ async def client(db_session: AsyncSession):
     async def override_get_session():
         yield db_session
 
+    async def override_get_current_user_id() -> uuid.UUID:
+        return TEST_USER_ID
+
     app.dependency_overrides[get_session] = override_get_session
-    token = make_test_token()
+    app.dependency_overrides[get_current_user_id] = override_get_current_user_id
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",
-        headers={"Authorization": f"Bearer {token}"},
     ) as ac:
         yield ac
     app.dependency_overrides.clear()
