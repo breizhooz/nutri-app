@@ -1,5 +1,3 @@
-from sqlalchemy.orm import DeclarativeBase
+from nutri_shared.db.base_class import Base
 
-
-class Base(DeclarativeBase):
-    pass
+__all__ = ["Base"]

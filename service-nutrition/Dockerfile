@@ -8,10 +8,13 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl dos2unix && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY shared/ /tmp/shared/
+RUN pip install --no-cache-dir /tmp/shared/
+
+COPY service-nutrition/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY service-nutrition/ .
 RUN dos2unix entrypoint.sh && chmod +x entrypoint.sh
 
 EXPOSE 8000

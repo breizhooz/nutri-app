@@ -1,7 +1,3 @@
-import jwt
-from app.core.config import settings
+from nutri_shared.core.security import decode_token
 
-
-def decode_token(token: str) -> dict:
-    """Décode et vérifie la signature du token JWT."""
-    return jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+__all__ = ["decode_token"]

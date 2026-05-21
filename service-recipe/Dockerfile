@@ -6,9 +6,12 @@ WORKDIR /app
 
 ENV PYTHONPATH=/app
 
-COPY requirements.txt .
+COPY shared/ /tmp/shared/
+RUN pip install --no-cache-dir /tmp/shared/
+
+COPY service-recipe/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY service-recipe/ .
 
 CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"]
