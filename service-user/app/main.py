@@ -1,22 +1,22 @@
 from fastapi import FastAPI
 from sqlalchemy import text
 
+from nutri_shared.errors import register_error_handlers
+
 from app.db.session import get_engine
 from app.api.routes import users as users_routes
 from app.api.routes import auth as auth_routes
 
-app = FastAPI(
-    title="service-user", 
-    version="0.1.0")
+app = FastAPI(title="service-user", version="0.1.0")
+
+register_error_handlers(app)
 
 app.include_router(auth_routes.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(users_routes.router, prefix="/api/v1/users", tags=["users"])
+
 @app.get("/health")
 async def health():
-    return {
-        "status": "ok",
-        "service": "service-user",
-    }
+    return {"status": "ok", "service": "service-user"}
 
 @app.get("/health/db")
 async def health_db():
@@ -26,9 +26,4 @@ async def health_db():
         db_status = "ok"
     except Exception as e:
         db_status = f"error: {e}"
-
-    return {
-        "status": "ok",
-        "service": "service-user",
-        "database": db_status,
-    }
+    return {"status": "ok", "service": "service-user", "database": db_status}

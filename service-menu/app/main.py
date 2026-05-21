@@ -1,7 +1,8 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
+
+from nutri_shared.errors import register_error_handlers
 
 from app.db.session import get_engine
 from app.i18n.middleware import LocaleMiddleware
@@ -16,14 +17,14 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="service-menu", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(LocaleMiddleware)
+register_error_handlers(app)
+
 app.include_router(weekly_menu_router.router, prefix="/api/v1/menus", tags=["menus"])
 app.include_router(shopping_list_router.router, prefix="/api/v1/menus", tags=["shopping-list"])
+
 @app.get("/health")
 async def health():
-    return {
-        "status": "ok",
-        "service": "service-menu",
-    }
+    return {"status": "ok", "service": "service-menu"}
 
 @app.get("/health/db")
 async def health_db():
@@ -33,9 +34,4 @@ async def health_db():
         db_status = "ok"
     except Exception as e:
         db_status = f"error: {e}"
-
-    return {
-        "status": "ok",
-        "service": "service-menu",
-        "database": db_status,
-    }
+    return {"status": "ok", "service": "service-menu", "database": db_status}

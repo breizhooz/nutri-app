@@ -52,7 +52,7 @@ async def test_get_source(client: AsyncClient):
 async def test_get_source_not_found(client: AsyncClient):
     response = await client.get("/api/v1/crawler/sources/00000000-0000-0000-0000-000000000099")
     assert response.status_code == 404
-    assert response.json()["detail"] == "Source introuvable."
+    assert response.json()['error']['message'] == "Source introuvable."
 
 
 @pytest.mark.asyncio
@@ -122,4 +122,4 @@ async def test_trigger_crawl_unsupported_type(client: AsyncClient, db_session: A
     await db_session.commit()
     response = await client.post(f"/api/v1/crawler/sources/{source.id}/crawl")
     assert response.status_code == 400
-    assert response.json()["detail"] == "Ce type de source n'est pas encore pris en charge."
+    assert response.json()['error']['message'] == "Ce type de source n'est pas encore pris en charge."
