@@ -22,7 +22,7 @@ app.include_router(shopping_list_router.router, prefix="/api/v1/menus", tags=["s
 async def health():
     return {
         "status": "ok",
-        "service": "service-recipe",
+        "service": "service-menu",
     }
 
 @app.get("/health/db")
@@ -36,6 +36,6 @@ async def health_db():
 
     return {
         "status": "ok",
-        "service": "service-recipe",
+        "service": "service-menu",
         "database": db_status,
     }

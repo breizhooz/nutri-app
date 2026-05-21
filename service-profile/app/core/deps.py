@@ -4,7 +4,8 @@ import uuid
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+import jwt
+from jwt.exceptions import InvalidTokenError
 
 from app.core.config import settings
 
@@ -32,7 +33,7 @@ async def get_current_user_id(
         user_id = uuid.UUID(sub)
         logger.debug("Token valide pour user_id=%s", user_id)
         return user_id
-    except (JWTError, ValueError) as exc:
+    except (InvalidTokenError, ValueError) as exc:
         logger.warning("Échec de validation du token : %s", exc)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

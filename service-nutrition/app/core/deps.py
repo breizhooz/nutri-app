@@ -3,7 +3,7 @@ import uuid
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
-from jwt import InvalidTokenError
+from jwt.exceptions import InvalidTokenError
 
 from app.core.config import settings
 

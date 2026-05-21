@@ -23,7 +23,7 @@ def create_smoke_user():
             )
 
 
-# ── Health ──────────────────────────────────────────────────────────────────────
+# ── Health ───────────────────────────────────────────────────────────────────────
 
 @pytest.mark.smoke
 def test_user_health():
@@ -42,7 +42,7 @@ def test_user_health_db():
     assert response.json()["database"] == "ok"
 
 
-# ── Utilisateurs ────────────────────────────────────────────────────────────────
+# ── Utilisateurs ─────────────────────────────────────────────────────────────────
 
 @pytest.mark.smoke
 def test_create_user(create_smoke_user):
@@ -57,7 +57,7 @@ def test_create_user_duplicate(create_smoke_user):
     assert response.status_code == 409
 
 
-# ── Auth ────────────────────────────────────────────────────────────────────────
+# ── Auth ─────────────────────────────────────────────────────────────────────────
 
 @pytest.mark.smoke
 def test_login_returns_token(create_smoke_user):

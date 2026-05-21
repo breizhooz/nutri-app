@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from sqlalchemy import select, func
 
-from app.api.routes import admin, calculate, macro_errors, nutrition_items, stats
+from app.api.routes import admin, calculate, macro_errors, nutrition_items, stats, lookup
 from app.core.config import settings
 from app.db.session import get_engine
 from app.i18n.middleware import LocaleMiddleware
@@ -57,6 +57,7 @@ def create_app() -> FastAPI:
 
     app.add_middleware(LocaleMiddleware)
 
+    app.include_router(lookup.router, prefix="/api/v1/nutrition-items")
     app.include_router(calculate.router, prefix="/api/v1/calculate")
     app.include_router(nutrition_items.router, prefix="/api/v1/nutrition-items")
     app.include_router(macro_errors.router, prefix="/api/v1")
