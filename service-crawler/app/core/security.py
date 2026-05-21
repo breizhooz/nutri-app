@@ -1,4 +1,4 @@
-from jose import jwt
+import jwt
 from app.core.config import settings
 
 

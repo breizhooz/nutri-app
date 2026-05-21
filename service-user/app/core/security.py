@@ -3,7 +3,7 @@ from typing import Any
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError, VerificationError, InvalidHashError
-from jose import jwt
+import jwt
 
 from app.core.config import settings
 

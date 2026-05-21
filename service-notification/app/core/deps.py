@@ -3,7 +3,7 @@ import uuid
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
-from jwt import InvalidTokenError
+from jwt.exceptions import InvalidTokenError
 
 from app.core.config import settings
 
@@ -38,7 +38,6 @@ async def verify_service_token(
 ) -> None:
     """Vérifie le token de service pour les appels inter-services."""
     if not settings.SERVICE_NOTIFICATION_TOKEN:
-        # Token non configuré → pas de vérification (dev local)
         return
     if credentials.credentials != settings.SERVICE_NOTIFICATION_TOKEN:
         raise HTTPException(

@@ -220,11 +220,22 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
+
+
+
+
   smoke-tests:
-      needs: [analyze-user, analyze-recipe, analyze-menu, analyze-crawler, analyze-notification, analyze-profile]
+      needs: [analyze-user, analyze-recipe, analyze-menu, analyze-crawler, analyze-notification, analyze-nutrition, analyze-profile]
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v5
+
+        - name: Setup Python
+          uses: actions/setup-python@v5
+          with: { python-version: '3.12' }
+
+        - name: Install smoke test dependencies
+          run: pip install httpx pytest
 
         - name: Create .env file
           run: |
@@ -243,6 +254,18 @@ jobs:
             echo "POSTGRES_CRAWLER_DB=${{ secrets.CRAWLER_DB_NAME }}" >> .env
             echo "POSTGRES_CRAWLER_USER=${{ secrets.POSTGRES_CRAWLER }}" >> .env
             echo "POSTGRES_CRAWLER_PASSWORD=${{ secrets.POSTGRES_MENU_CRAWLER }}" >> .env
+
+            echo "POSTGRES_NUTRITION_DB=nutrition_db" >> .env
+            echo "POSTGRES_NUTRITION_USER=nutrition_user" >> .env
+            echo "POSTGRES_NUTRITION_PASSWORD=nutrition_pass_ci" >> .env
+
+            echo "POSTGRES_NOTIFICATION_DB=notification_db" >> .env
+            echo "POSTGRES_NOTIFICATION_USER=notification_user" >> .env
+            echo "POSTGRES_NOTIFICATION_PASSWORD=notification_pass_ci" >> .env
+
+            echo "POSTGRES_PROFILE_DB=profile_db" >> .env
+            echo "POSTGRES_PROFILE_USER=profile_user" >> .env
+            echo "POSTGRES_PROFILE_PASSWORD=profile_pass_ci" >> .env
             
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
             echo "ELASTICSEARCH_URL=http://elasticsearch:9200" >> .env
@@ -258,6 +281,28 @@ jobs:
             echo "SERVICE_RECIPE_URL=http://service-recipe:8000" >> .env
             echo "CELERY_BROKER_URL=redis://redis:6379/0" >> .env
             echo "CELERY_RESULT_BACKEND=redis://redis:6379/1" >> .env
+
+            echo "POSTGRES_NOTIFICATION_DB=${{ secrets.NOTIFICATION_DB_NAME }}" >> .env
+            echo "POSTGRES_NOTIFICATION_USER=${{ secrets.POSTGRES_NOTIFICATION }}" >> .env
+            echo "POSTGRES_NOTIFICATION_PASSWORD=${{ secrets.POSTGRES_MENU_NOTIFICATION }}" >> .env
+            
+            echo "POSTGRES_NUTRITION_DB=${{ secrets.NUTRITION_DB_NAME }}" >> .env
+            echo "POSTGRES_NUTRITION_USER=${{ secrets.POSTGRES_NUTRITION }}" >> .env
+            echo "POSTGRES_NUTRITION_PASSWORD=${{ secrets.POSTGRES_MENU_NUTRITION }}" >> .env
+
+            echo "POSTGRES_PROFILE_DB=${{ secrets.PROFILE_DB_NAME }}" >> .env
+            echo "POSTGRES_PROFILE_USER=${{ secrets.POSTGRES_PROFILE }}" >> .env
+            echo "POSTGRES_PROFILE_PASSWORD=${{ secrets.POSTGRES_MENU_PROFILE }}" >> .env
+
+            echo "SERVICE_PROFILE_TOKEN=ci-inter-service-token" >> .env
+            echo "VAPID_PRIVATE_KEY=${{ secrets.VAPID_PRIVATE_KEY }}" >> .env
+            echo "VAPID_PUBLIC_KEY=${{ secrets.VAPID_PUBLIC_KEY }}" >> .env
+            echo "VAPID_CLAIMS_EMAIL=ci@nutriplanner.app" >> .env
+
+            echo "SERVICE_NOTIFICATION_URL=${{ secrets.SERVICE_NOTIFICATION_URL }}" >> .env
+            echo "SERVICE_NOTIFICATION_TOKEN${{ secrets.SERVICE_NOTIFICATION_TOKEN }}" >> .env
+
+            
 
             mkdir -p service-user/conf
             mkdir -p service-recipe/conf
@@ -310,31 +355,26 @@ jobs:
             echo "=== Service Menu Logs ==="
             docker compose logs service-menu --tail=100
             echo ""
-            echo "=== Service Menu Logs ==="
+            echo "=== Service Crawler Logs ==="
             docker compose logs service-crawler --tail=100
 
         - name: Wait for services to be healthy
           run: |
-            echo "🔍 Waiting for service-user on localhost:8001..."
+            echo "Waiting for service-user on localhost:8001..."
             timeout 60 bash -c 'until curl -f http://localhost:8001/health 2>/dev/null; do sleep 2; done'
-            
-            echo "🔍 Waiting for service-recipe on localhost:8002..."
+            echo "Waiting for service-recipe on localhost:8002..."
             timeout 60 bash -c 'until curl -f http://localhost:8002/health 2>/dev/null; do sleep 2; done'
-            
-            echo "🔍 Waiting for service-menu on localhost:8003..."
-            timeout 60 bash -c 'until curl -f http://localhost:8003/health 2>/dev/null; do sleep 2; done'
-
-            echo "🔍 Waiting for service-crawler on localhost:8004..."
-            timeout 60 bash -c 'until curl -f http://localhost:8004/health 2>/dev/null; do sleep 2; done'
-            
-            echo "✅ All services are ready!"
-
-        - name: Show running containers
-          run: docker compose ps
-        
-        - name: Install dependencies for Smoke Tests
-          run: |
-            pip install httpx pytest
+            echo "Waiting for service-menu on localhost:8003..."
+            timeout 120 bash -c 'until curl -f http://localhost:8003/health 2>/dev/null; do sleep 2; done'
+            echo "Waiting for service-crawler on localhost:8004..."
+            timeout 120 bash -c 'until curl -f http://localhost:8004/health 2>/dev/null; do sleep 2; done'
+            echo "Waiting for service-nutrition on localhost:8005..."
+            timeout 60 bash -c 'until curl -f http://localhost:8005/health 2>/dev/null; do sleep 2; done'
+            echo "Waiting for service-notification on localhost:8006..."
+            timeout 60 bash -c 'until curl -f http://localhost:8006/health 2>/dev/null; do sleep 2; done'
+            echo "Waiting for service-profile on localhost:8007..."
+            timeout 60 bash -c 'until curl -f http://localhost:8007/health 2>/dev/null; do sleep 2; done'
+            echo "All services ready!"
 
         - name: Run Smoke Tests — service-user
           run: pytest service-user/tests/smoke_test.py --noconftest -m smoke -v
@@ -347,6 +387,15 @@ jobs:
 
         - name: Run Smoke Tests — service-crawler
           run: pytest service-crawler/tests/smoke_test.py --noconftest -m smoke -v
+
+        - name: Run Smoke Tests — service-nutrition
+          run: pytest service-nutrition/tests/smoke_test.py --noconftest -m smoke -v
+
+        - name: Run Smoke Tests — service-notification
+          run: pytest service-notification/tests/smoke_test.py --noconftest -m smoke -v
+
+        - name: Run Smoke Tests — service-profile
+          run: pytest service-profile/tests/smoke_test.py --noconftest -m smoke -v
 
         - name: Debug - Show service logs on failure
           if: failure()
@@ -362,3 +411,9 @@ jobs:
             echo ""
             echo "=== Service crawler Logs ==="
             docker compose logs service-crawler
+            echo "=== Service notification Logs ==="
+            docker compose logs service-notification
+            echo "=== Service nutrition Logs ==="
+            docker compose logs service-nutrition
+            echo "=== Service profile Logs ==="
+            docker compose logs service-profile

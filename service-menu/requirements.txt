@@ -11,6 +11,6 @@ pytest-asyncio==0.21.1
 pytest-cov==4.1.0
 httpx==0.25.2
 aiosqlite>=0.20.0
-python-jose[cryptography]==3.3.0
+PyJWT==2.9.0
 weasyprint>=68.1
 python-docx>=1.2.0

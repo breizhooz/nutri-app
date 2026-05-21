@@ -234,12 +234,13 @@ def test_trigger_crawl_queued(auth_token, source_setup):
 
 
 @pytest.mark.smoke
-def test_trigger_crawl_unsupported_type(auth_token):
+def test_trigger_instagram_crawl_queued(auth_token):
+    """Instagram est un type supporté — le trigger doit retourner 202."""
     headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
         create = client.post(
             f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources",
-            json={"type": "instagram", "url": "@smoke_test_account"},
+            json={"type": "instagram", "account": "@smoke_test_account"},
             headers=headers,
         )
         assert create.status_code == 201
@@ -249,7 +250,10 @@ def test_trigger_crawl_unsupported_type(auth_token):
             f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}/crawl",
             headers=headers,
         )
-        assert response.status_code == 400
+        assert response.status_code == 202
+        body = response.json()
+        assert "source_id" in body
+        assert "task_id" in body
 
         client.delete(
             f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}",
