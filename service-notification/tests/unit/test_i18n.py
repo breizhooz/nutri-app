@@ -9,7 +9,7 @@ from app.i18n.loader import TranslationLoader
 class TestTranslationLoader:
     @pytest.fixture
     def loader(self) -> TranslationLoader:
-        return TranslationLoader()
+        return TranslationLoader(locales_dir=Path(__file__).parent.parent.parent / "app" / "i18n" / "locales")
 
     @pytest.mark.unit
     def test_fr_locale_loaded(self, loader):

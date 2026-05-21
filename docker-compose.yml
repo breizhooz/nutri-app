@@ -180,7 +180,8 @@ services:
 # ══════════════════════════════════════════════════════════
   service-user:
     build:
-      context: ./service-user
+      context: .
+      dockerfile: service-user/Dockerfile
     container_name: nutriplanner-service-user
     ports:
       - "8001:8000"
@@ -215,7 +216,8 @@ services:
 # ══════════════════════════════════════════════════════════
   service-recipe:
     build:
-      context: ./service-recipe
+      context: .
+      dockerfile: service-recipe/Dockerfile
     container_name: nutriplanner-service-recipe
     ports:
       - "8002:8000"
@@ -255,7 +257,8 @@ services:
 # ══════════════════════════════════════════════════════════
   service-menu:
     build:
-      context: ./service-menu
+      context: .
+      dockerfile: service-menu/Dockerfile
     container_name: nutriplanner-service-menu
     ports:
       - "8003:8000"
@@ -296,7 +299,8 @@ services:
 # ══════════════════════════════════════════════════════════
   service-crawler:
     build:
-      context: ./service-crawler
+      context: .
+      dockerfile: service-crawler/Dockerfile
     container_name: nutriplanner-service-crawler
     ports:
       - "8004:8000"
@@ -331,7 +335,8 @@ services:
 # ══════════════════════════════════════════════════════════
   service-notification:
     build:
-      context: ./service-notification
+      context: .
+      dockerfile: service-notification/Dockerfile
     container_name: nutriplanner-service-notification
     ports:
       - "8006:8000"
@@ -366,7 +371,8 @@ services:
 # ══════════════════════════════════════════════════════════
   service-nutrition:
     build:
-      context: ./service-nutrition
+      context: .
+      dockerfile: service-nutrition/Dockerfile
     container_name: nutriplanner-service-nutrition
     ports:
       - "8005:8000"
@@ -411,7 +417,8 @@ services:
 # ══════════════════════════════════════════════════════════
   service-profile:
     build:
-      context: ./service-profile
+      context: .
+      dockerfile: service-profile/Dockerfile
     container_name: nutriplanner-service-profile
     ports:
       - "8007:8000"
@@ -485,7 +492,8 @@ services:
 # ══════════════════════════════════════════════════════════
   celery-beat:
     build:
-      context: ./service-crawler
+      context: .
+      dockerfile: service-crawler/Dockerfile
     container_name: nutriplanner-celery-beat
     command: celery -A celery_app beat --loglevel=info
     environment:
@@ -507,7 +515,8 @@ services:
 
   celery-beat-nutrition:
     build:
-      context: ./service-nutrition
+      context: .
+      dockerfile: service-nutrition/Dockerfile
     container_name: nutriplanner-celery-beat-nutrition
     command: celery -A celery_app beat --loglevel=info
     environment:
@@ -530,7 +539,8 @@ services:
 
   celery-worker-nutrition:
     build:
-      context: ./service-nutrition
+      context: .
+      dockerfile: service-nutrition/Dockerfile
     container_name: nutriplanner-celery-worker-nutrition
     command: celery -A celery_app worker --loglevel=info -Q celery
     environment:

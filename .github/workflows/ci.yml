@@ -23,6 +23,7 @@ jobs:
       - name: Install & Test
         run: |
           cd service-user
+          pip install ../shared/
           pip install -r requirements.txt
           pip install pytest pytest-cov
           pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
@@ -53,6 +54,7 @@ jobs:
       - name: Install & Test
         run: |
           cd service-recipe
+          pip install ../shared/
           pip install -r requirements.txt
           pip install pytest pytest-cov
           pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
@@ -83,6 +85,7 @@ jobs:
       - name: Install & Test
         run: |
           cd service-menu
+          pip install ../shared/
           pip install -r requirements.txt
           pip install pytest pytest-cov
           pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
@@ -113,6 +116,7 @@ jobs:
       - name: Install & Test
         run: |
           cd service-crawler
+          pip install ../shared/
           pip install -r requirements.txt
           pip install pytest pytest-cov
           pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
@@ -143,6 +147,7 @@ jobs:
       - name: Install & Test
         run: |
           cd service-notification
+          pip install ../shared/
           pip install -r requirements.txt
           pip install pytest pytest-cov
           pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
@@ -173,6 +178,7 @@ jobs:
       - name: Install & Test
         run: |
           cd service-nutrition
+          pip install ../shared/
           pip install -r requirements.txt
           pip install pytest pytest-cov
           pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
@@ -203,6 +209,7 @@ jobs:
       - name: Install & Test
         run: |
           cd service-profile
+          pip install ../shared/
           pip install -r requirements.txt
           pip install pytest pytest-cov
           pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
