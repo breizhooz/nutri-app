@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NutriPlanner — API Portal</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+  <style>
+    .swagger-ui .topbar { background-color: #1b2a3b; }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+  <script>
+    SwaggerUIBundle({
+      urls: [
+        { url: "/specs/service-user.json",         name: "service-user — Auth & Users" },
+        { url: "/specs/service-recipe.json",       name: "service-recipe — Recettes & Ingrédients" },
+        { url: "/specs/service-menu.json",         name: "service-menu — Planification" },
+        { url: "/specs/service-crawler.json",      name: "service-crawler — Crawl & Validation" },
+        { url: "/specs/service-nutrition.json",    name: "service-nutrition — Ciqual & Macros" },
+        { url: "/specs/service-notification.json", name: "service-notification — Push & Historique" },
+        { url: "/specs/service-profile.json",      name: "service-profile — Profils & Préférences" },
+      ],
+      "urls.primaryName": "service-user — Auth & Users",
+      dom_id: "#swagger-ui",
+      presets: [
+        SwaggerUIBundle.presets.apis,
+        SwaggerUIStandalonePreset,
+      ],
+      plugins: [
+        SwaggerUIBundle.plugins.DownloadUrl,
+      ],
+      layout: "StandaloneLayout",
+      deepLinking: true,
+      displayRequestDuration: true,
+      filter: true,
+    });
+  </script>
+</body>
+</html>
