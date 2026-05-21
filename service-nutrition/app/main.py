@@ -4,7 +4,9 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text
+
+from nutri_shared.errors import register_error_handlers
 
 from app.api.routes import admin, calculate, macro_errors, nutrition_items, stats, lookup
 from app.core.config import settings
@@ -56,6 +58,7 @@ def create_app() -> FastAPI:
     )
 
     app.add_middleware(LocaleMiddleware)
+    register_error_handlers(app)
 
     app.include_router(lookup.router, prefix="/api/v1/nutrition-items")
     app.include_router(calculate.router, prefix="/api/v1/calculate")
@@ -66,9 +69,19 @@ def create_app() -> FastAPI:
 
     @app.get("/health")
     async def health():
-        return {"status": "ok"}
+        return  {"status": "ok", "service": "service-nutrition"}
+
+
+    @app.get("/health/db")
+    async def health_db():
+        try:
+            async with get_engine().connect() as conn:
+                await conn.execute(text("SELECT 1"))
+            db_status = "ok"
+        except Exception as e:
+            db_status = f"error: {e}"
+        return {"status": "ok", "service": "service-nutrition", "database": db_status}
 
     return app
-
 
 app = create_app()

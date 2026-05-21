@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from sqlalchemy import text
 
+from nutri_shared.errors import register_error_handlers
+
 from app.api.routes import history, notify, subscriptions
 from app.db.session import get_engine
 from app.i18n.middleware import LocaleMiddleware
@@ -8,19 +10,15 @@ from app.i18n.middleware import LocaleMiddleware
 app = FastAPI(title="service-notification", version="0.1.0")
 
 app.add_middleware(LocaleMiddleware)
+register_error_handlers(app)
 
-app.include_router(
-    subscriptions.router, prefix="/api/v1/subscriptions", tags=["subscriptions"],
-    
-)
+app.include_router(subscriptions.router, prefix="/api/v1/subscriptions", tags=["subscriptions"])
 app.include_router(notify.router, prefix="/api/v1/notify", tags=["notify"])
 app.include_router(history.router, prefix="/api/v1/users", tags=["history"])
-
 
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "service-notification"}
-
 
 @app.get("/health/db")
 async def health_db():
