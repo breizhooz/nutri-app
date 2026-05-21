@@ -576,6 +576,174 @@ services:
     networks:
       - nutriplanner
 
+# ══════════════════════════════════════════════════════════
+# MONITORING — Prometheus + Grafana + Exporters
+# Démarrage : docker compose --profile monitoring up
+# ══════════════════════════════════════════════════════════
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: nutriplanner-prometheus
+    profiles: [monitoring]
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=15d'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.localhost`)"
+      - "traefik.http.routers.prometheus.entrypoints=web"
+      - "traefik.http.routers.prometheus.service=prometheus"
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: nutriplanner-grafana
+    profiles: [monitoring]
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://grafana.localhost
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.localhost`)"
+      - "traefik.http.routers.grafana.entrypoints=web"
+      - "traefik.http.routers.grafana.service=grafana"
+    depends_on:
+      - prometheus
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: nutriplanner-redis-exporter
+    profiles: [monitoring]
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  elasticsearch-exporter:
+    image: quay.io/prometheuscommunity/elasticsearch-exporter:latest
+    container_name: nutriplanner-elasticsearch-exporter
+    profiles: [monitoring]
+    command:
+      - '--es.uri=http://elasticsearch:9200'
+      - '--es.all'
+      - '--es.indices'
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  postgres-exporter-user:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    container_name: nutriplanner-postgres-exporter-user
+    profiles: [monitoring]
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER_USER}:${POSTGRES_USER_PASSWORD}@postgres-user:5432/${POSTGRES_USER_DB}?sslmode=disable"
+    depends_on:
+      postgres-user:
+        condition: service_healthy
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  postgres-exporter-recipe:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    container_name: nutriplanner-postgres-exporter-recipe
+    profiles: [monitoring]
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@postgres-recipe:5432/${POSTGRES_RECIPE_DB}?sslmode=disable"
+    depends_on:
+      postgres-recipe:
+        condition: service_healthy
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  postgres-exporter-menu:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    container_name: nutriplanner-postgres-exporter-menu
+    profiles: [monitoring]
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_MENU_USER}:${POSTGRES_MENU_PASSWORD}@postgres-menu:5432/${POSTGRES_MENU_DB}?sslmode=disable"
+    depends_on:
+      postgres-menu:
+        condition: service_healthy
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  postgres-exporter-crawler:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    container_name: nutriplanner-postgres-exporter-crawler
+    profiles: [monitoring]
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres-crawler:5432/${POSTGRES_CRAWLER_DB}?sslmode=disable"
+    depends_on:
+      postgres-crawler:
+        condition: service_healthy
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  postgres-exporter-notification:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    container_name: nutriplanner-postgres-exporter-notification
+    profiles: [monitoring]
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_NOTIFICATION_USER}:${POSTGRES_NOTIFICATION_PASSWORD}@postgres-notification:5432/${POSTGRES_NOTIFICATION_DB}?sslmode=disable"
+    depends_on:
+      postgres-notification:
+        condition: service_healthy
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  postgres-exporter-nutrition:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    container_name: nutriplanner-postgres-exporter-nutrition
+    profiles: [monitoring]
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_NUTRITION_USER}:${POSTGRES_NUTRITION_PASSWORD}@postgres-nutrition:5432/${POSTGRES_NUTRITION_DB}?sslmode=disable"
+    depends_on:
+      postgres-nutrition:
+        condition: service_healthy
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  postgres-exporter-profile:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    container_name: nutriplanner-postgres-exporter-profile
+    profiles: [monitoring]
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_PROFILE_USER}:${POSTGRES_PROFILE_PASSWORD}@postgres-profile:5432/${POSTGRES_PROFILE_DB}?sslmode=disable"
+    depends_on:
+      postgres-profile:
+        condition: service_healthy
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
 networks:
   nutriplanner:
     driver: bridge
@@ -591,3 +759,5 @@ volumes:
   es-data:
   redis-data:
   minio-data:
+  prometheus-data:
+  grafana-data:
