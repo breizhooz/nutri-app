@@ -1,0 +1,54 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Traefik — métriques HTTP (requêtes, latences, codes HTTP par service)
+  - job_name: traefik
+    static_configs:
+      - targets: ['traefik:8082']
+
+  # Redis — mémoire, hit/miss, connexions
+  - job_name: redis
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  # Elasticsearch — heap JVM, indexation, latence
+  - job_name: elasticsearch
+    static_configs:
+      - targets: ['elasticsearch-exporter:9114']
+
+  # PostgreSQL — une entrée par base, label db pour filtrer dans Grafana
+  - job_name: postgres
+    static_configs:
+      - targets:
+          - 'postgres-exporter-user:9187'
+          - 'postgres-exporter-recipe:9187'
+          - 'postgres-exporter-menu:9187'
+          - 'postgres-exporter-crawler:9187'
+          - 'postgres-exporter-notification:9187'
+          - 'postgres-exporter-nutrition:9187'
+          - 'postgres-exporter-profile:9187'
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: 'postgres-exporter-(.+):9187'
+        target_label: db
+        replacement: '$1'
+
+  # Services FastAPI — décommenter après Phase 3
+  - job_name: services
+    static_configs:
+      - targets:
+          - 'service-user:8000'
+          - 'service-recipe:8000'
+          - 'service-menu:8000'
+          - 'service-crawler:8000'
+          - 'service-notification:8000'
+          - 'service-nutrition:8000'
+          - 'service-profile:8000'
+    metrics_path: /metrics
