@@ -189,9 +189,39 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  analyze-profile:
+    if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-profile')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 0 }
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+
+      - name: Install & Test
+        run: |
+          cd service-profile
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+      
+      - name: SonarScan profile
+        uses: SonarSource/sonarqube-scan-action@v6
+        with:
+          projectBaseDir: service-profile
+          args: 
+            -Dsonar.organization=sonar-nutri-app
+            -Dsonar.projectKey=nutri-app-service-profile
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
   smoke-tests:
-      needs: [analyze-user, analyze-recipe, analyze-menu, analyze-crawler, analyze-notification]
+      needs: [analyze-user, analyze-recipe, analyze-menu, analyze-crawler, analyze-notification, analyze-profile]
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v5
@@ -235,6 +265,7 @@ jobs:
             mkdir -p service-crawler/conf
             mkdir -p service-notification/conf
             mkdir -p service-nutrition/conf
+            mkdir -p service-profile/conf
 
             cp .env service-user/conf/.env
             cp .env service-recipe/conf/.env
@@ -242,6 +273,7 @@ jobs:
             cp .env service-crawler/conf/.env
             cp .env service-notification/conf/.env
             cp .env service-nutrition/conf/.env
+            cp .env service-profile/conf/.env
         
         - name: Verify .env file
           run: |

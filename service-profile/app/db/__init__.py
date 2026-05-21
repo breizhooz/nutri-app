@@ -1,0 +1,1 @@
+"""Package base de données — moteur, sessions et métadonnées."""
