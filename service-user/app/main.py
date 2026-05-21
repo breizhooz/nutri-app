@@ -6,8 +6,14 @@ from nutri_shared.errors import register_error_handlers
 from app.db.session import get_engine
 from app.api.routes import users as users_routes
 from app.api.routes import auth as auth_routes
+from nutri_shared.core.logger import configure_logging
+from nutri_shared.core.middleware import RequestLoggingMiddleware
 
+
+configure_logging("service-user")
 app = FastAPI(title="service-user", version="0.1.0")
+
+app.add_middleware(RequestLoggingMiddleware)
 
 register_error_handlers(app)
 

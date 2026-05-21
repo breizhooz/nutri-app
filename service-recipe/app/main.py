@@ -12,13 +12,19 @@ from app.api.routes import recipes as recipes_router
 from app.api.routes import ingredient as ingredient_router
 from app.api.routes import search as search_router
 
+from nutri_shared.core.logger import configure_logging
+from nutri_shared.core.middleware import RequestLoggingMiddleware
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_elasticsearch()
     yield
     await close_elasticsearch()
 
+configure_logging("service-recipe")
 app = FastAPI(title="service-recipe", version="0.1.0", lifespan=lifespan)
+
+app.add_middleware(RequestLoggingMiddleware)
 
 register_error_handlers(app)
 

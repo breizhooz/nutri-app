@@ -1,0 +1,211 @@
+{
+  "__inputs": [],
+  "__requires": [
+    { "type": "datasource", "id": "elasticsearch", "name": "Elasticsearch", "version": "1.0.0" }
+  ],
+  "annotations": { "list": [] },
+  "description": "NutriPlanner — logs centralisés (structlog → Filebeat → Elasticsearch)",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "panels": [
+    {
+      "datasource": { "type": "elasticsearch", "uid": "${DS_ELASTICSEARCH}" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "error" }, "properties": [{ "id": "color", "value": { "fixedColor": "#F2495C", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "warning" }, "properties": [{ "id": "color", "value": { "fixedColor": "#FF9830", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "info" }, "properties": [{ "id": "color", "value": { "fixedColor": "#73BF69", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "alias": "errors",
+          "bucketAggs": [{ "field": "@timestamp", "id": "2", "settings": { "interval": "auto" }, "type": "date_histogram" }],
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "level:error",
+          "refId": "A",
+          "timeField": "@timestamp"
+        },
+        {
+          "alias": "warning",
+          "bucketAggs": [{ "field": "@timestamp", "id": "2", "settings": { "interval": "auto" }, "type": "date_histogram" }],
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "level:warning",
+          "refId": "B",
+          "timeField": "@timestamp"
+        },
+        {
+          "alias": "info",
+          "bucketAggs": [{ "field": "@timestamp", "id": "2", "settings": { "interval": "auto" }, "type": "date_histogram" }],
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "level:info",
+          "refId": "C",
+          "timeField": "@timestamp"
+        }
+      ],
+      "title": "Volume de logs par niveau",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "${DS_ELASTICSEARCH}" },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 7 },
+      "id": 2,
+      "options": {
+        "bucketOffset": 0,
+        "fillOpacity": 80,
+        "gradientMode": "none",
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "bucketAggs": [
+            { "field": "service.keyword", "id": "3", "settings": { "min_doc_count": "1", "order": "desc", "orderBy": "1", "size": "10" }, "type": "terms" }
+          ],
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "level:error",
+          "refId": "A",
+          "timeField": "@timestamp"
+        }
+      ],
+      "title": "Erreurs par service",
+      "type": "barchart"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "${DS_ELASTICSEARCH}" },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 7 },
+      "id": 3,
+      "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "text": {} },
+      "targets": [
+        {
+          "alias": "Requêtes",
+          "bucketAggs": [],
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "event:request",
+          "refId": "A",
+          "timeField": "@timestamp"
+        }
+      ],
+      "title": "Total requêtes HTTP",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "${DS_ELASTICSEARCH}" },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 7 },
+      "id": 4,
+      "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "text": {}, "colorMode": "background" },
+      "targets": [
+        {
+          "alias": "Erreurs",
+          "bucketAggs": [],
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "level:error",
+          "refId": "A",
+          "timeField": "@timestamp"
+        }
+      ],
+      "title": "Total erreurs",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "${DS_ELASTICSEARCH}" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "filterable": true
+          }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "level" }, "properties": [{ "id": "custom.width", "value": 80 }] },
+          { "matcher": { "id": "byName", "options": "service" }, "properties": [{ "id": "custom.width", "value": 140 }] },
+          { "matcher": { "id": "byName", "options": "request_id" }, "properties": [{ "id": "custom.width", "value": 300 }] }
+        ]
+      },
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 14 },
+      "id": 5,
+      "options": {
+        "footer": { "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "@timestamp" }]
+      },
+      "targets": [
+        {
+          "bucketAggs": [],
+          "metrics": [{ "id": "1", "settings": { "size": "500" }, "type": "logs" }],
+          "query": "$service_filter $level_filter",
+          "refId": "A",
+          "timeField": "@timestamp"
+        }
+      ],
+      "title": "Logs en temps réel",
+      "type": "logs",
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false
+      }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "tags": ["logs", "nutri-app"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": { "type": "elasticsearch", "uid": "${DS_ELASTICSEARCH}" },
+        "definition": "{\"find\": \"terms\", \"field\": \"service.keyword\"}",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "service",
+        "options": [],
+        "query": "{\"find\": \"terms\", \"field\": \"service.keyword\"}",
+        "refresh": 2,
+        "type": "query",
+        "label": "Service",
+        "allValue": "*"
+      },
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "level",
+        "options": [
+          { "selected": false, "text": "info", "value": "info" },
+          { "selected": false, "text": "warning", "value": "warning" },
+          { "selected": false, "text": "error", "value": "error" },
+          { "selected": false, "text": "debug", "value": "debug" }
+        ],
+        "query": "info,warning,error,debug",
+        "type": "custom",
+        "label": "Level"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "NutriPlanner — Logs",
+  "uid": "nutri-logs-001",
+  "version": 1
+}

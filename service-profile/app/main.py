@@ -12,8 +12,11 @@ from nutri_shared.errors import register_error_handlers
 from app.api.routes import medical, preferences, profile, tracker
 from app.db.session import get_engine
 
-logger = logging.getLogger(__name__)
+from nutri_shared.core.logger import configure_logging
+from nutri_shared.core.middleware import RequestLoggingMiddleware
 
+logger = logging.getLogger(__name__)
+configure_logging("service-profile")
 
 class LocaleMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: object) -> Response:
@@ -25,6 +28,8 @@ class LocaleMiddleware(BaseHTTPMiddleware):
 
 app = FastAPI(title="service-profile", version="0.1.0")
 app.add_middleware(LocaleMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
+
 register_error_handlers(app)
 
 app.include_router(profile.router, prefix="/api/v1/profiles", tags=["profile"])

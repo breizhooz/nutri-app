@@ -7,9 +7,17 @@ from app.api.routes import history, notify, subscriptions
 from app.db.session import get_engine
 from app.i18n.middleware import LocaleMiddleware
 
+from nutri_shared.core.logger import configure_logging
+from nutri_shared.core.middleware import RequestLoggingMiddleware
+
+configure_logging("service-notification")
+
 app = FastAPI(title="service-notification", version="0.1.0")
 
 app.add_middleware(LocaleMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
+
+
 register_error_handlers(app)
 
 app.include_router(subscriptions.router, prefix="/api/v1/subscriptions", tags=["subscriptions"])
