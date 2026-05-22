@@ -4,15 +4,20 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from sqlalchemy import select, func, text
+from sqlalchemy import text
 
 from nutri_shared.errors import register_error_handlers
 
-from app.api.routes import admin, calculate, macro_errors, nutrition_items, stats, lookup
+from app.api.routes import (
+    admin,
+    calculate,
+    macro_errors,
+    nutrition_items,
+    stats,
+    lookup,
+)
 from app.core.config import settings
-from app.db.session import get_engine
 from app.i18n.middleware import LocaleMiddleware
-from app.models.nutrition_item import NutritionItem, NutritionSource
 
 from nutri_shared.core.logger import configure_logging
 from nutri_shared.core.middleware import RequestLoggingMiddleware
@@ -20,6 +25,7 @@ from nutri_shared.core.middleware import RequestLoggingMiddleware
 logger = logging.getLogger(__name__)
 
 configure_logging("service-nutrition")
+
 
 async def _bootstrap_ciqual() -> None:
     try:
@@ -40,6 +46,7 @@ async def _bootstrap_ciqual() -> None:
         if not already_done:
             logger.info("Archive '%s' non importée — déclenchement import.", filename)
             from app.tasks.nutrition_task import import_ciqual
+
             import_ciqual.delay()
         else:
             logger.info("Archive '%s' déjà importée — rien à faire.", filename)
@@ -74,12 +81,13 @@ def create_app() -> FastAPI:
 
     @app.get("/health")
     async def health():
-        return  {"status": "ok", "service": "service-nutrition"}
-
+        return {"status": "ok", "service": "service-nutrition"}
 
     @app.get("/health/db")
     async def health_db():
         try:
+            from app.db.session import get_engine
+
             async with get_engine().connect() as conn:
                 await conn.execute(text("SELECT 1"))
             db_status = "ok"
@@ -88,5 +96,6 @@ def create_app() -> FastAPI:
         return {"status": "ok", "service": "service-nutrition", "database": db_status}
 
     return app
+
 
 app = create_app()

@@ -25,8 +25,28 @@ jobs:
           cd service-user
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pip install pytest pytest-cov ruff bandit
+
+      - name: Run linter user
+        run: |
+          cd service-user
+          ruff check .
+
+      - name: Check formatting user
+        run: |
+          cd service-user
+          ruff format --check .
+      
+      - name: Security scan
+        run: |
+          cd service-user
+          bandit -r . -f json -o bandit-report.json --exit-zero
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: service-user/bandit-report.json
       
       - name: SonarScan User
         uses: SonarSource/sonarqube-scan-action@v6
@@ -39,6 +59,12 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run test User
+        run: |
+          cd service-user  
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
     
   analyze-recipe:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-recipe')
@@ -56,8 +82,28 @@ jobs:
           cd service-recipe
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pip install pytest pytest-cov ruff bandit
+
+      - name: Run linter recipe
+        run: |
+          cd service-recipe
+          ruff check .
+
+      - name: Check formatting recipe
+        run: |
+          cd service-recipe
+          ruff format --check .
+      
+      - name: Security scan
+        run: |
+          cd service-recipe
+          bandit -r . -f json -o bandit-report.json --exit-zero
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: service-recipe/bandit-report.json
       
       - name: SonarScan Recipe
         uses: SonarSource/sonarqube-scan-action@v6
@@ -70,6 +116,12 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run test recipe
+        run: |
+          cd service-recipe
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
     
   analyze-menu:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-menu')
@@ -87,8 +139,28 @@ jobs:
           cd service-menu
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pip install pytest pytest-cov ruff bandit
+
+      - name: Run linter menu
+        run: |
+          cd service-menu
+          ruff check .
+
+      - name: Check formatting menu
+        run: |
+          cd service-menu
+          ruff format --check .
+      
+      - name: Security scan
+        run: |
+          cd service-menu
+          bandit -r . -f json -o bandit-report.json --exit-zero
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: service-menu/bandit-report.json
       
       - name: SonarScan Menu
         uses: SonarSource/sonarqube-scan-action@v6
@@ -101,6 +173,12 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run test menu
+        run: |
+          cd service-menu
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
 
   analyze-crawler:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-crawler')
@@ -118,8 +196,28 @@ jobs:
           cd service-crawler
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pip install pytest pytest-cov ruff bandit
+
+      - name: Run linter crawler
+        run: |
+          cd service-crawler
+          ruff check .
+
+      - name: Check formatting crawler
+        run: |
+          cd service-crawler
+          ruff format --check .
+      
+      - name: Security scan
+        run: |
+          cd service-crawler
+          bandit -r . -f json -o bandit-report.json --exit-zero
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: service-crawler/bandit-report.json
       
       - name: SonarScan crawler
         uses: SonarSource/sonarqube-scan-action@v6
@@ -132,6 +230,12 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run test crawler
+        run: |
+          cd service-crawler
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
 
   analyze-notification:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-notification')
@@ -149,8 +253,28 @@ jobs:
           cd service-notification
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pip install pytest pytest-cov ruff bandit
+
+      - name: Run linter notification
+        run: |
+          cd service-notification
+          ruff check .
+
+      - name: Check formatting notification
+        run: |
+          cd service-notification
+          ruff format --check .
+      
+      - name: Security scan
+        run: |
+          cd service-notification
+          bandit -r . -f json -o bandit-report.json --exit-zero
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: service-notification/bandit-report.json
       
       - name: SonarScan notification
         uses: SonarSource/sonarqube-scan-action@v6
@@ -163,6 +287,12 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run test notification
+        run: |
+          cd service-notification
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
   
   analyze-nutrition:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-nutrition')
@@ -180,8 +310,28 @@ jobs:
           cd service-nutrition
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pip install pytest pytest-cov ruff bandit
+
+      - name: Run linter nutrition
+        run: |
+          cd service-nutrition
+          ruff check .
+
+      - name: Check formatting nutrition
+        run: |
+          cd service-nutrition
+          ruff format --check .
+      
+      - name: Security scan
+        run: |
+          cd service-nutrition
+          bandit -r . -f json -o bandit-report.json --exit-zero
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: service-nutrition/bandit-report.json
       
       - name: SonarScan nutrition
         uses: SonarSource/sonarqube-scan-action@v6
@@ -194,6 +344,12 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run test nutrition
+        run: |
+          cd service-nutrition
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
 
   analyze-profile:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-profile')
@@ -211,8 +367,28 @@ jobs:
           cd service-profile
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pip install pytest pytest-cov ruff bandit
+
+      - name: Run linter profile
+        run: |
+          cd service-profile
+          ruff check .
+
+      - name: Check formatting profile
+        run: |
+          cd service-profile
+          ruff format --check .
+      
+      - name: Security scan
+        run: |
+          cd service-profile
+          bandit -r . -f json -o bandit-report.json --exit-zero
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: service-profile/bandit-report.json
       
       - name: SonarScan profile
         uses: SonarSource/sonarqube-scan-action@v6
@@ -225,6 +401,12 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run test profile
+        run: |
+          cd service-profile  
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
 
 
 

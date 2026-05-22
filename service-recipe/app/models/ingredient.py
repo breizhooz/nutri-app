@@ -1,24 +1,26 @@
-from typing import Optional, Any
-from sqlalchemy import String, Integer, ForeignKey, func, JSON, Float,  Enum as SQLEnum
+from typing import Optional
+from sqlalchemy import String, JSON, Float
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
+from sqlalchemy.orm import Mapped, mapped_column, validates
 from app.models.enums import TypeOfIngredient, Allergen, Nutrition, Diet
 from app.db.base_class import Base
 
+
 class Ingredient(Base):
     """Ingredient Model"""
+
     __tablename__ = "ingredients"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name:  Mapped[str] = mapped_column(String(200), unique=True)
+    name: Mapped[str] = mapped_column(String(200), unique=True)
 
     # Utilisation de ARRAY avec le type natif Enum de SQLAlchemy
     # On utilise String comme type de base pour stocker la valeur "enums.type..."
     tags: Mapped[list[str]] = mapped_column(
-        ARRAY(String), 
+        ARRAY(String),
         default=[],
         server_default="{}",
-        comment="List of tags issus from Enums"
+        comment="List of tags issus from Enums",
     )
 
     @validates("tags")
@@ -26,7 +28,7 @@ class Ingredient(Base):
         """
         Validate tags data, need to be Enum TypeOfIngredient, Allergen, Nutrition, Diet
 
-        Raise: 
+        Raise:
             ValueError: if value doesn't exist
         """
         if not tags_list:
@@ -45,14 +47,10 @@ class Ingredient(Base):
                     f"tags '{tag}' is not valid value "
                     f"Expected values from TypeOfIngredient, Allergen, Nutrition ou Diet."
                 )
-        
+
         return tags_list
-    
-    free_tags: Mapped[list[str]] = mapped_column(
-        JSON, 
-        default=[], 
-        server_default="[]"
-    )
+
+    free_tags: Mapped[list[str]] = mapped_column(JSON, default=[], server_default="[]")
 
     calories_per_100g: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     proteins_per_100g: Mapped[Optional[float]] = mapped_column(Float, nullable=True)

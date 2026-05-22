@@ -8,6 +8,7 @@ from app.models.enums import NotificationStatus, NotificationType
 
 class NotifyRequest(BaseModel):
     """Payload reçu par POST /api/v1/notify (appel inter-service)."""
+
     user_slug: str
     type: NotificationType
     title: str

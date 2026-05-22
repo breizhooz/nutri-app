@@ -1,5 +1,6 @@
 from enum import Enum as PyEnum
 
+
 class TypeOfIngredient(str, PyEnum):
     MEAT = "enums.type_of_ingredient.meat"
     WHITE_MEAT = "enums.type_of_ingredient.white_meat"

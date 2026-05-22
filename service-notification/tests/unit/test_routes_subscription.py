@@ -1,20 +1,24 @@
-import uuid 
+import uuid
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.main import app
 
+
 class TestSubscriptionsRoutes:
     @pytest.mark.unit
     async def test_create_subscription_returns_201(self, client: AsyncClient):
         """POST /api/v1/subscriptions → 201 avec slug généré."""
-        resp = await client.post("/api/v1/subscriptions", json={
-            "endpoint": "https://fcm.googleapis.com/fcm/send/abc",
-            "p256dh_key": "BNcTestKey",
-            "auth_key": "TestAuth",
-            "device_label": "Chrome Desktop",
-        })
+        resp = await client.post(
+            "/api/v1/subscriptions",
+            json={
+                "endpoint": "https://fcm.googleapis.com/fcm/send/abc",
+                "p256dh_key": "BNcTestKey",
+                "auth_key": "TestAuth",
+                "device_label": "Chrome Desktop",
+            },
+        )
         assert resp.status_code == 201
         data = resp.json()
         assert "slug" in data
@@ -46,12 +50,15 @@ class TestSubscriptionsRoutes:
     @pytest.mark.unit
     async def test_get_subscription_returns_200(self, client: AsyncClient):
         """GET /api/v1/subscriptions/{slug} → 200 avec les bonnes données."""
-        create = await client.post("/api/v1/subscriptions", json={
-            "endpoint": "https://fcm.googleapis.com/fcm/send/get-test",
-            "p256dh_key": "p256dh",
-            "auth_key": "auth",
-            "device_label": "Safari iPhone",
-        })
+        create = await client.post(
+            "/api/v1/subscriptions",
+            json={
+                "endpoint": "https://fcm.googleapis.com/fcm/send/get-test",
+                "p256dh_key": "p256dh",
+                "auth_key": "auth",
+                "device_label": "Safari iPhone",
+            },
+        )
         slug = create.json()["slug"]
         get = await client.get(f"/api/v1/subscriptions/{slug}")
         assert get.status_code == 200
@@ -61,10 +68,16 @@ class TestSubscriptionsRoutes:
     @pytest.mark.unit
     async def test_delete_subscription_returns_204(self, client: AsyncClient):
         """DELETE /api/v1/subscriptions/{slug} → 204, puis 404 au GET."""
-        slug = (await client.post("/api/v1/subscriptions", json={
-            "endpoint": "https://fcm.googleapis.com/fcm/send/delete-test",
-            "p256dh_key": "k", "auth_key": "a",
-        })).json()["slug"]
+        slug = (
+            await client.post(
+                "/api/v1/subscriptions",
+                json={
+                    "endpoint": "https://fcm.googleapis.com/fcm/send/delete-test",
+                    "p256dh_key": "k",
+                    "auth_key": "a",
+                },
+            )
+        ).json()["slug"]
 
         assert (await client.delete(f"/api/v1/subscriptions/{slug}")).status_code == 204
         assert (await client.get(f"/api/v1/subscriptions/{slug}")).status_code == 404
@@ -81,24 +94,30 @@ class TestSubscriptionsRoutes:
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"
         ) as ac:
-            resp = await ac.post("/api/v1/subscriptions", json={
-                "endpoint": "https://fcm.googleapis.com/fcm/send/noauth",
-                "p256dh_key": "k", "auth_key": "a",
-            })
+            resp = await ac.post(
+                "/api/v1/subscriptions",
+                json={
+                    "endpoint": "https://fcm.googleapis.com/fcm/send/noauth",
+                    "p256dh_key": "k",
+                    "auth_key": "a",
+                },
+            )
         assert resp.status_code == 403
-    
+
     @pytest.mark.unit
     async def test_get_subscription_other_user_returns_403(
         self, client: AsyncClient, db_session
     ):
         """GET d'une subscription appartenant à un autre user → 403."""
         from app.repositories.subscription_repository import SubscriptionRepository
+
         other_user_id = uuid.UUID("00000000-0000-0000-0000-000000000099")
         repo = SubscriptionRepository(db_session)
         sub = await repo.create(
             user_id=other_user_id,
             endpoint="https://push.example.com/other-user",
-            p256dh_key="k", auth_key="a",
+            p256dh_key="k",
+            auth_key="a",
         )
         resp = await client.get(f"/api/v1/subscriptions/{sub.slug}")
         assert resp.status_code == 403
@@ -109,12 +128,14 @@ class TestSubscriptionsRoutes:
     ):
         """DELETE d'une subscription appartenant à un autre user → 403."""
         from app.repositories.subscription_repository import SubscriptionRepository
+
         other_user_id = uuid.UUID("00000000-0000-0000-0000-000000000099")
         repo = SubscriptionRepository(db_session)
         sub = await repo.create(
             user_id=other_user_id,
             endpoint="https://push.example.com/other-user-del",
-            p256dh_key="k", auth_key="a",
+            p256dh_key="k",
+            auth_key="a",
         )
         resp = await client.delete(f"/api/v1/subscriptions/{sub.slug}")
         assert resp.status_code == 403

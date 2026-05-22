@@ -1,4 +1,5 @@
 """Service de calcul métabolique — BMR, TDEE, IMC, macronutriments, poids idéal."""
+
 import logging
 from datetime import date, datetime, timezone
 
@@ -40,11 +41,11 @@ class CalculationService:
     ]
 
     _MACRO_SPLITS: dict[MainGoal, tuple[float, float, float]] = {
-        MainGoal.WEIGHT_LOSS:        (0.40, 0.30, 0.30),
-        MainGoal.MUSCLE_GAIN:        (0.40, 0.35, 0.25),
+        MainGoal.WEIGHT_LOSS: (0.40, 0.30, 0.30),
+        MainGoal.MUSCLE_GAIN: (0.40, 0.35, 0.25),
         MainGoal.BODY_RECOMPOSITION: (0.40, 0.30, 0.30),
         MainGoal.SPORTS_PERFORMANCE: (0.50, 0.25, 0.25),
-        MainGoal.MAINTENANCE:        (0.45, 0.25, 0.30),
+        MainGoal.MAINTENANCE: (0.45, 0.25, 0.30),
     }
 
     def compute_age(self, dob: date) -> int:
@@ -52,7 +53,9 @@ class CalculationService:
         today = datetime.now(timezone.utc).date()
         return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 
-    def compute_bmr(self, weight_kg: float, height_cm: float, age: int, sex: BiologicalSex) -> float:
+    def compute_bmr(
+        self, weight_kg: float, height_cm: float, age: int, sex: BiologicalSex
+    ) -> float:
         """Calcule le métabolisme de base via la formule Mifflin-St Jeor.
 
         Homme  : 10×poids + 6.25×taille − 5×âge + 5
@@ -82,7 +85,9 @@ class CalculationService:
         """
         base = self._PROFESSION_PAL[lifestyle.profession_activity_level]
         if sports:
-            bonus = min(sports.sessions_per_week * 0.025 * (sports.avg_intensity_rpe / 5.0), 0.3)
+            bonus = min(
+                sports.sessions_per_week * 0.025 * (sports.avg_intensity_rpe / 5.0), 0.3
+            )
         else:
             bonus = 0.0
         return round(base + bonus, 3)
@@ -130,8 +135,17 @@ class CalculationService:
 
         Lève ValueError('missing_data_calc') si les données anthropométriques sont incomplètes.
         """
-        if not all([profile.date_of_birth, profile.weight_kg, profile.height_cm, profile.biological_sex]):
-            logger.warning("Données insuffisantes pour le calcul : profile_id=%s", profile.id)
+        if not all(
+            [
+                profile.date_of_birth,
+                profile.weight_kg,
+                profile.height_cm,
+                profile.biological_sex,
+            ]
+        ):
+            logger.warning(
+                "Données insuffisantes pour le calcul : profile_id=%s", profile.id
+            )
             raise ValueError("missing_data_calc")
 
         weight = float(profile.weight_kg)  # type: ignore[arg-type]

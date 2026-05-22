@@ -12,6 +12,7 @@ _CRAWLER_USER = {"email": "smoke_crawler@test.internal", "password": "SmokeTest!
 
 # ── Fixtures user / auth ─────────────────────────────────────────────────────────
 
+
 @pytest.fixture()
 def create_user():
     with httpx.Client() as client:
@@ -39,6 +40,7 @@ def auth_token(create_user):
 
 # ── Helpers ──────────────────────────────────────────────────────────────────────
 
+
 class ResultsSmokeHelper:
     @staticmethod
     def get_paginated(client: httpx.Client, **params) -> httpx.Response:
@@ -49,7 +51,9 @@ class ResultsSmokeHelper:
         return client.get(f"{_RESULTS_URL}/{result_id}")
 
     @staticmethod
-    def patch_result(client: httpx.Client, result_id: str, payload: dict) -> httpx.Response:
+    def patch_result(
+        client: httpx.Client, result_id: str, payload: dict
+    ) -> httpx.Response:
         return client.patch(f"{_RESULTS_URL}/{result_id}", json=payload)
 
     @staticmethod
@@ -69,7 +73,9 @@ class ResultsSmokeHelper:
     ) -> dict | None:
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
-            resp = client.get(_RESULTS_URL, params={"status": "waiting", "source_id": source_id})
+            resp = client.get(
+                _RESULTS_URL, params={"status": "waiting", "source_id": source_id}
+            )
             if resp.status_code == 200:
                 items = resp.json().get("items", [])
                 if items:
@@ -80,13 +86,18 @@ class ResultsSmokeHelper:
 
 # ── Fixtures sources ─────────────────────────────────────────────────────────────
 
+
 @pytest.fixture()
 def source_setup(auth_token):
     headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
         response = client.post(
             f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources",
-            json={"type": "web", "url": "https://smoke-test.example.com", "frequency_hours": 24},
+            json={
+                "type": "web",
+                "url": "https://smoke-test.example.com",
+                "frequency_hours": 24,
+            },
             headers=headers,
         )
         assert response.status_code == 201, f"Erreur création source: {response.text}"
@@ -104,6 +115,7 @@ def source_setup(auth_token):
 @pytest.fixture()
 def crawled_result_setup(auth_token):
     import uuid as _uuid
+
     headers = {"Authorization": f"Bearer {auth_token}"}
     unique_url = f"https://www.marmiton.org/recettes/recette_tarte-aux-pommes_12372.aspx?smoke={_uuid.uuid4().hex}"
 
@@ -141,6 +153,7 @@ def crawled_result_setup(auth_token):
 
 # ── Health ─────────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.smoke
 def test_crawler_health():
     with httpx.Client() as client:
@@ -159,6 +172,7 @@ def test_crawler_health_db():
 
 
 # ── Sources ────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.smoke
 def test_create_web_source(auth_token):
@@ -274,6 +288,7 @@ def test_get_source_not_found(auth_token):
 
 # ── Résultats — listing paginé ─────────────────────────────────────────────────
 
+
 @pytest.mark.smoke
 def test_list_results_returns_paginated_envelope():
     with httpx.Client() as client:
@@ -346,12 +361,15 @@ def test_list_results_page_zero_rejected():
 @pytest.mark.smoke
 def test_list_results_filter_by_source_id_empty():
     with httpx.Client() as client:
-        response = ResultsSmokeHelper.get_paginated(client, source_id=_NULL_UUID, status="waiting")
+        response = ResultsSmokeHelper.get_paginated(
+            client, source_id=_NULL_UUID, status="waiting"
+        )
     assert response.status_code == 200
     assert response.json()["total"] == 0
 
 
 # ── Résultats — détail ─────────────────────────────────────────────────────────
+
 
 @pytest.mark.smoke
 def test_get_result_not_found():
@@ -368,6 +386,7 @@ def test_get_result_invalid_uuid():
 
 
 # ── Résultats — guards 404 sans résultat réel ──────────────────────────────────
+
 
 @pytest.mark.smoke
 def test_validate_result_not_found():
@@ -391,6 +410,7 @@ def test_patch_result_not_found():
 
 
 # ── Résultats — flux complets (nécessite Celery worker) ───────────────────────
+
 
 @pytest.mark.smoke
 @pytest.mark.integration
@@ -492,6 +512,7 @@ def test_validated_result_appears_in_valid_filter(crawled_result_setup):
 
 # ── Settings ───────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.smoke
 def test_crawler_settings_get():
     with httpx.Client() as client:
@@ -505,20 +526,31 @@ def test_crawler_settings_get():
 @pytest.mark.smoke
 def test_crawler_settings_update():
     with httpx.Client() as client:
-        original = client.get(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/settings").json()["js_detection_threshold"]
+        original = client.get(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/settings").json()[
+            "js_detection_threshold"
+        ]
 
-        response = client.patch(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/settings", json={"js_detection_threshold": 300})
+        response = client.patch(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/settings",
+            json={"js_detection_threshold": 300},
+        )
         assert response.status_code == 200
         assert response.json()["js_detection_threshold"] == 300
 
         get = client.get(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/settings")
         assert get.json()["js_detection_threshold"] == 300
 
-        client.patch(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/settings", json={"js_detection_threshold": original})
+        client.patch(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/settings",
+            json={"js_detection_threshold": original},
+        )
 
 
 @pytest.mark.smoke
 def test_crawler_settings_rejects_invalid_threshold():
     with httpx.Client() as client:
-        response = client.patch(f"{SERVICE_CRAWLER_URL}/api/v1/crawler/settings", json={"js_detection_threshold": 5})
+        response = client.patch(
+            f"{SERVICE_CRAWLER_URL}/api/v1/crawler/settings",
+            json={"js_detection_threshold": 5},
+        )
     assert response.status_code == 422

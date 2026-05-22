@@ -1,13 +1,11 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from nutri_shared.errors import register_error_handlers
 
 from app.db.session import get_engine
 from app.core.elasticsearch import init_elasticsearch, close_elasticsearch
-from app.i18n.loader import t
 from app.api.routes import recipes as recipes_router
 from app.api.routes import ingredient as ingredient_router
 from app.api.routes import search as search_router
@@ -15,11 +13,13 @@ from app.api.routes import search as search_router
 from nutri_shared.core.logger import configure_logging
 from nutri_shared.core.middleware import RequestLoggingMiddleware
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_elasticsearch()
     yield
     await close_elasticsearch()
+
 
 configure_logging("service-recipe")
 app = FastAPI(title="service-recipe", version="0.1.0", lifespan=lifespan)
@@ -29,12 +29,16 @@ app.add_middleware(RequestLoggingMiddleware)
 register_error_handlers(app)
 
 app.include_router(recipes_router.router, prefix="/api/v1/recipe", tags=["recipe"])
-app.include_router(ingredient_router.router, prefix="/api/v1/ingredient", tags=["recipe"])
+app.include_router(
+    ingredient_router.router, prefix="/api/v1/ingredient", tags=["recipe"]
+)
 app.include_router(search_router.router, prefix="/api/v1", tags=["search"])
+
 
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "service-recipe"}
+
 
 @app.get("/health/db")
 async def health_db():

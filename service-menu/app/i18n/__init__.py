@@ -1,1 +1,1 @@
-from .exceptions import LocalizedHTTPException
+from .exceptions import LocalizedHTTPException as LocalizedHTTPException

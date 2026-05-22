@@ -19,6 +19,7 @@ target_metadata = Base.metadata
 
 def get_url() -> str:
     from app.core.config import settings
+
     return settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
 

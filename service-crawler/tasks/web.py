@@ -51,17 +51,19 @@ async def _do_crawl(task, source_id: str | None, url: str) -> None:
             logger.error("Fetch failed for %s: %s", url, exc)
             raise task.retry(exc=exc)
 
-        await result_repo.create({
-            "source_id": UUID(source_id) if source_id else None,
-            "user_id": user_id,
-            "type": CrawlType.WEB,
-            "url_origin": url,
-            "title": data.get("title", ""),
-            "raw_content": data.get("raw_content", ""),
-            "images": data.get("images", []),
-            "video_url": data.get("video_url"),
-            "status": CrawlStatus.WAITING,
-        })
+        await result_repo.create(
+            {
+                "source_id": UUID(source_id) if source_id else None,
+                "user_id": user_id,
+                "type": CrawlType.WEB,
+                "url_origin": url,
+                "title": data.get("title", ""),
+                "raw_content": data.get("raw_content", ""),
+                "images": data.get("images", []),
+                "video_url": data.get("video_url"),
+                "status": CrawlStatus.WAITING,
+            }
+        )
         crawled = True
 
         if source:

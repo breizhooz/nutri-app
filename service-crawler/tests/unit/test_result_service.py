@@ -285,6 +285,7 @@ class TestResultServiceStaticGuards:
             ResultService._assert_validatable(r)
         assert exc.value.status_code == 409
 
+
 class TestResultServiceValidateResultWithMapper:
     @pytest.fixture
     def mock_repo(self):
@@ -363,7 +364,9 @@ class TestResultServiceValidateResultWithMapper:
             await service.validate_result(r.id, uuid.uuid4(), mapper=mock_mapper)
         assert exc.value.status_code == 502
 
-    async def test_mapper_error_does_not_call_repository_validate(self, service, mock_repo):
+    async def test_mapper_error_does_not_call_repository_validate(
+        self, service, mock_repo
+    ):
         r = CrawlResultFactory.make(status=CrawlStatus.WAITING)
         mock_repo.get_by_id.return_value = r
 

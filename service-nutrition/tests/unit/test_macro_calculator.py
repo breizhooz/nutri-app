@@ -100,8 +100,12 @@ class TestMacroCalculator:
     @pytest.mark.unit
     def test_calculate_multiple_ingredients_sum(self, calculator):
         """2 ingrédients → somme correcte."""
-        im1 = _make_ingredient(slug="a", grammes=100.0, cal=200.0, prot=5.0, gluc=30.0, lipid=8.0)
-        im2 = _make_ingredient(slug="b", grammes=50.0, cal=400.0, prot=20.0, gluc=10.0, lipid=15.0)
+        im1 = _make_ingredient(
+            slug="a", grammes=100.0, cal=200.0, prot=5.0, gluc=30.0, lipid=8.0
+        )
+        im2 = _make_ingredient(
+            slug="b", grammes=50.0, cal=400.0, prot=20.0, gluc=10.0, lipid=15.0
+        )
         total, _ = calculator.calculate([im1, im2])
         assert total.calories == pytest.approx(200.0 + 200.0)
         assert total.proteines == pytest.approx(5.0 + 10.0)

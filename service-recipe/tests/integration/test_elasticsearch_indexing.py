@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 from .conftest import make_mock_recipe
 
 BASE = "/api/v1/recipe"
@@ -7,7 +7,9 @@ BASE = "/api/v1/recipe"
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_create_recipe_triggers_es_indexation(override_db, override_user_client, mock_es, http_client):
+async def test_create_recipe_triggers_es_indexation(
+    override_db, override_user_client, mock_es, http_client
+):
     """Après une création, es_client.index() doit être appelé une fois."""
     mock_recipe = make_mock_recipe()
 
@@ -19,31 +21,41 @@ async def test_create_recipe_triggers_es_indexation(override_db, override_user_c
         obj.cuisine_origin = mock_recipe.cuisine_origin
         obj.course_type = mock_recipe.course_type
         obj.tags = {}
+
     override_db.refresh.side_effect = mock_refresh
 
     async with http_client as client:
-        response = await client.post(BASE, json={
-            "title": "Poulet rôti",
-            "instructions": "Cuire au four 1h.",
-            "recipe_ingredients": [],
-        })
+        response = await client.post(
+            BASE,
+            json={
+                "title": "Poulet rôti",
+                "instructions": "Cuire au four 1h.",
+                "recipe_ingredients": [],
+            },
+        )
 
     assert response.status_code == 201
     mock_es.index.assert_called_once()
     from app.core.config import settings
-    assert mock_es.index.call_args.kwargs["index"] == settings.ELASTICSEARCH_INDEX_RECIPES
+
+    assert (
+        mock_es.index.call_args.kwargs["index"] == settings.ELASTICSEARCH_INDEX_RECIPES
+    )
     assert mock_es.index.call_args.kwargs["id"] == mock_recipe.id
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_create_recipe_es_failure_does_not_break_crud(override_db, override_user_client, mock_es, http_client):
+async def test_create_recipe_es_failure_does_not_break_crud(
+    override_db, override_user_client, mock_es, http_client
+):
     """Si ES est down, la création en DB doit quand même réussir."""
     mock_es.index.side_effect = Exception("ES connection refused")
 
     async def mock_refresh(obj):
         from datetime import datetime
         from app.models.enums import CuisineOrigin, CourseType
+
         obj.id = 1
         obj.created_at = datetime(2026, 1, 1, 12, 0, 0)
         obj.updated_at = datetime(2026, 1, 1, 12, 0, 0)
@@ -51,26 +63,34 @@ async def test_create_recipe_es_failure_does_not_break_crud(override_db, overrid
         obj.cuisine_origin = CuisineOrigin.FRENCH
         obj.course_type = CourseType.MAIN_COURSE
         obj.tags = {}
+
     override_db.refresh.side_effect = mock_refresh
 
     async with http_client as client:
-        response = await client.post(BASE, json={
-            "title": "Poulet rôti",
-            "instructions": "Cuire au four 1h.",
-            "recipe_ingredients": [],
-        })
+        response = await client.post(
+            BASE,
+            json={
+                "title": "Poulet rôti",
+                "instructions": "Cuire au four 1h.",
+                "recipe_ingredients": [],
+            },
+        )
 
     assert response.status_code == 201
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_update_recipe_triggers_es_reindexation(override_db, mock_es, http_client):
+async def test_update_recipe_triggers_es_reindexation(
+    override_db, mock_es, http_client
+):
     mock_recipe = make_mock_recipe()
     override_db.get.return_value = mock_recipe
 
     async with http_client as client:
-        response = await client.put(f"{BASE}/id/{mock_recipe.id}", json={"title": "Poulet revisité"})
+        response = await client.put(
+            f"{BASE}/id/{mock_recipe.id}", json={"title": "Poulet revisité"}
+        )
 
     assert response.status_code == 200
     mock_es.index.assert_called_once()
@@ -99,7 +119,10 @@ async def test_delete_recipe_triggers_es_deletion(override_db, mock_es, http_cli
 
     assert response.status_code == 204
     from app.core.config import settings
-    mock_es.delete.assert_called_once_with(index=settings.ELASTICSEARCH_INDEX_RECIPES, id=mock_recipe.id)
+
+    mock_es.delete.assert_called_once_with(
+        index=settings.ELASTICSEARCH_INDEX_RECIPES, id=mock_recipe.id
+    )
 
 
 @pytest.mark.asyncio
@@ -137,10 +160,16 @@ async def test_indexed_document_contains_allergens_from_ingredients(mock_es):
     gluten = Allergen.GLUTEN.value
     milk = Allergen.MILK.value
 
-    ing1 = MagicMock(); ing1.name = "farine"; ing1.tags = [gluten, "enums.type.cereals"]
-    ing2 = MagicMock(); ing2.name = "beurre"; ing2.tags = [milk]
-    ri1 = MagicMock(); ri1.ingredient = ing1
-    ri2 = MagicMock(); ri2.ingredient = ing2
+    ing1 = MagicMock()
+    ing1.name = "farine"
+    ing1.tags = [gluten, "enums.type.cereals"]
+    ing2 = MagicMock()
+    ing2.name = "beurre"
+    ing2.tags = [milk]
+    ri1 = MagicMock()
+    ri1.ingredient = ing1
+    ri2 = MagicMock()
+    ri2.ingredient = ing2
 
     recipe = make_mock_recipe(recipe_ingredients=[ri1, ri2])
     doc = search_service._build_document(recipe)

@@ -71,6 +71,7 @@ class TypeOfIngredient(str, PyEnum):
     FROZEN = "enums.type_of_ingredient.frozen"
     PREPARED = "enums.type_of_ingredient.prepared"
 
+
 class CookingMethod(str, PyEnum):
     RAW = "enums.cooking_method.raw"
     BOILED = "enums.cooking_method.boiled"

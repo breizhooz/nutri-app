@@ -1,4 +1,5 @@
 """Repository Profile — accès aux données du profil principal."""
+
 import logging
 import uuid
 

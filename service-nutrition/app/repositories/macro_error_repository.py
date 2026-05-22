@@ -64,7 +64,9 @@ class MacroErrorRepository:
         lipides: float | None = None,
     ) -> MacroError:
         has_manual_macros = calories is not None
-        error.status = MacroErrorStatus.MANUAL if has_manual_macros else MacroErrorStatus.RESOLVED
+        error.status = (
+            MacroErrorStatus.MANUAL if has_manual_macros else MacroErrorStatus.RESOLVED
+        )
         error.resolved_name = resolved_name
         error.calories_manual = calories
         error.proteines_manual = proteines

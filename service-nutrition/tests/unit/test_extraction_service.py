@@ -12,9 +12,14 @@ USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 
 def _lookup_result(slug="farine-sarrasin") -> LookupResult:
     return LookupResult(
-        slug=slug, nom_fr="Farine de sarrasin",
-        calories=340.0, proteines=13.0, glucides=71.0, lipides=3.0,
-        fibres=None, score=8.5,
+        slug=slug,
+        nom_fr="Farine de sarrasin",
+        calories=340.0,
+        proteines=13.0,
+        glucides=71.0,
+        lipides=3.0,
+        fibres=None,
+        score=8.5,
     )
 
 
@@ -65,7 +70,10 @@ class TestExtractionService:
         groq = _groq([])
         lookup = _lookup([_lookup_result()])
 
-        with patch("app.services.extraction_service.MacroErrorRepository", return_value=_mock_repo()):
+        with patch(
+            "app.services.extraction_service.MacroErrorRepository",
+            return_value=_mock_repo(),
+        ):
             svc = ExtractionService(db_session, spacy=spacy, groq=groq, lookup=lookup)
             result = await svc.process(["200g de farine"], USER_ID)
 
@@ -80,7 +88,10 @@ class TestExtractionService:
         groq = _groq([_extracted()])
         lookup = _lookup([_lookup_result()])
 
-        with patch("app.services.extraction_service.MacroErrorRepository", return_value=_mock_repo()):
+        with patch(
+            "app.services.extraction_service.MacroErrorRepository",
+            return_value=_mock_repo(),
+        ):
             svc = ExtractionService(db_session, spacy=spacy, groq=groq, lookup=lookup)
             result = await svc.process(["texte ambigu"], USER_ID)
 
@@ -95,7 +106,9 @@ class TestExtractionService:
         lookup = _lookup([])
         repo = _mock_repo("gochujank-20260518")
 
-        with patch("app.services.extraction_service.MacroErrorRepository", return_value=repo):
+        with patch(
+            "app.services.extraction_service.MacroErrorRepository", return_value=repo
+        ):
             svc = ExtractionService(db_session, spacy=spacy, groq=groq, lookup=lookup)
             result = await svc.process(["gochujank"], USER_ID)
 
@@ -111,7 +124,9 @@ class TestExtractionService:
         lookup = _lookup([])
         repo = _mock_repo("gochujank-err")
 
-        with patch("app.services.extraction_service.MacroErrorRepository", return_value=repo):
+        with patch(
+            "app.services.extraction_service.MacroErrorRepository", return_value=repo
+        ):
             svc = ExtractionService(db_session, spacy=spacy, groq=groq, lookup=lookup)
             result = await svc.process(["gochujank"], USER_ID)
 
@@ -126,7 +141,9 @@ class TestExtractionService:
         lookup = _lookup([])
         repo = _mock_repo("empty-err")
 
-        with patch("app.services.extraction_service.MacroErrorRepository", return_value=repo):
+        with patch(
+            "app.services.extraction_service.MacroErrorRepository", return_value=repo
+        ):
             svc = ExtractionService(db_session, spacy=spacy, groq=groq, lookup=lookup)
             result = await svc.process(["texte vide"], USER_ID)
 
@@ -135,15 +152,24 @@ class TestExtractionService:
     @pytest.mark.unit
     async def test_unknown_unit_falls_back_to_raw_quantity(self, db_session):
         """Unité inconnue → grammes = quantité brute (pas None)."""
-        spacy = _spacy([
-            ExtractedIngredient(
-                raw_text="3 oeufs", quantite=3.0, unite="oeuf", nom="oeuf", confidence=0.75
-            )
-        ])
+        spacy = _spacy(
+            [
+                ExtractedIngredient(
+                    raw_text="3 oeufs",
+                    quantite=3.0,
+                    unite="oeuf",
+                    nom="oeuf",
+                    confidence=0.75,
+                )
+            ]
+        )
         groq = _groq([])
         lookup = _lookup([_lookup_result("oeuf")])
 
-        with patch("app.services.extraction_service.MacroErrorRepository", return_value=_mock_repo()):
+        with patch(
+            "app.services.extraction_service.MacroErrorRepository",
+            return_value=_mock_repo(),
+        ):
             svc = ExtractionService(db_session, spacy=spacy, groq=groq, lookup=lookup)
             result = await svc.process(["3 oeufs"], USER_ID)
 
@@ -168,7 +194,9 @@ class TestExtractionService:
         lookup = _lookup([_lookup_result()])
         repo = _mock_repo("fail-err")
 
-        with patch("app.services.extraction_service.MacroErrorRepository", return_value=repo):
+        with patch(
+            "app.services.extraction_service.MacroErrorRepository", return_value=repo
+        ):
             svc = ExtractionService(db_session, spacy=spacy, groq=groq, lookup=lookup)
             result = await svc.process(["200g de farine", "gochujank"], USER_ID)
 

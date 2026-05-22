@@ -1,4 +1,5 @@
 """Service métier pour le profil principal."""
+
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -26,7 +27,9 @@ class ProfileService:
         Lève ValueError('already_exists') si un profil existe déjà.
         """
         if await self._repo.get_by_user_id(user_id):
-            logger.warning("Tentative de création d'un profil en double pour user_id=%s", user_id)
+            logger.warning(
+                "Tentative de création d'un profil en double pour user_id=%s", user_id
+            )
             raise ValueError("already_exists")
 
         slug = await self._repo.resolve_slug(Profile, f"profile-{str(user_id)[:8]}")

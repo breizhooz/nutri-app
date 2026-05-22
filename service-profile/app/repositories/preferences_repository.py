@@ -1,4 +1,5 @@
 """Repository Preferences — sports, performances, lifestyle, nutrition, aliments exclus."""
+
 import logging
 import uuid
 
@@ -47,7 +48,9 @@ class PreferencesRepository(BaseRepository):
     async def get_nutrition(self, profile_id: uuid.UUID) -> NutritionPreferences | None:
         """Retourne les préférences nutritionnelles d'un profil, ou None."""
         result = await self._session.execute(
-            select(NutritionPreferences).where(NutritionPreferences.profile_id == profile_id)
+            select(NutritionPreferences).where(
+                NutritionPreferences.profile_id == profile_id
+            )
         )
         return result.scalar_one_or_none()
 

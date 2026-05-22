@@ -22,7 +22,9 @@ class Settings(BaseSettings):
     OFF_BASE_URL: str = "https://world.openfoodfacts.org"
     OFF_USER_AGENT: str = "NutriPlanner/1.0 (contact@nutriplanner.fr)"
 
-    CIQUAL_DOWNLOAD_URL: str = "https://ciqual.anses.fr/cms/sites/default/files/inline-files/2025_11_03.7z"
+    CIQUAL_DOWNLOAD_URL: str = (
+        "https://ciqual.anses.fr/cms/sites/default/files/inline-files/2025_11_03.7z"
+    )
 
     SERVICE_NUTRITION_TOKEN: str = ""
     SERVICE_NOTIFICATION_URL: str = "http://service-notification:8006"

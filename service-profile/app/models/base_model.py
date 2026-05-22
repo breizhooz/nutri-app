@@ -1,4 +1,5 @@
 """Mixins de colonnes réutilisables pour les modèles SQLAlchemy 2.0."""
+
 import uuid
 from datetime import datetime
 
@@ -13,7 +14,9 @@ class SlugMixin:
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    slug: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    slug: Mapped[str] = mapped_column(
+        String(255), unique=True, nullable=False, index=True
+    )
 
 
 class TimestampMixin:

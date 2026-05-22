@@ -9,13 +9,11 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 
-
 class WebService:
-
     _js_threshold: int = settings.JS_DETECTION_THRESHOLD
 
     @classmethod
-    def get_js_threshold(cls) -> int :
+    def get_js_threshold(cls) -> int:
         return cls._js_threshold
 
     @classmethod
@@ -48,7 +46,9 @@ class WebService:
                 title = h1.get_text(strip=True)
 
         content_tag = soup.find("article") or soup.find("main") or soup.body
-        raw_content = content_tag.get_text(separator="\n", strip=True) if content_tag else ""
+        raw_content = (
+            content_tag.get_text(separator="\n", strip=True) if content_tag else ""
+        )
 
         images: list[str] = []
         for img in soup.find_all("img"):

@@ -34,14 +34,18 @@ class ResultRepository:
         )
         return list(result.scalars().all())
 
-    async def update(self, crawl_result: CrawlResult, data: CrawlResultUpdate) -> CrawlResult:
+    async def update(
+        self, crawl_result: CrawlResult, data: CrawlResultUpdate
+    ) -> CrawlResult:
         for field, value in data.model_dump(exclude_none=True).items():
             setattr(crawl_result, field, value)
         await self.session.commit()
         await self.session.refresh(crawl_result)
         return crawl_result
 
-    async def validate(self, crawl_result: CrawlResult, validated_by: uuid.UUID) -> CrawlResult:
+    async def validate(
+        self, crawl_result: CrawlResult, validated_by: uuid.UUID
+    ) -> CrawlResult:
         crawl_result.status = CrawlStatus.VALID
         crawl_result.validate_by = validated_by
         crawl_result.validate_date = datetime.now(timezone.utc)
@@ -60,7 +64,7 @@ class ResultRepository:
             select(CrawlResult.id).where(CrawlResult.url_origin == url)
         )
         return result.scalar_one_or_none() is not None
-    
+
     async def list_by_filters(
         self,
         status: CrawlStatus | None = None,

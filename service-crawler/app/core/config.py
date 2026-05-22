@@ -1,15 +1,13 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file = "conf/.env",
-        extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file="conf/.env", extra="ignore")
 
     DATABASE_URL: str
     DEBUG: bool = False
 
-    CELERY_BROKER_URL: str 
+    CELERY_BROKER_URL: str
     CELERY_RESULT_BACKEND: str
 
     MINIO_ENDPOINT: str

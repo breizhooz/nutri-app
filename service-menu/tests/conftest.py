@@ -49,8 +49,12 @@ def make_recipe(
 
 SAMPLE_RECIPES: list[dict] = [make_recipe(i, cals_per_100g=100.0) for i in range(1, 25)]
 
-RECIPE_WITH_GLUTEN = make_recipe(50, allergens=["enums.allergen.gluten"], cals_per_100g=300.0)
-RECIPE_WITH_EGGS   = make_recipe(51, allergens=["enums.allergen.eggs"],   cals_per_100g=200.0)
+RECIPE_WITH_GLUTEN = make_recipe(
+    50, allergens=["enums.allergen.gluten"], cals_per_100g=300.0
+)
+RECIPE_WITH_EGGS = make_recipe(
+    51, allergens=["enums.allergen.eggs"], cals_per_100g=200.0
+)
 
 RICH_RECIPE = {
     "id": 100,

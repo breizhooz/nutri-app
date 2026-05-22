@@ -1,7 +1,7 @@
 """Modèle MedicalCondition — pathologie métabolique, digestive ou autre."""
+
 import logging
 import uuid
-from datetime import datetime
 
 from sqlalchemy import Boolean, Text, String
 from sqlalchemy import Enum as SQLEnum
@@ -20,7 +20,9 @@ class MedicalCondition(Base, SlugMixin, TimestampMixin):
 
     __tablename__ = "medical_conditions"
 
-    profile_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False, index=True
+    )
     category: Mapped[MedicalCategory] = mapped_column(
         SQLEnum(MedicalCategory, native_enum=False, length=20), nullable=False
     )

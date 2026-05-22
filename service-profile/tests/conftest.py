@@ -79,12 +79,16 @@ async def service_client() -> AsyncGenerator[AsyncClient, None]:
     """Client HTTP inter-service authentifié par SERVICE_PROFILE_TOKEN."""
     token = os.environ["SERVICE_PROFILE_TOKEN"]
     headers = {"Authorization": f"Bearer {token}"}
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test", headers=headers) as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test", headers=headers
+    ) as ac:
         yield ac
 
 
 @pytest_asyncio.fixture
-async def client(session: AsyncSession, test_user_id: uuid.UUID) -> AsyncGenerator[AsyncClient, None]:
+async def client(
+    session: AsyncSession, test_user_id: uuid.UUID
+) -> AsyncGenerator[AsyncClient, None]:
     """Client HTTP de test avec session DB et user_id injectés via dependency_overrides."""
 
     async def _override_session() -> AsyncGenerator[AsyncSession, None]:
@@ -98,7 +102,9 @@ async def client(session: AsyncSession, test_user_id: uuid.UUID) -> AsyncGenerat
     app.dependency_overrides[get_session] = _override_session
     app.dependency_overrides[get_current_user_id] = _override_user_id
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
 
     app.dependency_overrides.clear()

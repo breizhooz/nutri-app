@@ -47,21 +47,94 @@ INGREDIENTS_TO_TEST = [
 ]
 
 INGREDIENTS_9 = [
-    {"name": "pâtes",         "tags": ["enums.type_of_ingredient.grain"],           "free_tags": [],        "calories_per_100g": 350.0, "proteins_per_100g": 12.0, "carbs_per_100g": 70.0, "fats_per_100g":   1.5},
-    {"name": "tomates",       "tags": ["enums.type_of_ingredient.fruit_vegetable"], "free_tags": ["vegan"], "calories_per_100g":  18.0, "proteins_per_100g":  0.9, "carbs_per_100g":  3.5, "fats_per_100g":   0.2},
-    {"name": "ail",           "tags": ["enums.type_of_ingredient.bulb_vegetable"],  "free_tags": [],        "calories_per_100g": 149.0, "proteins_per_100g":  6.4, "carbs_per_100g": 33.0, "fats_per_100g":   0.5},
-    {"name": "huile d'olive", "tags": ["enums.type_of_ingredient.oil"],             "free_tags": ["vegan"], "calories_per_100g": 884.0, "proteins_per_100g":  0.0, "carbs_per_100g":  0.0, "fats_per_100g": 100.0},
-    {"name": "sel",           "tags": ["enums.type_of_ingredient.condiment"],       "free_tags": [],        "calories_per_100g":   0.0, "proteins_per_100g":  0.0, "carbs_per_100g":  0.0, "fats_per_100g":   0.0},
-    {"name": "poivre",        "tags": ["enums.type_of_ingredient.spice"],           "free_tags": [],        "calories_per_100g": 251.0, "proteins_per_100g": 10.4, "carbs_per_100g": 64.0, "fats_per_100g":   3.3},
-    {"name": "basilic",       "tags": ["enums.type_of_ingredient.herb"],            "free_tags": ["vegan"], "calories_per_100g":  22.0, "proteins_per_100g":  3.2, "carbs_per_100g":  2.7, "fats_per_100g":   0.6},
-    {"name": "parmesan",      "tags": ["enums.type_of_ingredient.cheese"],          "free_tags": [],        "calories_per_100g": 392.0, "proteins_per_100g": 36.0, "carbs_per_100g":  0.0, "fats_per_100g":  28.0},
-    {"name": "oignon",        "tags": ["enums.type_of_ingredient.bulb_vegetable"],  "free_tags": ["vegan"], "calories_per_100g":  40.0, "proteins_per_100g":  1.1, "carbs_per_100g":  9.3, "fats_per_100g":   0.1},
+    {
+        "name": "pâtes",
+        "tags": ["enums.type_of_ingredient.grain"],
+        "free_tags": [],
+        "calories_per_100g": 350.0,
+        "proteins_per_100g": 12.0,
+        "carbs_per_100g": 70.0,
+        "fats_per_100g": 1.5,
+    },
+    {
+        "name": "tomates",
+        "tags": ["enums.type_of_ingredient.fruit_vegetable"],
+        "free_tags": ["vegan"],
+        "calories_per_100g": 18.0,
+        "proteins_per_100g": 0.9,
+        "carbs_per_100g": 3.5,
+        "fats_per_100g": 0.2,
+    },
+    {
+        "name": "ail",
+        "tags": ["enums.type_of_ingredient.bulb_vegetable"],
+        "free_tags": [],
+        "calories_per_100g": 149.0,
+        "proteins_per_100g": 6.4,
+        "carbs_per_100g": 33.0,
+        "fats_per_100g": 0.5,
+    },
+    {
+        "name": "huile d'olive",
+        "tags": ["enums.type_of_ingredient.oil"],
+        "free_tags": ["vegan"],
+        "calories_per_100g": 884.0,
+        "proteins_per_100g": 0.0,
+        "carbs_per_100g": 0.0,
+        "fats_per_100g": 100.0,
+    },
+    {
+        "name": "sel",
+        "tags": ["enums.type_of_ingredient.condiment"],
+        "free_tags": [],
+        "calories_per_100g": 0.0,
+        "proteins_per_100g": 0.0,
+        "carbs_per_100g": 0.0,
+        "fats_per_100g": 0.0,
+    },
+    {
+        "name": "poivre",
+        "tags": ["enums.type_of_ingredient.spice"],
+        "free_tags": [],
+        "calories_per_100g": 251.0,
+        "proteins_per_100g": 10.4,
+        "carbs_per_100g": 64.0,
+        "fats_per_100g": 3.3,
+    },
+    {
+        "name": "basilic",
+        "tags": ["enums.type_of_ingredient.herb"],
+        "free_tags": ["vegan"],
+        "calories_per_100g": 22.0,
+        "proteins_per_100g": 3.2,
+        "carbs_per_100g": 2.7,
+        "fats_per_100g": 0.6,
+    },
+    {
+        "name": "parmesan",
+        "tags": ["enums.type_of_ingredient.cheese"],
+        "free_tags": [],
+        "calories_per_100g": 392.0,
+        "proteins_per_100g": 36.0,
+        "carbs_per_100g": 0.0,
+        "fats_per_100g": 28.0,
+    },
+    {
+        "name": "oignon",
+        "tags": ["enums.type_of_ingredient.bulb_vegetable"],
+        "free_tags": ["vegan"],
+        "calories_per_100g": 40.0,
+        "proteins_per_100g": 1.1,
+        "carbs_per_100g": 9.3,
+        "fats_per_100g": 0.1,
+    },
 ]
 
 _RECIPE_USER = {"email": "smoke_recipe@test.internal", "password": "SmokeTest!99"}
 
 
 # ── Fixtures user / auth ─────────────────────────────────────────────────────────
+
 
 @pytest.fixture()
 def create_user():
@@ -90,16 +163,23 @@ def auth_token(create_user):
 
 # ── Fixtures ingrédients / recettes ─────────────────────────────────────────────
 
+
 @pytest.fixture(params=INGREDIENTS_TO_TEST2, ids=lambda d: d["name"])
 def ingredient_setup(request, auth_token):
     headers = {"Authorization": f"Bearer {auth_token}"}
     ingredient_data = request.param
     with httpx.Client() as client:
-        response = client.post(f"{SERVICE_RECIPE_URL}/api/v1/ingredient/", json=ingredient_data, headers=headers)
+        response = client.post(
+            f"{SERVICE_RECIPE_URL}/api/v1/ingredient/",
+            json=ingredient_data,
+            headers=headers,
+        )
         assert response.status_code == 201, f"Erreur creation: {response.text}"
         ingredient_id = response.json()["id"]
         yield {"id": ingredient_id, "data": ingredient_data}
-        client.delete(f"{SERVICE_RECIPE_URL}/api/v1/ingredient/{ingredient_id}", headers=headers)
+        client.delete(
+            f"{SERVICE_RECIPE_URL}/api/v1/ingredient/{ingredient_id}", headers=headers
+        )
 
 
 @pytest.fixture()
@@ -108,13 +188,19 @@ def all_ingredients_setup(auth_token):
     created_ids = []
     with httpx.Client() as client:
         for ing_data in INGREDIENTS_TO_TEST:
-            response = client.post(f"{SERVICE_RECIPE_URL}/api/v1/ingredient/", json=ing_data, headers=headers)
+            response = client.post(
+                f"{SERVICE_RECIPE_URL}/api/v1/ingredient/",
+                json=ing_data,
+                headers=headers,
+            )
             assert response.status_code == 201
             created_ids.append(response.json()["id"])
     yield created_ids
     with httpx.Client() as client:
         for ing_id in created_ids:
-            client.delete(f"{SERVICE_RECIPE_URL}/api/v1/ingredient/{ing_id}", headers=headers)
+            client.delete(
+                f"{SERVICE_RECIPE_URL}/api/v1/ingredient/{ing_id}", headers=headers
+            )
 
 
 @pytest.fixture()
@@ -125,16 +211,24 @@ def recipe_setup(auth_token, all_ingredients_setup):
         "instructions": "Faire cuire le filet de poulet. Ajouter les œufs en fin de cuisson.",
         "recipe_ingredients": [
             {"ingredient_id": all_ingredients_setup[0], "quantity": 200.0, "unit": "g"},
-            {"ingredient_id": all_ingredients_setup[1], "quantity": 2.0, "unit": "pièce"},
+            {
+                "ingredient_id": all_ingredients_setup[1],
+                "quantity": 2.0,
+                "unit": "pièce",
+            },
         ],
     }
     with httpx.Client() as client:
-        response = client.post(f"{SERVICE_RECIPE_URL}/api/v1/recipe", json=recipe_payload, headers=headers)
+        response = client.post(
+            f"{SERVICE_RECIPE_URL}/api/v1/recipe", json=recipe_payload, headers=headers
+        )
         assert response.status_code == 201, f"Erreur création recette: {response.text}"
         recipe_id = response.json()["id"]
     yield recipe_id
     with httpx.Client() as client:
-        client.delete(f"{SERVICE_RECIPE_URL}/api/v1/recipe/id/{recipe_id}", headers=headers)
+        client.delete(
+            f"{SERVICE_RECIPE_URL}/api/v1/recipe/id/{recipe_id}", headers=headers
+        )
 
 
 @pytest.fixture()
@@ -143,13 +237,21 @@ def nine_ingredients_setup(auth_token):
     created_ids = []
     with httpx.Client() as client:
         for ing_data in INGREDIENTS_9:
-            response = client.post(f"{SERVICE_RECIPE_URL}/api/v1/ingredient/", json=ing_data, headers=headers)
-            assert response.status_code == 201, f"Erreur creation ingrédient: {response.text}"
+            response = client.post(
+                f"{SERVICE_RECIPE_URL}/api/v1/ingredient/",
+                json=ing_data,
+                headers=headers,
+            )
+            assert response.status_code == 201, (
+                f"Erreur creation ingrédient: {response.text}"
+            )
             created_ids.append(response.json()["id"])
     yield created_ids
     with httpx.Client() as client:
         for ing_id in created_ids:
-            client.delete(f"{SERVICE_RECIPE_URL}/api/v1/ingredient/{ing_id}", headers=headers)
+            client.delete(
+                f"{SERVICE_RECIPE_URL}/api/v1/ingredient/{ing_id}", headers=headers
+            )
 
 
 def _build_four_recipes(ids):
@@ -159,10 +261,10 @@ def _build_four_recipes(ids):
             "instructions": "Cuire les pâtes. Faire revenir l'ail dans l'huile d'olive. Mélanger et assaisonner.",
             "recipe_ingredients": [
                 {"ingredient_id": ids[0], "quantity": 200.0, "unit": "g"},
-                {"ingredient_id": ids[2], "quantity":   3.0, "unit": "gousse"},
-                {"ingredient_id": ids[3], "quantity":  30.0, "unit": "ml"},
-                {"ingredient_id": ids[4], "quantity":   1.0, "unit": "pincée"},
-                {"ingredient_id": ids[5], "quantity":   1.0, "unit": "pincée"},
+                {"ingredient_id": ids[2], "quantity": 3.0, "unit": "gousse"},
+                {"ingredient_id": ids[3], "quantity": 30.0, "unit": "ml"},
+                {"ingredient_id": ids[4], "quantity": 1.0, "unit": "pincée"},
+                {"ingredient_id": ids[5], "quantity": 1.0, "unit": "pincée"},
             ],
         },
         {
@@ -170,11 +272,11 @@ def _build_four_recipes(ids):
             "instructions": "Faire revenir l'oignon et l'ail dans l'huile. Ajouter les tomates. Laisser mijoter avec le basilic.",
             "recipe_ingredients": [
                 {"ingredient_id": ids[1], "quantity": 400.0, "unit": "g"},
-                {"ingredient_id": ids[2], "quantity":   2.0, "unit": "gousse"},
-                {"ingredient_id": ids[8], "quantity":   1.0, "unit": "pièce"},
-                {"ingredient_id": ids[6], "quantity":  10.0, "unit": "feuilles"},
-                {"ingredient_id": ids[3], "quantity":  20.0, "unit": "ml"},
-                {"ingredient_id": ids[4], "quantity":   1.0, "unit": "pincée"},
+                {"ingredient_id": ids[2], "quantity": 2.0, "unit": "gousse"},
+                {"ingredient_id": ids[8], "quantity": 1.0, "unit": "pièce"},
+                {"ingredient_id": ids[6], "quantity": 10.0, "unit": "feuilles"},
+                {"ingredient_id": ids[3], "quantity": 20.0, "unit": "ml"},
+                {"ingredient_id": ids[4], "quantity": 1.0, "unit": "pincée"},
             ],
         },
         {
@@ -182,8 +284,8 @@ def _build_four_recipes(ids):
             "instructions": "Trancher les tomates. Disposer avec les feuilles de basilic et le parmesan râpé.",
             "recipe_ingredients": [
                 {"ingredient_id": ids[1], "quantity": 300.0, "unit": "g"},
-                {"ingredient_id": ids[6], "quantity":  15.0, "unit": "feuilles"},
-                {"ingredient_id": ids[7], "quantity":  50.0, "unit": "g"},
+                {"ingredient_id": ids[6], "quantity": 15.0, "unit": "feuilles"},
+                {"ingredient_id": ids[7], "quantity": 50.0, "unit": "g"},
             ],
         },
         {
@@ -192,12 +294,12 @@ def _build_four_recipes(ids):
             "recipe_ingredients": [
                 {"ingredient_id": ids[0], "quantity": 200.0, "unit": "g"},
                 {"ingredient_id": ids[1], "quantity": 300.0, "unit": "g"},
-                {"ingredient_id": ids[8], "quantity":   1.0, "unit": "pièce"},
-                {"ingredient_id": ids[2], "quantity":   2.0, "unit": "gousse"},
-                {"ingredient_id": ids[3], "quantity":  20.0, "unit": "ml"},
-                {"ingredient_id": ids[7], "quantity":  30.0, "unit": "g"},
-                {"ingredient_id": ids[4], "quantity":   1.0, "unit": "pincée"},
-                {"ingredient_id": ids[5], "quantity":   1.0, "unit": "pincée"},
+                {"ingredient_id": ids[8], "quantity": 1.0, "unit": "pièce"},
+                {"ingredient_id": ids[2], "quantity": 2.0, "unit": "gousse"},
+                {"ingredient_id": ids[3], "quantity": 20.0, "unit": "ml"},
+                {"ingredient_id": ids[7], "quantity": 30.0, "unit": "g"},
+                {"ingredient_id": ids[4], "quantity": 1.0, "unit": "pincée"},
+                {"ingredient_id": ids[5], "quantity": 1.0, "unit": "pincée"},
             ],
         },
     ]
@@ -209,16 +311,23 @@ def four_recipes_setup(auth_token, nine_ingredients_setup):
     created_ids = []
     with httpx.Client() as client:
         for payload in _build_four_recipes(nine_ingredients_setup):
-            response = client.post(f"{SERVICE_RECIPE_URL}/api/v1/recipe", json=payload, headers=headers)
-            assert response.status_code == 201, f"Erreur création recette: {response.text}"
+            response = client.post(
+                f"{SERVICE_RECIPE_URL}/api/v1/recipe", json=payload, headers=headers
+            )
+            assert response.status_code == 201, (
+                f"Erreur création recette: {response.text}"
+            )
             created_ids.append(response.json()["id"])
     yield created_ids
     with httpx.Client() as client:
         for recipe_id in created_ids:
-            client.delete(f"{SERVICE_RECIPE_URL}/api/v1/recipe/id/{recipe_id}", headers=headers)
+            client.delete(
+                f"{SERVICE_RECIPE_URL}/api/v1/recipe/id/{recipe_id}", headers=headers
+            )
 
 
 # ── Health ───────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.smoke
 def test_recipe_health():
@@ -239,12 +348,17 @@ def test_recipe_health_db():
 
 # ── Ingrédients ──────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.smoke
 def test_ingredient_already_exist(auth_token, ingredient_setup):
     headers = {"Authorization": f"Bearer {auth_token}"}
     duplicate_data = ingredient_setup["data"]
     with httpx.Client() as client:
-        response = client.post(f"{SERVICE_RECIPE_URL}/api/v1/ingredient/", json=duplicate_data, headers=headers)
+        response = client.post(
+            f"{SERVICE_RECIPE_URL}/api/v1/ingredient/",
+            json=duplicate_data,
+            headers=headers,
+        )
     assert response.status_code == 409
 
 
@@ -253,11 +367,14 @@ def test_workflow_ingredient_exists(auth_token, ingredient_setup):
     headers = {"Authorization": f"Bearer {auth_token}"}
     ingredient_id = ingredient_setup["id"]
     with httpx.Client() as client:
-        response = client.get(f"{SERVICE_RECIPE_URL}/api/v1/ingredient/{ingredient_id}", headers=headers)
+        response = client.get(
+            f"{SERVICE_RECIPE_URL}/api/v1/ingredient/{ingredient_id}", headers=headers
+        )
     assert response.status_code == 200
 
 
 # ── Recettes ─────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.smoke
 def test_create_recipe(recipe_setup):
@@ -274,5 +391,7 @@ def test_four_recipes_accessible(auth_token, four_recipes_setup):
     headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
         for recipe_id in four_recipes_setup:
-            response = client.get(f"{SERVICE_RECIPE_URL}/api/v1/recipe/id/{recipe_id}", headers=headers)
+            response = client.get(
+                f"{SERVICE_RECIPE_URL}/api/v1/recipe/id/{recipe_id}", headers=headers
+            )
             assert response.status_code == 200

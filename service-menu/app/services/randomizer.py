@@ -7,6 +7,7 @@ from app.schemas.menu_slot import MenuSlotCreate
 _DAY_ORDER = list(DayOfWeek)
 _DEFAULT_MEALS = [MealType.LUNCH, MealType.DINNER]
 
+
 def _calories_per_serving(recipe: dict) -> float | None:
     total = 0.0
     ingredients = recipe.get("recipe_ingredients", [])
@@ -17,10 +18,11 @@ def _calories_per_serving(recipe: dict) -> float | None:
         qty = ri.get("quantity") or 0
         if cal is not None:
             total += (cal / 100) * qty
-        
+
     servings = recipe.get("servings") or 1
 
     return total / servings
+
 
 def _has_excluded_allergen(recipe: dict, exclusions: set[str]) -> bool:
     if not exclusions:
@@ -30,6 +32,7 @@ def _has_excluded_allergen(recipe: dict, exclusions: set[str]) -> bool:
             if tag in exclusions:
                 return True
     return False
+
 
 async def generate_slots(
     recipe_client: ServicesRecipeClient,
@@ -55,7 +58,11 @@ async def generate_slots(
     # Soft caloric constraint : on filtre si on a assez de recettes
     if caloric_target and len(available) > total_slots:
         budget = caloric_target / len(meal_types)
-        fitting = [r for r in available if (c := _calories_per_serving(r)) is None or c <= budget]
+        fitting = [
+            r
+            for r in available
+            if (c := _calories_per_serving(r)) is None or c <= budget
+        ]
         if len(fitting) >= total_slots:
             available = fitting
 
@@ -72,10 +79,12 @@ async def generate_slots(
     for i, day in enumerate(_DAY_ORDER[:duration_days]):
         for j, meal_type in enumerate(meal_types):
             recipe = pool[i * len(meal_types) + j]
-            slots.append(MenuSlotCreate(
-                day_of_week=day,
-                meal_type=meal_type,
-                recipe_id=recipe["id"],
-            ))
+            slots.append(
+                MenuSlotCreate(
+                    day_of_week=day,
+                    meal_type=meal_type,
+                    recipe_id=recipe["id"],
+                )
+            )
 
     return slots

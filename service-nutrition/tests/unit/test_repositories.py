@@ -16,8 +16,12 @@ USER2_ID = uuid.UUID("00000000-0000-0000-0000-000000000002")
 
 async def _create_item(session, nom="Farine", code="1001"):
     return await NutritionItemRepository(session).create(
-        nom_fr=nom, calories=340.0, proteines=13.0,
-        glucides=71.0, lipides=3.0, source=NutritionSource.CIQUAL,
+        nom_fr=nom,
+        calories=340.0,
+        proteines=13.0,
+        glucides=71.0,
+        lipides=3.0,
+        source=NutritionSource.CIQUAL,
         ciqual_id=code,
     )
 
@@ -54,7 +58,10 @@ class TestNutritionItemRepository:
 
     @pytest.mark.unit
     async def test_get_by_slug_not_found(self, db_session):
-        assert await NutritionItemRepository(db_session).get_by_slug("slug-inexistant") is None
+        assert (
+            await NutritionItemRepository(db_session).get_by_slug("slug-inexistant")
+            is None
+        )
 
     @pytest.mark.unit
     async def test_get_by_ciqual_id_found(self, db_session):
@@ -64,7 +71,9 @@ class TestNutritionItemRepository:
 
     @pytest.mark.unit
     async def test_get_by_ciqual_id_not_found(self, db_session):
-        assert await NutritionItemRepository(db_session).get_by_ciqual_id("XXXX") is None
+        assert (
+            await NutritionItemRepository(db_session).get_by_ciqual_id("XXXX") is None
+        )
 
 
 class TestMacroErrorRepository:
@@ -79,8 +88,10 @@ class TestMacroErrorRepository:
     @pytest.mark.unit
     async def test_create_with_suggestion(self, db_session):
         error = await MacroErrorRepository(db_session).create(
-            user_id=USER_ID, raw_ingredient="gochujank",
-            suggested_match="gochujang", match_score=0.85,
+            user_id=USER_ID,
+            raw_ingredient="gochujank",
+            suggested_match="gochujang",
+            match_score=0.85,
         )
         assert error.suggested_match == "gochujang"
         assert error.match_score == pytest.approx(0.85)
@@ -119,7 +130,9 @@ class TestMacroErrorRepository:
     @pytest.mark.unit
     async def test_resolve_sets_resolved_status(self, db_session):
         error = await _create_error(db_session)
-        updated = await MacroErrorRepository(db_session).resolve(error, resolved_name="gochujang")
+        updated = await MacroErrorRepository(db_session).resolve(
+            error, resolved_name="gochujang"
+        )
         assert updated.status == MacroErrorStatus.RESOLVED
         assert updated.resolved_name == "gochujang"
         assert updated.resolved_at is not None
@@ -128,8 +141,12 @@ class TestMacroErrorRepository:
     async def test_resolve_with_macros_sets_manual_status(self, db_session):
         error = await _create_error(db_session)
         updated = await MacroErrorRepository(db_session).resolve(
-            error, resolved_name="perso",
-            calories=100.0, proteines=5.0, glucides=15.0, lipides=3.0,
+            error,
+            resolved_name="perso",
+            calories=100.0,
+            proteines=5.0,
+            glucides=15.0,
+            lipides=3.0,
         )
         assert updated.status == MacroErrorStatus.MANUAL
         assert updated.calories_manual == pytest.approx(100.0)
@@ -143,7 +160,9 @@ class TestMacroErrorRepository:
         await repo.resolve(e3, resolved_name="ok")
 
         pending = await repo.count_by_user_and_status(USER_ID, MacroErrorStatus.PENDING)
-        resolved = await repo.count_by_user_and_status(USER_ID, MacroErrorStatus.RESOLVED)
+        resolved = await repo.count_by_user_and_status(
+            USER_ID, MacroErrorStatus.RESOLVED
+        )
         assert pending == 2
         assert resolved == 1
 
@@ -151,7 +170,7 @@ class TestMacroErrorRepository:
     async def test_get_by_user_id_ordered_desc(self, db_session):
         repo = MacroErrorRepository(db_session)
         e1 = await _create_error(db_session, "first")
-        e2 = await _create_error(db_session, "second")
+        await _create_error(db_session, "second")
 
         # Force e1 dans le passé pour garantir l'ordre DESC
         await db_session.execute(

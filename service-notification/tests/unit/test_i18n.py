@@ -9,7 +9,9 @@ from app.i18n.loader import TranslationLoader
 class TestTranslationLoader:
     @pytest.fixture
     def loader(self) -> TranslationLoader:
-        return TranslationLoader(locales_dir=Path(__file__).parent.parent.parent / "app" / "i18n" / "locales")
+        return TranslationLoader(
+            locales_dir=Path(__file__).parent.parent.parent / "app" / "i18n" / "locales"
+        )
 
     @pytest.mark.unit
     def test_fr_locale_loaded(self, loader):
@@ -24,12 +26,18 @@ class TestTranslationLoader:
     @pytest.mark.unit
     def test_get_simple_key_fr(self, loader):
         """Clé simple en français retourne la bonne traduction."""
-        assert loader.get("subscription.not_found", locale="fr") == "Abonnement introuvable."
+        assert (
+            loader.get("subscription.not_found", locale="fr")
+            == "Abonnement introuvable."
+        )
 
     @pytest.mark.unit
     def test_get_simple_key_en(self, loader):
         """Clé simple en anglais retourne la bonne traduction."""
-        assert loader.get("subscription.not_found", locale="en") == "Subscription not found."
+        assert (
+            loader.get("subscription.not_found", locale="en")
+            == "Subscription not found."
+        )
 
     @pytest.mark.unit
     def test_get_nested_key(self, loader):

@@ -64,6 +64,7 @@ async def db_session():
 @pytest.fixture(scope="function")
 async def client(db_session: AsyncSession):
     """Client HTTP avec JWT utilisateur valide."""
+
     async def _override():
         yield db_session
 
@@ -80,6 +81,7 @@ async def client(db_session: AsyncSession):
 @pytest.fixture(scope="function")
 async def service_client(db_session: AsyncSession):
     """Client HTTP avec token de service (appels inter-services)."""
+
     async def _override():
         yield db_session
 

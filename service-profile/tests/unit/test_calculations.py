@@ -1,7 +1,7 @@
 """Tests unitaires du CalculationService — calculs purs sans base de données."""
+
 import pytest
 from datetime import date
-from unittest.mock import patch
 
 from app.models.enums import ActivityLevel, BiologicalSex, MainGoal
 from app.models.lifestyle_profile import LifestyleProfile
@@ -96,8 +96,11 @@ class TestCalculationService:
         """Calcul complet retourne un CalculationResponse cohérent."""
         from decimal import Decimal
         import uuid
+
         profile = Profile(
-            id=uuid.uuid4(), user_id=uuid.uuid4(), slug="test",
+            id=uuid.uuid4(),
+            user_id=uuid.uuid4(),
+            slug="test",
             date_of_birth=date(1992, 3, 15),
             biological_sex=BiologicalSex.MALE,
             height_cm=Decimal("181.0"),

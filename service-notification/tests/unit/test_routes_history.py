@@ -20,9 +20,7 @@ class TestHistoryRoute:
         assert resp.json() == []
 
     @pytest.mark.unit
-    async def test_get_history_returns_created_notifications(
-        self, client, db_session
-    ):
+    async def test_get_history_returns_created_notifications(self, client, db_session):
         """Notifications en base → retournées dans la réponse."""
         repo = NotificationRepository(db_session)
         await repo.create(

@@ -15,12 +15,16 @@ def _to_csv(sl: ShoppingList) -> StreamingResponse:
     writer = csv.writer(buf)
     writer.writerow(["Ingrédient", "Quantité", "Unité", "Catégorie"])
     for item in sl.items:
-        writer.writerow([item.ingredient_name, item.total_quantity, item.unit, item.category or ""])
+        writer.writerow(
+            [item.ingredient_name, item.total_quantity, item.unit, item.category or ""]
+        )
     buf.seek(0)
     return StreamingResponse(
         iter([buf.getvalue()]),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=shopping-list-{sl.menu_id}.csv"},
+        headers={
+            "Content-Disposition": f"attachment; filename=shopping-list-{sl.menu_id}.csv"
+        },
     )
 
 
@@ -44,5 +48,7 @@ def _to_pdf(sl: ShoppingList) -> StreamingResponse:
     return StreamingResponse(
         iter([pdf]),
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename=shopping-list-{sl.menu_id}.pdf"},
+        headers={
+            "Content-Disposition": f"attachment; filename=shopping-list-{sl.menu_id}.pdf"
+        },
     )

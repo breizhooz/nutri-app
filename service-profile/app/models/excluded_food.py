@@ -1,7 +1,7 @@
 """Modèle ExcludedFood — aliment banni des suggestions pour un utilisateur."""
+
 import logging
 import uuid
-from datetime import datetime
 
 from sqlalchemy import String, Text
 from sqlalchemy.dialects.postgresql import UUID
@@ -18,7 +18,9 @@ class ExcludedFood(Base, SlugMixin, TimestampMixin):
 
     __tablename__ = "excluded_foods"
 
-    profile_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False, index=True
+    )
     food_name: Mapped[str] = mapped_column(String(200), nullable=False)
     food_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)

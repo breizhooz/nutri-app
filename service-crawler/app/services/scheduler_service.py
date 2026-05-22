@@ -24,7 +24,9 @@ class SchedulerService:
         return f"instagram_crawl_{source_id}"
 
     @staticmethod
-    def compute_schedule(frequency_hours: int, execution_hour: time) -> crontab | timedelta:
+    def compute_schedule(
+        frequency_hours: int, execution_hour: time
+    ) -> crontab | timedelta:
         """
         Retourne l'objet schedule Celery adapté :
         - 24 h  → crontab quotidien à execution_hour (heure et minute exactes)
@@ -39,7 +41,9 @@ class SchedulerService:
         """Convertit un CrawlSource en dict d'entrée Celery Beat."""
         return {
             "task": cls.INSTAGRAM_TASK,
-            "schedule": cls.compute_schedule(source.frequency_hours, source.execution_hour),
+            "schedule": cls.compute_schedule(
+                source.frequency_hours, source.execution_hour
+            ),
             "args": [str(source.id), source.url],
             "options": {"expires": cls.TASK_EXPIRES_SECONDS},
         }
@@ -48,8 +52,7 @@ class SchedulerService:
     def build_schedule(cls, sources: list[CrawlSource]) -> dict[str, dict[str, Any]]:
         """Construit le planning Beat complet depuis une liste de sources actives."""
         return {
-            cls.source_key(source.id): cls.build_entry(source)
-            for source in sources
+            cls.source_key(source.id): cls.build_entry(source) for source in sources
         }
 
     @staticmethod

@@ -14,7 +14,7 @@ from app.core.http_client import get_recipe_client
 from app.models.weekly_menu import WeeklyMenu
 from tests.conftest import MockRecipeClient, SAMPLE_RECIPES, RICH_RECIPE
 
-TEST_USER_ID  = "test-user-uuid-1234"
+TEST_USER_ID = "test-user-uuid-1234"
 OTHER_USER_ID = "other-user-uuid-9999"
 
 _TEST_ENGINE = create_async_engine(
@@ -59,18 +59,22 @@ def mock_recipe_client() -> MockRecipeClient:
 
 
 @pytest.fixture
-async def client(session: AsyncSession, mock_recipe_client: MockRecipeClient) -> AsyncClient:
+async def client(
+    session: AsyncSession, mock_recipe_client: MockRecipeClient
+) -> AsyncClient:
     async def _get_session():
         yield session
 
     async def _get_recipe_client():
         yield mock_recipe_client
 
-    app.dependency_overrides[get_session]         = _get_session
+    app.dependency_overrides[get_session] = _get_session
     app.dependency_overrides[get_current_user_id] = lambda: TEST_USER_ID
-    app.dependency_overrides[get_recipe_client]   = _get_recipe_client
+    app.dependency_overrides[get_recipe_client] = _get_recipe_client
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
         yield ac
 
     app.dependency_overrides.clear()

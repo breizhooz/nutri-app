@@ -60,17 +60,19 @@ async def _do_crawl(task, source_id: str, account: str) -> None:
             if await result_repo.url_exists(post.url):
                 logger.debug("Post déjà indexé, ignoré : %s", post.url)
                 continue
-            await result_repo.create({
-                "source_id": UUID(source_id),
-                "user_id": user_id,
-                "type": CrawlType.INSTAGRAM,
-                "url_origin": post.url,
-                "title": post.title,
-                "raw_content": post.caption,
-                "images": post.images,
-                "video_url": post.video_url,
-                "status": CrawlStatus.WAITING,
-            })
+            await result_repo.create(
+                {
+                    "source_id": UUID(source_id),
+                    "user_id": user_id,
+                    "type": CrawlType.INSTAGRAM,
+                    "url_origin": post.url,
+                    "title": post.title,
+                    "raw_content": post.caption,
+                    "images": post.images,
+                    "video_url": post.video_url,
+                    "status": CrawlStatus.WAITING,
+                }
+            )
             new_count += 1
 
         await source_repo.mark_crawled(source)

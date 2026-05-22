@@ -26,15 +26,21 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-async def _get_profile_id(user_id: uuid.UUID, session: AsyncSession, locale: str) -> uuid.UUID:
+async def _get_profile_id(
+    user_id: uuid.UUID, session: AsyncSession, locale: str
+) -> uuid.UUID:
     """Résout le profile_id depuis le user_id. Lève 404 si le profil est absent."""
     profile = await ProfileRepository(session).get_by_user_id(user_id)
     if not profile:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale)
+        )
     return profile.id
 
 
-@router.post("/me/injuries", response_model=InjuryResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/me/injuries", response_model=InjuryResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_injury(
     request: Request,
     data: InjuryCreate,
@@ -72,10 +78,16 @@ async def delete_injury(
     locale = get_locale(request)
     profile_id = await _get_profile_id(user_id, session, locale)
     if not await MedicalService(session).delete_injury(slug, profile_id):
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("injury.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("injury.not_found", locale)
+        )
 
 
-@router.post("/me/conditions", response_model=MedicalConditionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/me/conditions",
+    response_model=MedicalConditionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_condition(
     request: Request,
     data: MedicalConditionCreate,
@@ -100,10 +112,16 @@ async def delete_condition(
     locale = get_locale(request)
     profile_id = await _get_profile_id(user_id, session, locale)
     if not await MedicalService(session).delete_condition(slug, profile_id):
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("condition.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("condition.not_found", locale)
+        )
 
 
-@router.post("/me/allergies", response_model=FoodAllergyResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/me/allergies",
+    response_model=FoodAllergyResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_allergy(
     request: Request,
     data: FoodAllergyCreate,
@@ -141,10 +159,16 @@ async def delete_allergy(
     locale = get_locale(request)
     profile_id = await _get_profile_id(user_id, session, locale)
     if not await MedicalService(session).delete_allergy(slug, profile_id):
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("allergy.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("allergy.not_found", locale)
+        )
 
 
-@router.post("/me/medications", response_model=MedicationResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/me/medications",
+    response_model=MedicationResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_medication(
     request: Request,
     data: MedicationCreate,
@@ -169,4 +193,6 @@ async def delete_medication(
     locale = get_locale(request)
     profile_id = await _get_profile_id(user_id, session, locale)
     if not await MedicalService(session).delete_medication(slug, profile_id):
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("medication.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("medication.not_found", locale)
+        )

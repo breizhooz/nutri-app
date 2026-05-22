@@ -1,4 +1,5 @@
 """Point d'entrée FastAPI du service-profile."""
+
 import logging
 
 from fastapi import FastAPI
@@ -17,6 +18,7 @@ from nutri_shared.core.middleware import RequestLoggingMiddleware
 
 logger = logging.getLogger(__name__)
 configure_logging("service-profile")
+
 
 class LocaleMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: object) -> Response:
@@ -37,9 +39,11 @@ app.include_router(tracker.router, prefix="/api/v1/profiles", tags=["tracker"])
 app.include_router(medical.router, prefix="/api/v1/profiles", tags=["medical"])
 app.include_router(preferences.router, prefix="/api/v1/profiles", tags=["preferences"])
 
+
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok", "service": "service-profile"}
+
 
 @app.get("/health/db")
 async def health_db() -> dict[str, str]:

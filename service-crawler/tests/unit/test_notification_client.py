@@ -1,4 +1,5 @@
 """Tests unitaires — NotificationClient."""
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
@@ -25,7 +26,9 @@ def _mock_http_client(status_code: int = 200) -> AsyncMock:
 @pytest.mark.anyio
 async def test_notify_crawl_done_calls_post():
     http = _mock_http_client()
-    await _make_client(http).notify_crawl_done("user-id-123", "web", 3, "https://example.com")
+    await _make_client(http).notify_crawl_done(
+        "user-id-123", "web", 3, "https://example.com"
+    )
     http.post.assert_called_once()
     call_args = http.post.call_args
     assert call_args[0][0] == "/api/v1/notify"

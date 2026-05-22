@@ -1,4 +1,5 @@
 """Repository de base — résolution de slug unique partagée."""
+
 import logging
 
 from slugify import slugify

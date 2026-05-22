@@ -25,9 +25,7 @@ class CiqualImporter:
         )
         return result.scalar_one_or_none() is not None
 
-    async def import_archive(
-        self, extract_dir: str, sha256: str, filename: str
-    ) -> int:
+    async def import_archive(self, extract_dir: str, sha256: str, filename: str) -> int:
         try:
             aliments = CiqualXmlParser.parse_aliments(extract_dir)
             macros = CiqualXmlParser.parse_compo(extract_dir)
@@ -63,12 +61,14 @@ class CiqualImporter:
                 count += 1
 
             version = filename.replace(".7z", "")
-            self._session.add(CiqualArchive(
-                sha256=sha256,
-                filename=filename,
-                version=version,
-                item_count=count,
-            ))
+            self._session.add(
+                CiqualArchive(
+                    sha256=sha256,
+                    filename=filename,
+                    version=version,
+                    item_count=count,
+                )
+            )
             await self._session.commit()
             logger.info("Import Ciqual terminé : %d items", count)
             return count
@@ -78,6 +78,7 @@ class CiqualImporter:
 
 def _slugify(nom_fr: str, alim_code: int) -> str:
     import re
+
     slug = nom_fr.lower()
     slug = re.sub(r"[^a-z0-9]+", "-", slug).strip("-")
     return f"{slug}-{alim_code}"

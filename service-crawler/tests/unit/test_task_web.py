@@ -60,6 +60,7 @@ async def test_do_crawl_nominal():
         mock_ws_cls.return_value = mock_ws
 
         from tasks.web import _do_crawl
+
         await _do_crawl(task, _FAKE_SOURCE_ID, _FAKE_URL)
 
     result_repo.url_exists.assert_called_once_with(_FAKE_URL)
@@ -96,6 +97,7 @@ async def test_do_crawl_skips_duplicate_url():
         mock_factory.return_value.return_value = mock_session
 
         from tasks.web import _do_crawl
+
         await _do_crawl(task, _FAKE_SOURCE_ID, _FAKE_URL)
 
     result_repo.create.assert_not_called()
@@ -129,6 +131,7 @@ async def test_do_crawl_retries_on_fetch_error():
         mock_ws_cls.return_value = mock_ws
 
         from tasks.web import _do_crawl
+
         with pytest.raises(RuntimeError, match="retry called"):
             await _do_crawl(task, _FAKE_SOURCE_ID, _FAKE_URL)
 
@@ -138,7 +141,12 @@ async def test_do_crawl_retries_on_fetch_error():
 
 @pytest.mark.asyncio
 async def test_do_crawl_no_source_id():
-    fake_data = {"title": "Recette ponctuelle", "raw_content": "...", "images": [], "video_url": None}
+    fake_data = {
+        "title": "Recette ponctuelle",
+        "raw_content": "...",
+        "images": [],
+        "video_url": None,
+    }
 
     result_repo = AsyncMock()
     result_repo.url_exists = AsyncMock(return_value=False)
@@ -162,6 +170,7 @@ async def test_do_crawl_no_source_id():
         mock_ws_cls.return_value = mock_ws
 
         from tasks.web import _do_crawl
+
         await _do_crawl(task, None, _FAKE_URL)
 
     payload = result_repo.create.call_args[0][0]

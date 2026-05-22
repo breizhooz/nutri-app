@@ -125,7 +125,9 @@ class TestCreateRecipe:
     async def test_posts_to_correct_path(self, mock_http):
         mock_http.post.return_value = _make_response({"id": 2})
         client = RecipeServiceClient(http_client=mock_http)
-        await client.create_recipe({"title": "X", "instructions": "Y", "recipe_ingredients": []})
+        await client.create_recipe(
+            {"title": "X", "instructions": "Y", "recipe_ingredients": []}
+        )
         args, _ = mock_http.post.call_args
         assert args[0] == "/api/v1/recipe/"
 

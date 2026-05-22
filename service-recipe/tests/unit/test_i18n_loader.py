@@ -1,8 +1,7 @@
-import pytest
-from pathlib import Path
 from app.i18n.loader import TranslationLoader
 
-class TestTranslationLoader():
+
+class TestTranslationLoader:
     """Test pour la classe TranslationLoader"""
 
     def test_load_all_translation(self, temp_locale_files):
@@ -39,11 +38,7 @@ class TestTranslationLoader():
     def test_get_with_interpolation(self, temp_locale_files, monkeypatch):
         """Teste l'interpolation de variables"""
         loader = TranslationLoader(locales_dir=temp_locale_files)
-        result = loader.get(
-            "recipe.errors.validation",
-            locale="fr",
-            field="title"
-        )
+        result = loader.get("recipe.errors.validation", locale="fr", field="title")
 
         assert result == "Le champ title est invalide"
 
@@ -56,14 +51,15 @@ class TestTranslationLoader():
     def test_get_missing_locale_returns_key(self, temp_locale_files, monkeypatch):
         """Locale inexistante retourne la clé (fallback)"""
         loader = TranslationLoader(locales_dir=temp_locale_files)
-        result = loader.get("enums.difficulty.easy", locale="de")  # Allemand non supporté
+        result = loader.get(
+            "enums.difficulty.easy", locale="de"
+        )  # Allemand non supporté
 
         assert result == "enums.difficulty.easy"
 
     def test_translate_enum_french(self, temp_locale_files, monkeypatch):
         """Teste translate_enum pour un enum en français"""
         loader = TranslationLoader(locales_dir=temp_locale_files)
-        
 
         from enum import Enum
 

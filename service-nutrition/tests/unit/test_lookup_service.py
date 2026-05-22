@@ -36,7 +36,9 @@ class TestLookupService:
     @pytest.mark.unit
     async def test_search_above_threshold_returns_result(self, svc, mock_es):
         """Score ≥ seuil → résultat retourné."""
-        mock_es.search = AsyncMock(return_value=_make_es_response([_hit("farine", 5.0)]))
+        mock_es.search = AsyncMock(
+            return_value=_make_es_response([_hit("farine", 5.0)])
+        )
         results = await svc.search("farine")
         assert len(results) == 1
         assert results[0].slug == "farine"
@@ -45,7 +47,9 @@ class TestLookupService:
     @pytest.mark.unit
     async def test_search_below_threshold_excluded(self, svc, mock_es):
         """Score < seuil → résultat exclu."""
-        mock_es.search = AsyncMock(return_value=_make_es_response([_hit("farine", 0.5)]))
+        mock_es.search = AsyncMock(
+            return_value=_make_es_response([_hit("farine", 0.5)])
+        )
         assert await svc.search("farine") == []
 
     @pytest.mark.unit
@@ -62,10 +66,14 @@ class TestLookupService:
     @pytest.mark.unit
     async def test_search_multiple_results_in_order(self, svc, mock_es):
         """Plusieurs hits → retournés dans l'ordre ES (score décroissant)."""
-        mock_es.search = AsyncMock(return_value=_make_es_response([
-            _hit("farine-ble", 8.0),
-            _hit("farine-sarrasin", 5.0),
-        ]))
+        mock_es.search = AsyncMock(
+            return_value=_make_es_response(
+                [
+                    _hit("farine-ble", 8.0),
+                    _hit("farine-sarrasin", 5.0),
+                ]
+            )
+        )
         results = await svc.search("farine")
         assert len(results) == 2
         assert results[0].slug == "farine-ble"
@@ -74,10 +82,14 @@ class TestLookupService:
     @pytest.mark.unit
     async def test_search_filters_partial_below_threshold(self, svc, mock_es):
         """1 hit au-dessus, 1 en-dessous → seul le premier retourné."""
-        mock_es.search = AsyncMock(return_value=_make_es_response([
-            _hit("ok", 3.0),
-            _hit("trop-faible", 0.2),
-        ]))
+        mock_es.search = AsyncMock(
+            return_value=_make_es_response(
+                [
+                    _hit("ok", 3.0),
+                    _hit("trop-faible", 0.2),
+                ]
+            )
+        )
         results = await svc.search("test")
         assert len(results) == 1
         assert results[0].slug == "ok"

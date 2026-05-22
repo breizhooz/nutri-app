@@ -1,4 +1,5 @@
 """Dépendances FastAPI partagées entre les routes."""
+
 import logging
 import uuid
 

@@ -9,11 +9,12 @@ from app.models.user import User
 
 bearer_scheme = HTTPBearer()
 
+
 async def get_current_user(
-        credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-        session: AsyncSession = Depends(get_session)
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    session: AsyncSession = Depends(get_session),
 ):
-    """ Dépendance injectable dans n'importe quelle route
+    """Dépendance injectable dans n'importe quelle route
     Valide le token et retourne le user
     """
     try:

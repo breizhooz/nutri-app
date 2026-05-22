@@ -1,8 +1,7 @@
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
-from typing import Optional, Any, Union, List
-from app.models.enums import (
-    TypeOfIngredient, Allergen, Nutrition, Diet
-)
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Optional, Union, List
+from app.models.enums import TypeOfIngredient, Allergen, Nutrition, Diet
+
 
 class IngredientBase(BaseModel):
     name: str = Field(..., max_length=200)
@@ -13,8 +12,10 @@ class IngredientBase(BaseModel):
     carbs_per_100g: Optional[float] = None
     fats_per_100g: Optional[float] = None
 
+
 class IngredientCreate(IngredientBase):
     pass
+
 
 class IngredientUpdate(BaseModel):
     name: Optional[str] = Field(None, max_length=200)
@@ -26,6 +27,7 @@ class IngredientUpdate(BaseModel):
     fats_per_100g: Optional[float] = None
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class IngredientResponse(IngredientBase):
     id: int

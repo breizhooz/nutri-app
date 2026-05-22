@@ -39,8 +39,9 @@ class SpacyExtractor:
             return
         try:
             import spacy
+
             self._nlp = spacy.load("fr_core_news_md")
-        except Exception:
+        except Exception:  # nosec B110
             pass
 
     def extract(self, text: str) -> list[ExtractedIngredient] | None:

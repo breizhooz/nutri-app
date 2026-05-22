@@ -4,29 +4,43 @@ from starlette.requests import Request
 
 from app.db.session import get_session
 from app.core.deps import get_current_user_id
-from app.core.http_client import ServicesRecipeClient, get_recipe_client, ServiceUnavailableError
-from app.schemas.weekly_menu import WeeklyMenuCreate, WeeklyMenuUpdate, WeeklyMenuResponse
+from app.core.http_client import (
+    ServicesRecipeClient,
+    get_recipe_client,
+    ServiceUnavailableError,
+)
+from app.schemas.weekly_menu import (
+    WeeklyMenuCreate,
+    WeeklyMenuUpdate,
+    WeeklyMenuResponse,
+)
 from app.repositories import menu_service
 from app.services.randomizer import generate_slots
 from app.i18n import LocalizedHTTPException
 
 router = APIRouter()
 
+
 @router.post("", response_model=WeeklyMenuResponse, status_code=status.HTTP_201_CREATED)
 async def create_menu(
-        menu_data: WeeklyMenuCreate,
-        session: AsyncSession = Depends(get_session),
-        current_user_id: str = Depends(get_current_user_id)
+    menu_data: WeeklyMenuCreate,
+    session: AsyncSession = Depends(get_session),
+    current_user_id: str = Depends(get_current_user_id),
 ):
-    return await menu_service.create_menu(session, menu_data=menu_data, user_id=current_user_id)
+    return await menu_service.create_menu(
+        session, menu_data=menu_data, user_id=current_user_id
+    )
 
-@router.post("/generate", response_model=WeeklyMenuResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/generate", response_model=WeeklyMenuResponse, status_code=status.HTTP_201_CREATED
+)
 async def generate_menu(
     menu_data: WeeklyMenuCreate,
     request: Request,
     session: AsyncSession = Depends(get_session),
     recipe_client: ServicesRecipeClient = Depends(get_recipe_client),
-    current_user_id: str = Depends(get_current_user_id)
+    current_user_id: str = Depends(get_current_user_id),
 ):
     try:
         menu_data.slots = await generate_slots(
@@ -42,6 +56,7 @@ async def generate_menu(
         raise HTTPException(status_code=422, detail=str(e))
 
     return await menu_service.create_menu(session, menu_data, current_user_id)
+
 
 @router.get("", response_model=list[WeeklyMenuResponse])
 async def list_menus(

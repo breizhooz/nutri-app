@@ -7,7 +7,11 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from app.db.base import Base
-from app.models import recipe, ingredient, recipe_ingredients
+from app.models import (
+    recipe as recipe,
+    ingredient as ingredient,
+    recipe_ingredients as recipe_ingredients,
+)
 
 # Alembic lit sa propre config
 config = context.config
@@ -25,9 +29,8 @@ def get_url() -> str:
     # On lit l'URL depuis les variables d'environnement
     # jamais depuis alembic.ini
     from app.core.config import settings
-    return settings.DATABASE_URL.replace(
-        "postgresql://", "postgresql+asyncpg://"
-    )
+
+    return settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
 
 def run_migrations_offline() -> None:

@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.models.enums import NotificationStatus, NotificationType
-from app.services.dispatch_service import DispatchResult, DispatchService
+from app.services.dispatch_service import DispatchService
 from app.services.push_service import PushService
 
 
@@ -47,8 +47,10 @@ class TestDispatchService:
         notif.status = NotificationStatus.SENT
         push = _make_push(send_result=True)
 
-        with patch("app.services.dispatch_service.SubscriptionRepository") as SR, \
-             patch("app.services.dispatch_service.NotificationRepository") as NR:
+        with (
+            patch("app.services.dispatch_service.SubscriptionRepository") as SR,
+            patch("app.services.dispatch_service.NotificationRepository") as NR,
+        ):
             SR.return_value.get_by_user_id = AsyncMock(return_value=[sub])
             NR.return_value.create = AsyncMock(return_value=notif)
             NR.return_value.update_status = AsyncMock(return_value=notif)
@@ -73,8 +75,10 @@ class TestDispatchService:
         notif.status = NotificationStatus.FAILED
         push = _make_push()
 
-        with patch("app.services.dispatch_service.SubscriptionRepository") as SR, \
-             patch("app.services.dispatch_service.NotificationRepository") as NR:
+        with (
+            patch("app.services.dispatch_service.SubscriptionRepository") as SR,
+            patch("app.services.dispatch_service.NotificationRepository") as NR,
+        ):
             SR.return_value.get_by_user_id = AsyncMock(return_value=[])
             NR.return_value.create = AsyncMock(return_value=notif)
             NR.return_value.update_status = AsyncMock(return_value=notif)
@@ -99,8 +103,10 @@ class TestDispatchService:
         push = MagicMock(spec=PushService)
         push.send = AsyncMock(side_effect=[True, False])
 
-        with patch("app.services.dispatch_service.SubscriptionRepository") as SR, \
-             patch("app.services.dispatch_service.NotificationRepository") as NR:
+        with (
+            patch("app.services.dispatch_service.SubscriptionRepository") as SR,
+            patch("app.services.dispatch_service.NotificationRepository") as NR,
+        ):
             SR.return_value.get_by_user_id = AsyncMock(return_value=[sub1, sub2])
             NR.return_value.create = AsyncMock(return_value=notif)
             NR.return_value.update_status = AsyncMock(return_value=notif)
@@ -123,15 +129,19 @@ class TestDispatchService:
         notif.status = NotificationStatus.FAILED
         push = _make_push(send_result=False)
 
-        with patch("app.services.dispatch_service.SubscriptionRepository") as SR, \
-             patch("app.services.dispatch_service.NotificationRepository") as NR:
+        with (
+            patch("app.services.dispatch_service.SubscriptionRepository") as SR,
+            patch("app.services.dispatch_service.NotificationRepository") as NR,
+        ):
             SR.return_value.get_by_user_id = AsyncMock(return_value=[sub])
             NR.return_value.create = AsyncMock(return_value=notif)
             NR.return_value.update_status = AsyncMock(return_value=notif)
 
             result = await DispatchService(db_session, push).dispatch(
-                user_id=user_id, type=NotificationType.MACRO_ERROR,
-                title="T", body="B",
+                user_id=user_id,
+                type=NotificationType.MACRO_ERROR,
+                title="T",
+                body="B",
             )
 
         assert result.sent == 0
@@ -147,15 +157,20 @@ class TestDispatchService:
         notif.status = NotificationStatus.SENT
         push = _make_push()
 
-        with patch("app.services.dispatch_service.SubscriptionRepository") as SR, \
-             patch("app.services.dispatch_service.NotificationRepository") as NR:
+        with (
+            patch("app.services.dispatch_service.SubscriptionRepository") as SR,
+            patch("app.services.dispatch_service.NotificationRepository") as NR,
+        ):
             SR.return_value.get_by_user_id = AsyncMock(return_value=[sub])
             NR.return_value.create = AsyncMock(return_value=notif)
             NR.return_value.update_status = AsyncMock(return_value=notif)
 
             result = await DispatchService(db_session, push).dispatch(
-                user_id=user_id, type=NotificationType.SYSTEM,
-                title="T", body="B", data={"key": "val"},
+                user_id=user_id,
+                type=NotificationType.SYSTEM,
+                title="T",
+                body="B",
+                data={"key": "val"},
             )
 
             NR.return_value.create.assert_called_once()

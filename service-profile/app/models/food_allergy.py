@@ -1,7 +1,7 @@
 """Modèle FoodAllergy — intolérance ou allergie alimentaire."""
+
 import logging
 import uuid
-from datetime import datetime
 
 from sqlalchemy import Text, String
 from sqlalchemy import Enum as SQLEnum
@@ -20,7 +20,9 @@ class FoodAllergy(Base, SlugMixin, TimestampMixin):
 
     __tablename__ = "food_allergies"
 
-    profile_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False, index=True
+    )
     allergen: Mapped[str] = mapped_column(String(100), nullable=False)
     severity: Mapped[AllergySeverity] = mapped_column(
         SQLEnum(AllergySeverity, native_enum=False, length=15), nullable=False

@@ -3,9 +3,10 @@ from app.models.weekly_menu import WeeklyMenu
 from app.core.http_client import ServicesRecipeClient
 from app.schemas.shopping_list import ShoppingList, ShoppingItem
 
+
 async def build_shopping_list(
-        menu: WeeklyMenu,
-        recipe_client: ServicesRecipeClient,
+    menu: WeeklyMenu,
+    recipe_client: ServicesRecipeClient,
 ) -> ShoppingList:
     aggregated: dict[int, dict] = defaultdict(
         lambda: {"name": "", "unit": "", "category": None, "total_quantity": 0.0}

@@ -1,7 +1,8 @@
 """Modèle BodyMeasurementsSnapshot — mensurations corporelles datées."""
+
 import logging
 import uuid
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 
 from sqlalchemy import Date, Numeric
@@ -19,7 +20,9 @@ class BodyMeasurementsSnapshot(Base, SlugMixin, TimestampMixin):
 
     __tablename__ = "body_measurements_snapshots"
 
-    profile_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False, index=True
+    )
     measured_at: Mapped[date] = mapped_column(Date, nullable=False)
     waist_cm: Mapped[Decimal | None] = mapped_column(Numeric(4, 1), nullable=True)
     hips_cm: Mapped[Decimal | None] = mapped_column(Numeric(4, 1), nullable=True)

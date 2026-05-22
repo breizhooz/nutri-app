@@ -6,6 +6,9 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
+from app.db.base import Base
+from app.models.user import User  # noqa — doit être importé pour être détecté
+
 # Alembic lit sa propre config
 config = context.config
 
@@ -13,8 +16,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # On pointe vers nos modèles pour la détection automatique
-from app.db.base import Base
-from app.models.user import User  # noqa — doit être importé pour être détecté
+
 
 target_metadata = Base.metadata
 
@@ -23,9 +25,8 @@ def get_url() -> str:
     # On lit l'URL depuis les variables d'environnement
     # jamais depuis alembic.ini
     from app.core.config import settings
-    return settings.DATABASE_URL.replace(
-        "postgresql://", "postgresql+asyncpg://"
-    )
+
+    return settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
 
 def run_migrations_offline() -> None:

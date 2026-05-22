@@ -17,7 +17,9 @@ async def _create_error(session, raw="gochujank", user_id=USER_ID):
 
 class TestMacroErrorsRoutes:
     @pytest.mark.unit
-    async def test_list_macro_errors_for_current_user(self, client: AsyncClient, db_session):
+    async def test_list_macro_errors_for_current_user(
+        self, client: AsyncClient, db_session
+    ):
         """GET /users/{user_id}/macro-errors → liste des erreurs du user."""
         await _create_error(db_session, "gochujank")
         await _create_error(db_session, "autre-truc")
@@ -28,7 +30,9 @@ class TestMacroErrorsRoutes:
         assert all(e["user_id"] == str(USER_ID) for e in data)
 
     @pytest.mark.unit
-    async def test_list_macro_errors_empty_for_new_user(self, client: AsyncClient, db_session):
+    async def test_list_macro_errors_empty_for_new_user(
+        self, client: AsyncClient, db_session
+    ):
         """User sans erreurs → liste vide."""
         resp = await client.get(f"/api/v1/users/{USER_ID}/macro-errors")
         assert resp.status_code == 200
@@ -64,7 +68,9 @@ class TestMacroErrorsRoutes:
         assert data["resolved_name"] == "gochujang"
 
     @pytest.mark.unit
-    async def test_patch_resolve_with_manual_macros(self, client: AsyncClient, db_session):
+    async def test_patch_resolve_with_manual_macros(
+        self, client: AsyncClient, db_session
+    ):
         """PATCH avec macros manuelles → status=manual."""
         error = await _create_error(db_session)
         resp = await client.patch(
@@ -92,7 +98,9 @@ class TestMacroErrorsRoutes:
         assert resp.status_code == 404
 
     @pytest.mark.unit
-    async def test_patch_forbidden_for_other_user(self, client: AsyncClient, db_session):
+    async def test_patch_forbidden_for_other_user(
+        self, client: AsyncClient, db_session
+    ):
         """PATCH d'un error appartenant à un autre user → 403."""
         error = await _create_error(db_session, user_id=OTHER_USER_ID)
         resp = await client.patch(
@@ -102,7 +110,9 @@ class TestMacroErrorsRoutes:
         assert resp.status_code == 403
 
     @pytest.mark.unit
-    async def test_patch_already_resolved_returns_409(self, client: AsyncClient, db_session):
+    async def test_patch_already_resolved_returns_409(
+        self, client: AsyncClient, db_session
+    ):
         """PATCH d'une erreur déjà résolue → 409."""
         repo = MacroErrorRepository(db_session)
         error = await _create_error(db_session)

@@ -1,6 +1,5 @@
 import uuid
 
-import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +9,7 @@ from app.models.nutrition_item import NutritionItem, NutritionSource
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 async def _create_item(
     session: AsyncSession,
@@ -47,6 +47,7 @@ async def _create_item(
 # ---------------------------------------------------------------------------
 # GET /api/v1/nutrition-items/{slug}
 # ---------------------------------------------------------------------------
+
 
 class TestGetNutritionItem:
     async def test_get_existing_item_returns_200(
@@ -140,11 +141,18 @@ class TestGetNutritionItem:
 # PATCH /api/v1/nutrition-items/{slug}
 # ---------------------------------------------------------------------------
 
+
 class TestPatchNutritionItem:
     async def test_patch_updates_fields(
         self, client: AsyncClient, db_session: AsyncSession
     ):
-        await _create_item(db_session, slug="beurre", calories=717.0, source=NutritionSource.user, ciqual_id=None)
+        await _create_item(
+            db_session,
+            slug="beurre",
+            calories=717.0,
+            source=NutritionSource.user,
+            ciqual_id=None,
+        )
 
         resp = await client.patch(
             "/api/v1/nutrition-items/beurre",

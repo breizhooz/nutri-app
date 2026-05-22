@@ -4,7 +4,6 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 from app.db.base import Base
-from app.models import weekly_menu, menu_slot
 
 config = context.config
 if config.config_file_name is not None:
@@ -15,6 +14,7 @@ target_metadata = Base.metadata
 
 def get_url() -> str:
     from app.core.config import settings
+
     return settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
 
@@ -39,7 +39,9 @@ async def run_async_migrations() -> None:
     configuration = config.get_section(config.config_ini_section)
     configuration["sqlalchemy.url"] = get_url()
     connectable = async_engine_from_config(
-        configuration, prefix="sqlalchemy.", poolclass=pool.NullPool,
+        configuration,
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
     )
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)

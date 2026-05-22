@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime, time
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, Enum as SQLEnum, Integer, String, Time, func
 from sqlalchemy.dialects.postgresql import UUID
@@ -7,6 +10,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_class import Base
 from app.models.enums import CrawlType
+
+if TYPE_CHECKING:
+    from app.models.crawl_result import CrawlResult
+
 
 class CrawlSource(Base):
     __tablename__ = "crawl_sources"
@@ -21,8 +28,10 @@ class CrawlSource(Base):
     url: Mapped[str] = mapped_column(String(1000), nullable=False)
     actif: Mapped[bool] = mapped_column(Boolean, default=True)
     frequency_hours: Mapped[int] = mapped_column(Integer, default=24)
-    execution_hour: Mapped[time] = mapped_column(Time, default=time(3,0))
-    last_crawl: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    execution_hour: Mapped[time] = mapped_column(Time, default=time(3, 0))
+    last_crawl: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

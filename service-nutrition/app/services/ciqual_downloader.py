@@ -4,7 +4,6 @@ import hashlib
 import os
 import tempfile
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 import httpx
 import py7zr

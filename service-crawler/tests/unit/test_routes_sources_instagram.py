@@ -1,4 +1,5 @@
 """Tests routes sources — comportement spécifique Instagram."""
+
 import uuid
 from unittest.mock import MagicMock, patch
 

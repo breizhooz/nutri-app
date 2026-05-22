@@ -2,8 +2,6 @@ import uuid
 from datetime import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 from app.services.scheduler_service import SchedulerService
 from tasks.scheduler import DatabaseBackedScheduler, build_beat_schedule
 
@@ -33,6 +31,7 @@ def _make_scheduler() -> DatabaseBackedScheduler:
 
 
 # ── build_beat_schedule ────────────────────────────────────────────────────────
+
 
 class TestBuildBeatSchedule:
     def test_returns_empty_dict_on_db_error(self):
@@ -95,6 +94,7 @@ class TestBuildBeatSchedule:
 
 
 # ── DatabaseBackedScheduler._sync_from_db ─────────────────────────────────────
+
 
 class TestSyncFromDb:
     def test_adds_new_entry(self):
@@ -238,21 +238,21 @@ class TestSyncFromDb:
 
     def test_mixed_state_add_remove_skip(self):
         existing_id = uuid.uuid4()
-        new_id      = uuid.uuid4()
-        stale_id    = uuid.uuid4()
+        new_id = uuid.uuid4()
+        stale_id = uuid.uuid4()
 
         existing_key = SchedulerService.source_key(existing_id)
-        stale_key    = SchedulerService.source_key(stale_id)
+        stale_key = SchedulerService.source_key(stale_id)
 
         scheduler = _make_scheduler()
         scheduler.data = {existing_key: MagicMock(), stale_key: MagicMock()}
         scheduler._entry_sigs = {
             existing_key: (24, 3, 0),
-            stale_key:    (24, 3, 0),
+            stale_key: (24, 3, 0),
         }
 
         existing_source = _make_source(source_id=existing_id, freq=24, hour=3, minute=0)
-        new_source      = _make_source(source_id=new_id)
+        new_source = _make_source(source_id=new_id)
 
         with patch(
             "tasks.scheduler._fetch_active_instagram_sources",

@@ -17,6 +17,7 @@ _FAKE_SUBSCRIPTION = {
 
 # ── Fixtures user / auth ─────────────────────────────────────────────────────────
 
+
 @pytest.fixture()
 def create_user():
     with httpx.Client() as client:
@@ -68,6 +69,7 @@ def subscription_setup(auth_token):
 
 # ── Health ───────────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.smoke
 def test_notification_health():
     with httpx.Client() as client:
@@ -88,10 +90,14 @@ def test_notification_health_db():
 
 # ── Subscriptions ────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.smoke
 def test_create_subscription(auth_token):
     headers = {"Authorization": f"Bearer {auth_token}"}
-    payload = {**_FAKE_SUBSCRIPTION, "endpoint": "https://smoke-create.example.com/push"}
+    payload = {
+        **_FAKE_SUBSCRIPTION,
+        "endpoint": "https://smoke-create.example.com/push",
+    }
     with httpx.Client() as client:
         resp = client.post(
             f"{SERVICE_NOTIFICATION_URL}/api/v1/subscriptions",
@@ -147,7 +153,10 @@ def test_get_subscription_not_found(auth_token):
 @pytest.mark.smoke
 def test_delete_subscription(auth_token):
     headers = {"Authorization": f"Bearer {auth_token}"}
-    payload = {**_FAKE_SUBSCRIPTION, "endpoint": "https://smoke-delete.example.com/push"}
+    payload = {
+        **_FAKE_SUBSCRIPTION,
+        "endpoint": "https://smoke-delete.example.com/push",
+    }
     with httpx.Client() as client:
         create = client.post(
             f"{SERVICE_NOTIFICATION_URL}/api/v1/subscriptions",
@@ -164,6 +173,7 @@ def test_delete_subscription(auth_token):
 
 
 # ── Historique notifications ──────────────────────────────────────────────────────
+
 
 @pytest.mark.smoke
 def test_history_empty_for_new_user(auth_token, user_id):

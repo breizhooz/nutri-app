@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from app.db.base import Base
-from app.models import subscription, notification
+from app.models import subscription as subscription, notification as notification
 
 config = context.config
 
@@ -19,9 +19,8 @@ target_metadata = Base.metadata
 
 def get_url() -> str:
     from app.core.config import settings
-    return settings.DATABASE_URL.replace(
-        "postgresql://", "postgresql+asyncpg://"
-    )
+
+    return settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
 
 def run_migrations_offline() -> None:

@@ -31,8 +31,10 @@ class TestSubscriptionRepository:
         """Sans device_label, le slug contient 'device'."""
         repo = SubscriptionRepository(db_session)
         sub = await repo.create(
-            user_id=USER_ID, endpoint="https://push.example.com/nolabel",
-            p256dh_key="k", auth_key="a",
+            user_id=USER_ID,
+            endpoint="https://push.example.com/nolabel",
+            p256dh_key="k",
+            auth_key="a",
         )
         assert "device" in sub.slug
         assert sub.device_label is None
@@ -42,12 +44,18 @@ class TestSubscriptionRepository:
         """Deux subscriptions même user + device_label → slugs différents avec suffixe -2."""
         repo = SubscriptionRepository(db_session)
         s1 = await repo.create(
-            user_id=USER_ID, endpoint="https://push.example.com/1",
-            p256dh_key="k1", auth_key="a1", device_label="Mobile",
+            user_id=USER_ID,
+            endpoint="https://push.example.com/1",
+            p256dh_key="k1",
+            auth_key="a1",
+            device_label="Mobile",
         )
         s2 = await repo.create(
-            user_id=USER_ID, endpoint="https://push.example.com/2",
-            p256dh_key="k2", auth_key="a2", device_label="Mobile",
+            user_id=USER_ID,
+            endpoint="https://push.example.com/2",
+            p256dh_key="k2",
+            auth_key="a2",
+            device_label="Mobile",
         )
         assert s1.slug != s2.slug
         assert s2.slug.endswith("-2")
@@ -57,8 +65,10 @@ class TestSubscriptionRepository:
         """get_by_slug retourne la subscription si elle existe."""
         repo = SubscriptionRepository(db_session)
         created = await repo.create(
-            user_id=USER_ID, endpoint="https://push.example.com/byslug",
-            p256dh_key="k", auth_key="a",
+            user_id=USER_ID,
+            endpoint="https://push.example.com/byslug",
+            p256dh_key="k",
+            auth_key="a",
         )
         found = await repo.get_by_slug(created.slug)
         assert found is not None
@@ -93,12 +103,16 @@ class TestSubscriptionRepository:
         """get_by_user_id retourne toutes les subscriptions du user."""
         repo = SubscriptionRepository(db_session)
         await repo.create(
-            user_id=USER_ID, endpoint="https://push.example.com/ua",
-            p256dh_key="k1", auth_key="a1",
+            user_id=USER_ID,
+            endpoint="https://push.example.com/ua",
+            p256dh_key="k1",
+            auth_key="a1",
         )
         await repo.create(
-            user_id=USER_ID, endpoint="https://push.example.com/ub",
-            p256dh_key="k2", auth_key="a2",
+            user_id=USER_ID,
+            endpoint="https://push.example.com/ub",
+            p256dh_key="k2",
+            auth_key="a2",
         )
         subs = await repo.get_by_user_id(USER_ID)
         assert len(subs) == 2
@@ -115,8 +129,10 @@ class TestSubscriptionRepository:
         """delete() supprime la subscription, get_by_slug retourne None ensuite."""
         repo = SubscriptionRepository(db_session)
         sub = await repo.create(
-            user_id=USER_ID, endpoint="https://push.example.com/del",
-            p256dh_key="k", auth_key="a",
+            user_id=USER_ID,
+            endpoint="https://push.example.com/del",
+            p256dh_key="k",
+            auth_key="a",
         )
         slug = sub.slug
         await repo.delete(sub)
@@ -194,13 +210,14 @@ class TestNotificationRepository:
         n1 = await repo.create(
             user_id=USER_ID, type=NotificationType.SYSTEM, title="Premier", body="B"
         )
-        n2 = await repo.create(
+        await repo.create(
             user_id=USER_ID, type=NotificationType.SYSTEM, title="Deuxième", body="B"
         )
 
         # SQLite in-memory : func.now() identique pour deux inserts rapides.
         # On force n1 dans le passé pour garantir l'ordre DESC.
         from datetime import datetime, timezone
+
         await db_session.execute(
             sa_update(Notification)
             .where(Notification.id == n1.id)
@@ -219,8 +236,10 @@ class TestNotificationRepository:
         repo = NotificationRepository(db_session)
         for i in range(5):
             await repo.create(
-                user_id=USER_ID, type=NotificationType.SYSTEM,
-                title=f"Notif {i}", body="B"
+                user_id=USER_ID,
+                type=NotificationType.SYSTEM,
+                title=f"Notif {i}",
+                body="B",
             )
         page1 = await repo.get_by_user_id(USER_ID, limit=2, offset=0)
         page2 = await repo.get_by_user_id(USER_ID, limit=2, offset=2)
