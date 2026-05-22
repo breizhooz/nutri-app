@@ -25,8 +25,27 @@ jobs:
           cd service-user
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pip install pytest pytest-cov ruff bandit
+
+      - name: Run linter user
+        run: |
+          cd service-user
+          ruff check .
+
+      - name: Check formatting user
+        run: |
+          cd service-user
+          ruff format --check .
+      
+      - name: Security scan
+        run: |
+          bandit -r . -f json -o bandit-report.json
+      
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: service-user/bandit-report.json
       
       - name: SonarScan User
         uses: SonarSource/sonarqube-scan-action@v6
@@ -36,6 +55,11 @@ jobs:
             -Dsonar.organization=sonar-nutri-app
             -Dsonar.projectKey=nutri-app-service-user
             -Dsonar.python.coverage.reportPaths=coverage.xml
+      
+      - name: Run test User
+        run: |
+            pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -56,8 +80,27 @@ jobs:
           cd service-recipe
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pip install pytest pytest-cov ruff bandit
+
+      - name: Run linter recipe
+        run: |
+          cd service-recipe
+          ruff check .
+
+      - name: Check formatting recipe
+        run: |
+          cd service-recipe
+          ruff format --check .
+      
+      - name: Security scan
+        run: |
+          bandit -r . -f json -o bandit-report.json
+      
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: service-recipe/bandit-report.json
       
       - name: SonarScan Recipe
         uses: SonarSource/sonarqube-scan-action@v6
@@ -67,6 +110,11 @@ jobs:
             -Dsonar.organization=sonar-nutri-app
             -Dsonar.projectKey=nutri-app-service-recipe
             -Dsonar.python.coverage.reportPaths=coverage.xml
+      
+      - name: Run test recipe
+        run: |
+            pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -87,8 +135,27 @@ jobs:
           cd service-menu
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pip install pytest pytest-cov ruff bandit
+
+      - name: Run linter menu
+        run: |
+          cd service-menu
+          ruff check .
+
+      - name: Check formatting menu
+        run: |
+          cd service-menu
+          ruff format --check .
+      
+      - name: Security scan
+        run: |
+          bandit -r . -f json -o bandit-report.json
+      
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: service-menu/bandit-report.json
       
       - name: SonarScan Menu
         uses: SonarSource/sonarqube-scan-action@v6
@@ -98,6 +165,11 @@ jobs:
             -Dsonar.organization=sonar-nutri-app
             -Dsonar.projectKey=nutri-app-service-menu
             -Dsonar.python.coverage.reportPaths=coverage.xml
+      
+      - name: Run test menu
+        run: |
+            pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -118,8 +190,27 @@ jobs:
           cd service-crawler
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pip install pytest pytest-cov ruff bandit
+
+      - name: Run linter crawler
+        run: |
+          cd service-crawler
+          ruff check .
+
+      - name: Check formatting crawler
+        run: |
+          cd service-crawler
+          ruff format --check .
+      
+      - name: Security scan
+        run: |
+          bandit -r . -f json -o bandit-report.json
+      
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: service-crawler/bandit-report.json
       
       - name: SonarScan crawler
         uses: SonarSource/sonarqube-scan-action@v6
@@ -129,6 +220,11 @@ jobs:
             -Dsonar.organization=sonar-nutri-app
             -Dsonar.projectKey=nutri-app-service-crawler
             -Dsonar.python.coverage.reportPaths=coverage.xml
+      
+      - name: Run test crawler
+        run: |
+            pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -149,8 +245,27 @@ jobs:
           cd service-notification
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pip install pytest pytest-cov ruff bandit
+
+      - name: Run linter notification
+        run: |
+          cd service-notification
+          ruff check .
+
+      - name: Check formatting notification
+        run: |
+          cd service-notification
+          ruff format --check .
+      
+      - name: Security scan
+        run: |
+          bandit -r . -f json -o bandit-report.json
+      
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: service-notification/bandit-report.json
       
       - name: SonarScan notification
         uses: SonarSource/sonarqube-scan-action@v6
@@ -160,6 +275,11 @@ jobs:
             -Dsonar.organization=sonar-nutri-app
             -Dsonar.projectKey=nutri-app-service-notification
             -Dsonar.python.coverage.reportPaths=coverage.xml
+      
+      - name: Run test notification
+        run: |
+            pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -180,8 +300,27 @@ jobs:
           cd service-nutrition
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pip install pytest pytest-cov ruff bandit
+
+      - name: Run linter nutrition
+        run: |
+          cd service-nutrition
+          ruff check .
+
+      - name: Check formatting nutrition
+        run: |
+          cd service-nutrition
+          ruff format --check .
+      
+      - name: Security scan
+        run: |
+          bandit -r . -f json -o bandit-report.json
+      
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: service-nutrition/bandit-report.json
       
       - name: SonarScan nutrition
         uses: SonarSource/sonarqube-scan-action@v6
@@ -191,6 +330,11 @@ jobs:
             -Dsonar.organization=sonar-nutri-app
             -Dsonar.projectKey=nutri-app-service-nutrition
             -Dsonar.python.coverage.reportPaths=coverage.xml
+      
+      - name: Run test nutrition
+        run: |
+            pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -211,8 +355,27 @@ jobs:
           cd service-profile
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pip install pytest pytest-cov ruff bandit
+
+      - name: Run linter profile
+        run: |
+          cd service-profile
+          ruff check .
+
+      - name: Check formatting profile
+        run: |
+          cd service-profile
+          ruff format --check .
+      
+      - name: Security scan
+        run: |
+          bandit -r . -f json -o bandit-report.json
+      
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report
+          path: service-profile/bandit-report.json
       
       - name: SonarScan profile
         uses: SonarSource/sonarqube-scan-action@v6
@@ -222,6 +385,11 @@ jobs:
             -Dsonar.organization=sonar-nutri-app
             -Dsonar.projectKey=nutri-app-service-profile
             -Dsonar.python.coverage.reportPaths=coverage.xml
+      
+      - name: Run test profile
+        run: |
+            pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
