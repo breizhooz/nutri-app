@@ -1,7 +1,8 @@
 """Modèle Injury — blessure actuelle ou antérieure."""
+
 import logging
 import uuid
-from datetime import date, datetime
+from datetime import date
 
 from sqlalchemy import Boolean, Date, Text, String
 from sqlalchemy.dialects.postgresql import UUID
@@ -18,7 +19,9 @@ class Injury(Base, SlugMixin, TimestampMixin):
 
     __tablename__ = "injuries"
 
-    profile_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False, index=True
+    )
     body_part: Mapped[str] = mapped_column(String(100), nullable=False)
     injury_type: Mapped[str] = mapped_column(String(200), nullable=False)
     is_current: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)

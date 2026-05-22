@@ -15,6 +15,7 @@ Démarrage (docker-compose) :
     celery -A celery_app beat -l info
 beat_scheduler est configuré dans celery_app.conf.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -147,7 +148,11 @@ class DatabaseBackedScheduler(PersistentScheduler):
                 old_sig = self._entry_sigs.get(key)
                 self.update_from_dict({key: entry_dict})
                 self._entry_sigs[key] = new_sig
-                logger.info("Beat : schedule mis à jour — %s (%s → %s)", key, old_sig, new_sig)
+                logger.info(
+                    "Beat : schedule mis à jour — %s (%s → %s)", key, old_sig, new_sig
+                )
 
         self._last_db_poll = time.monotonic()
-        logger.info("Beat : sync terminé — %d source(s) Instagram active(s)", len(sources))
+        logger.info(
+            "Beat : sync terminé — %d source(s) Instagram active(s)", len(sources)
+        )

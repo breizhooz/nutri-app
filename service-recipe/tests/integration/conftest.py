@@ -33,6 +33,7 @@ def mock_session():
 def override_db(mock_session):
     async def _get_session():
         yield mock_session
+
     app.dependency_overrides[get_session] = _get_session
     yield mock_session
     app.dependency_overrides.clear()
@@ -42,8 +43,10 @@ def override_db(mock_session):
 def override_user_client():
     mock_client = AsyncMock()
     mock_client.user_exist = AsyncMock(return_value=True)
+
     async def _get_user_client():
         return mock_client
+
     app.dependency_overrides[get_user_client] = _get_user_client
     yield mock_client
     app.dependency_overrides.pop(get_user_client, None)
@@ -55,13 +58,15 @@ def mock_es():
     with patch("app.core.elasticsearch.es_client") as mock:
         mock.index = AsyncMock()
         mock.delete = AsyncMock()
-        mock.search = AsyncMock(return_value={
-            "hits": {"total": {"value": 0}, "hits": []}
-        })
+        mock.search = AsyncMock(
+            return_value={"hits": {"total": {"value": 0}, "hits": []}}
+        )
         yield mock
 
 
-def make_mock_recipe(recipe_id=1, title="Poulet rôti", slug="poulet-roti", recipe_ingredients=None):
+def make_mock_recipe(
+    recipe_id=1, title="Poulet rôti", slug="poulet-roti", recipe_ingredients=None
+):
     recipe = MagicMock()
     recipe.id = recipe_id
     recipe.title = title

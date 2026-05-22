@@ -1,4 +1,5 @@
 """Service métier pour les données médicales et de sécurité."""
+
 import logging
 import uuid
 
@@ -10,7 +11,10 @@ from app.models.medical_condition import MedicalCondition
 from app.models.medication import Medication
 from app.repositories.medical_repository import MedicalRepository
 from app.schemas.medical import (
-    FoodAllergyCreate, InjuryCreate, MedicalConditionCreate, MedicationCreate,
+    FoodAllergyCreate,
+    InjuryCreate,
+    MedicalConditionCreate,
+    MedicationCreate,
 )
 
 logger = logging.getLogger(__name__)
@@ -26,12 +30,18 @@ class MedicalService:
 
     async def add_injury(self, profile_id: uuid.UUID, data: InjuryCreate) -> Injury:
         """Ajoute une blessure au profil."""
-        slug = await self._repo.resolve_slug(Injury, f"{data.injury_type}-{data.body_part}")
+        slug = await self._repo.resolve_slug(
+            Injury, f"{data.injury_type}-{data.body_part}"
+        )
         obj = Injury(
-            profile_id=profile_id, slug=slug,
-            body_part=data.body_part, injury_type=data.injury_type,
-            is_current=data.is_current, is_chronic=data.is_chronic,
-            diagnosed_at=data.diagnosed_at, notes=data.notes,
+            profile_id=profile_id,
+            slug=slug,
+            body_part=data.body_part,
+            injury_type=data.injury_type,
+            is_current=data.is_current,
+            is_chronic=data.is_chronic,
+            diagnosed_at=data.diagnosed_at,
+            notes=data.notes,
         )
         self._repo.add(obj)
         await self._session.commit()
@@ -53,13 +63,18 @@ class MedicalService:
         logger.info("Blessure supprimée : slug=%s", slug)
         return True
 
-    async def add_condition(self, profile_id: uuid.UUID, data: MedicalConditionCreate) -> MedicalCondition:
+    async def add_condition(
+        self, profile_id: uuid.UUID, data: MedicalConditionCreate
+    ) -> MedicalCondition:
         """Ajoute une pathologie au profil."""
         slug = await self._repo.resolve_slug(MedicalCondition, data.condition_name)
         obj = MedicalCondition(
-            profile_id=profile_id, slug=slug,
-            category=data.category, condition_name=data.condition_name,
-            is_current=data.is_current, notes=data.notes,
+            profile_id=profile_id,
+            slug=slug,
+            category=data.category,
+            condition_name=data.condition_name,
+            is_current=data.is_current,
+            notes=data.notes,
         )
         self._repo.add(obj)
         await self._session.commit()
@@ -79,12 +94,17 @@ class MedicalService:
         await self._session.commit()
         return True
 
-    async def add_allergy(self, profile_id: uuid.UUID, data: FoodAllergyCreate) -> FoodAllergy:
+    async def add_allergy(
+        self, profile_id: uuid.UUID, data: FoodAllergyCreate
+    ) -> FoodAllergy:
         """Ajoute une allergie ou intolérance au profil."""
         slug = await self._repo.resolve_slug(FoodAllergy, data.allergen)
         obj = FoodAllergy(
-            profile_id=profile_id, slug=slug,
-            allergen=data.allergen, severity=data.severity, notes=data.notes,
+            profile_id=profile_id,
+            slug=slug,
+            allergen=data.allergen,
+            severity=data.severity,
+            notes=data.notes,
         )
         self._repo.add(obj)
         await self._session.commit()
@@ -104,13 +124,17 @@ class MedicalService:
         await self._session.commit()
         return True
 
-    async def add_medication(self, profile_id: uuid.UUID, data: MedicationCreate) -> Medication:
+    async def add_medication(
+        self, profile_id: uuid.UUID, data: MedicationCreate
+    ) -> Medication:
         """Ajoute un traitement médicamenteux au profil."""
         slug = await self._repo.resolve_slug(Medication, data.medication_name)
         obj = Medication(
-            profile_id=profile_id, slug=slug,
+            profile_id=profile_id,
+            slug=slug,
             medication_name=data.medication_name,
-            impacts_metabolism=data.impacts_metabolism, notes=data.notes,
+            impacts_metabolism=data.impacts_metabolism,
+            notes=data.notes,
         )
         self._repo.add(obj)
         await self._session.commit()

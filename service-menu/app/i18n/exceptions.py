@@ -21,16 +21,29 @@ class LocalizedHTTPException(AppException):
 
     @staticmethod
     def menu_not_found(request: Request) -> "LocalizedHTTPException":
-        return LocalizedHTTPException(404, "menu.errors.not_found", request, code="MENU_NOT_FOUND")
+        return LocalizedHTTPException(
+            404, "menu.errors.not_found", request, code="MENU_NOT_FOUND"
+        )
 
     @staticmethod
     def menu_unauthorized(request: Request) -> "LocalizedHTTPException":
-        return LocalizedHTTPException(403, "menu.errors.unauthorized", request, code="MENU_UNAUTHORIZED")
+        return LocalizedHTTPException(
+            403, "menu.errors.unauthorized", request, code="MENU_UNAUTHORIZED"
+        )
 
     @staticmethod
     def service_recipe_unavailable(request: Request) -> "LocalizedHTTPException":
-        return LocalizedHTTPException(503, "http_client.recipe.errors.unavailable", request, code="SERVICE_RECIPE_UNAVAILABLE")
+        return LocalizedHTTPException(
+            503,
+            "http_client.recipe.errors.unavailable",
+            request,
+            code="SERVICE_RECIPE_UNAVAILABLE",
+        )
 
     @staticmethod
-    def service_failed(request: Request, translation_key: str, e: Exception) -> "LocalizedHTTPException":
-        return LocalizedHTTPException(500, translation_key, request, code="SERVICE_ERROR", message=str(e))
+    def service_failed(
+        request: Request, translation_key: str, e: Exception
+    ) -> "LocalizedHTTPException":
+        return LocalizedHTTPException(
+            500, translation_key, request, code="SERVICE_ERROR", message=str(e)
+        )

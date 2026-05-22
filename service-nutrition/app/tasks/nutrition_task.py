@@ -10,6 +10,7 @@ def _make_engine():
     from sqlalchemy.ext.asyncio import create_async_engine
     from sqlalchemy.pool import NullPool
     from app.core.config import settings
+
     return create_async_engine(settings.DATABASE_URL, poolclass=NullPool)
 
 
@@ -19,6 +20,7 @@ def import_ciqual() -> dict:
     Télécharge le ZIP Ciqual depuis l'ANSES, extrait le CSV,
     puis upserte tous les aliments en base. Autonome, sans intervention admin.
     """
+
     async def _run() -> int:
         from app.services.ciqual_downloader import CiqualDownloader
         from app.services.ciqual_importer import CiqualImporter
@@ -32,8 +34,11 @@ def import_ciqual() -> dict:
             async with AsyncSession(engine) as session:
                 importer = CiqualImporter(session)
                 if await importer.already_imported(sha256):
-                    logger.info("Archive déjà importée (sha256 identique) — import ignoré.")
+                    logger.info(
+                        "Archive déjà importée (sha256 identique) — import ignoré."
+                    )
                     import shutil
+
                     shutil.rmtree(extract_dir, ignore_errors=True)
                     return 0
                 return await importer.import_archive(extract_dir, sha256, filename)
@@ -48,6 +53,7 @@ def import_ciqual() -> dict:
 @celery_app.task(name="app.tasks.nutrition_tasks.enrich_from_off")
 def enrich_from_off(batch_size: int = 50) -> dict:
     """Enrichit les NutritionItems sans données OFF via l'API Open Food Facts."""
+
     async def _run() -> int:
         from app.models.nutrition_item import NutritionItem, NutritionSource
         from app.services.open_food_facts_client import OpenFoodFactsClient
@@ -103,6 +109,7 @@ def enrich_from_off(batch_size: int = 50) -> dict:
 @celery_app.task(name="app.tasks.nutrition_tasks.reindex_elasticsearch")
 def reindex_elasticsearch() -> dict:
     """Réindexe tous les NutritionItems dans Elasticsearch."""
+
     async def _run() -> int:
         from app.models.nutrition_item import NutritionItem
         from app.services.lookup_service import LookupService

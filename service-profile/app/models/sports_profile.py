@@ -1,9 +1,9 @@
 """Modèle SportsProfile — profil sportif 1-to-1 avec Profile."""
+
 import logging
 import uuid
-from datetime import datetime
 
-from sqlalchemy import JSON, SmallInteger, String
+from sqlalchemy import JSON, SmallInteger
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -30,4 +30,6 @@ class SportsProfile(Base, SlugMixin, UpdatedAtMixin):
     sessions_per_week: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     avg_session_duration_min: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     avg_intensity_rpe: Mapped[int] = mapped_column(SmallInteger, nullable=False)
-    resting_heart_rate_bpm: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    resting_heart_rate_bpm: Mapped[int | None] = mapped_column(
+        SmallInteger, nullable=True
+    )

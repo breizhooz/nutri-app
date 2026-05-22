@@ -8,14 +8,13 @@ from app.services.recipe_mapper import (
     FR_CONFIG,
     MULTILINGUAL_CONFIG,
     IngredientParser,
-    LanguageConfig,
-    ParsedIngredient,
     RecipeMapper,
     _merge,
 )
 
 
 # ── LanguageConfig & _merge ───────────────────────────────────────────────────
+
 
 class TestLanguageConfig:
     def test_fr_config_has_units_and_connectors(self):
@@ -30,13 +29,13 @@ class TestLanguageConfig:
 
     def test_multilingual_contains_fr_and_en_units(self):
         unit_str = " ".join(MULTILINGUAL_CONFIG.units)
-        assert "cuill" in unit_str      # FR
+        assert "cuill" in unit_str  # FR
         assert "tablespoon" in unit_str  # EN
 
     def test_multilingual_contains_fr_and_en_connectors(self):
         connector_str = " ".join(MULTILINGUAL_CONFIG.connectors)
-        assert "de" in connector_str   # FR
-        assert "of" in connector_str   # EN
+        assert "de" in connector_str  # FR
+        assert "of" in connector_str  # EN
 
     def test_merge_deduplicates_shared_units(self):
         # both FR and EN have "g" and "kg"
@@ -58,6 +57,7 @@ class TestLanguageConfig:
 
 
 # ── IngredientParser (FR) ─────────────────────────────────────────────────────
+
 
 class TestIngredientParserFR:
     @pytest.fixture
@@ -134,7 +134,7 @@ class TestIngredientParserFR:
 
     def test_name_too_short_ignored(self, parser):
         assert parser.parse("5g x") == []
-    
+
     def test_backtracking_artifact_ignored(self, parser):
         assert parser.parse("5g x") == []
 
@@ -143,6 +143,7 @@ class TestIngredientParserFR:
 
 
 # ── IngredientParser (EN) ─────────────────────────────────────────────────────
+
 
 class TestIngredientParserEN:
     @pytest.fixture
@@ -195,6 +196,7 @@ class TestIngredientParserEN:
 
 # ── IngredientParser (multilingual) ──────────────────────────────────────────
 
+
 class TestIngredientParserMultilingual:
     @pytest.fixture
     def parser(self):
@@ -227,6 +229,7 @@ class TestIngredientParserMultilingual:
 
 # ── IngredientParser._normalize_unit ─────────────────────────────────────────
 
+
 class TestNormalizeUnit:
     def test_single_word_plural_stripped(self):
         assert IngredientParser._normalize_unit("cups") == "cup"
@@ -238,7 +241,9 @@ class TestNormalizeUnit:
         assert IngredientParser._normalize_unit("ml") == "ml"
 
     def test_multiword_units_unchanged(self):
-        assert IngredientParser._normalize_unit("cuillère à soupe") == "cuillère à soupe"
+        assert (
+            IngredientParser._normalize_unit("cuillère à soupe") == "cuillère à soupe"
+        )
         assert IngredientParser._normalize_unit("tablespoon") == "tablespoon"
 
     def test_already_singular_unchanged(self):
@@ -251,6 +256,7 @@ class TestNormalizeUnit:
 
 
 # ── RecipeMapper ──────────────────────────────────────────────────────────────
+
 
 class TestRecipeMapper:
     @pytest.fixture
@@ -329,7 +335,9 @@ class TestRecipeMapper:
         mock_client.get_or_create_ingredient.return_value = 1
         mock_client.create_recipe.return_value = {}
         await mapper.map_and_send(
-            self._make_result(images=["https://img1.com/a.jpg", "https://img2.com/b.jpg"])
+            self._make_result(
+                images=["https://img1.com/a.jpg", "https://img2.com/b.jpg"]
+            )
         )
         payload = mock_client.create_recipe.call_args[0][0]
         assert payload["image_url"] == "https://img1.com/a.jpg"
@@ -365,4 +373,3 @@ class TestRecipeMapper:
         await mapper.map_and_send(r)
         payload = mock_client.create_recipe.call_args[0][0]
         assert payload["recipe_ingredients"][0]["unit"] == "cup"
-    

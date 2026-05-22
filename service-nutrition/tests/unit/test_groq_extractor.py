@@ -11,9 +11,7 @@ def _make_groq_response(ingredients: list[dict]) -> MagicMock:
     body = json.dumps(ingredients)
     mock_resp = MagicMock()
     mock_resp.raise_for_status = MagicMock()
-    mock_resp.json.return_value = {
-        "choices": [{"message": {"content": body}}]
-    }
+    mock_resp.json.return_value = {"choices": [{"message": {"content": body}}]}
     return mock_resp
 
 
@@ -35,10 +33,14 @@ class TestGroqExtractor:
     @pytest.mark.unit
     async def test_extract_valid_response_returns_list(self, extractor, mock_http):
         """Réponse JSON valide → liste d'ingrédients."""
-        mock_http.post = AsyncMock(return_value=_make_groq_response([
-            {"quantite": 200, "unite": "g", "nom": "farine de sarrasin"},
-            {"quantite": 2, "unite": "cs", "nom": "huile d'olive"},
-        ]))
+        mock_http.post = AsyncMock(
+            return_value=_make_groq_response(
+                [
+                    {"quantite": 200, "unite": "g", "nom": "farine de sarrasin"},
+                    {"quantite": 2, "unite": "cs", "nom": "huile d'olive"},
+                ]
+            )
+        )
         result = await extractor.extract("200g de farine, 2 cs d'huile")
         assert len(result) == 2
         assert result[0].nom == "farine de sarrasin"
@@ -46,7 +48,9 @@ class TestGroqExtractor:
         assert result[1].unite == "cs"
 
     @pytest.mark.unit
-    async def test_extract_malformed_json_raises_value_error(self, extractor, mock_http):
+    async def test_extract_malformed_json_raises_value_error(
+        self, extractor, mock_http
+    ):
         """JSON malformé → ValueError."""
         bad = MagicMock()
         bad.raise_for_status = MagicMock()
@@ -58,10 +62,14 @@ class TestGroqExtractor:
     @pytest.mark.unit
     async def test_extract_skips_incomplete_items(self, extractor, mock_http):
         """Items incomplets ignorés, items valides retournés."""
-        mock_http.post = AsyncMock(return_value=_make_groq_response([
-            {"quantite": 100, "unite": "g", "nom": "sucre"},
-            {"unite": "g"},
-        ]))
+        mock_http.post = AsyncMock(
+            return_value=_make_groq_response(
+                [
+                    {"quantite": 100, "unite": "g", "nom": "sucre"},
+                    {"unite": "g"},
+                ]
+            )
+        )
         result = await extractor.extract("100g de sucre")
         assert len(result) == 1
         assert result[0].nom == "sucre"
@@ -69,9 +77,13 @@ class TestGroqExtractor:
     @pytest.mark.unit
     async def test_extract_confidence_is_0_85(self, extractor, mock_http):
         """La confiance Groq est fixée à 0.85."""
-        mock_http.post = AsyncMock(return_value=_make_groq_response([
-            {"quantite": 50, "unite": "g", "nom": "beurre"},
-        ]))
+        mock_http.post = AsyncMock(
+            return_value=_make_groq_response(
+                [
+                    {"quantite": 50, "unite": "g", "nom": "beurre"},
+                ]
+            )
+        )
         result = await extractor.extract("50g beurre")
         assert result[0].confidence == pytest.approx(0.85)
 

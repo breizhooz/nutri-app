@@ -1,4 +1,5 @@
 """Repository Tracker — snapshots de composition et de mensurations."""
+
 import logging
 import uuid
 
@@ -23,7 +24,9 @@ class TrackerRepository(BaseRepository):
         """Ajoute un snapshot de composition à la session."""
         self._session.add(snap)
 
-    async def list_composition(self, profile_id: uuid.UUID) -> list[BodyCompositionSnapshot]:
+    async def list_composition(
+        self, profile_id: uuid.UUID
+    ) -> list[BodyCompositionSnapshot]:
         """Retourne tous les snapshots de composition, du plus récent au plus ancien."""
         result = await self._session.execute(
             select(BodyCompositionSnapshot)
@@ -52,7 +55,9 @@ class TrackerRepository(BaseRepository):
         """Ajoute un snapshot de mensurations à la session."""
         self._session.add(snap)
 
-    async def list_measurements(self, profile_id: uuid.UUID) -> list[BodyMeasurementsSnapshot]:
+    async def list_measurements(
+        self, profile_id: uuid.UUID
+    ) -> list[BodyMeasurementsSnapshot]:
         """Retourne toutes les mensurations, du plus récent au plus ancien."""
         result = await self._session.execute(
             select(BodyMeasurementsSnapshot)

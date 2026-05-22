@@ -23,10 +23,25 @@ async def _read(response) -> str:
 
 def _make_sl(**overrides) -> ShoppingList:
     defaults = dict(
-        menu_id=1, menu_slug="test-menu", nb_persons=2, start_date=date(2026, 1, 6),
+        menu_id=1,
+        menu_slug="test-menu",
+        nb_persons=2,
+        start_date=date(2026, 1, 6),
         items=[
-            ShoppingItem(ingredient_id=1, ingredient_name="Pasta", total_quantity=400.0, unit="g",    category="grain"),
-            ShoppingItem(ingredient_id=2, ingredient_name="Egg",   total_quantity=6.0,   unit="unit", category=None),
+            ShoppingItem(
+                ingredient_id=1,
+                ingredient_name="Pasta",
+                total_quantity=400.0,
+                unit="g",
+                category="grain",
+            ),
+            ShoppingItem(
+                ingredient_id=2,
+                ingredient_name="Egg",
+                total_quantity=6.0,
+                unit="unit",
+                category=None,
+            ),
         ],
     )
     defaults.update(overrides)
@@ -38,7 +53,10 @@ class TestCsvExport:
         assert _to_csv(_make_sl()).media_type == "text/csv"
 
     def test_content_disposition_contains_menu_id(self):
-        assert "shopping-list-42.csv" in _to_csv(_make_sl(menu_id=42)).headers["content-disposition"]
+        assert (
+            "shopping-list-42.csv"
+            in _to_csv(_make_sl(menu_id=42)).headers["content-disposition"]
+        )
 
     async def test_header_row_present(self):
         content = await _read(_to_csv(_make_sl()))
@@ -54,7 +72,7 @@ class TestCsvExport:
     async def test_empty_category_written_as_blank(self):
         content = await _read(_to_csv(_make_sl()))
         lines = content.strip().splitlines()
-        egg_line = next(l for l in lines if "Egg" in l)
+        egg_line = next(line for line in lines if "Egg" in line)
         assert egg_line.endswith(",")
 
     async def test_row_count_matches_items(self):
@@ -68,7 +86,10 @@ class TestPdfExport:
         assert _to_pdf(_make_sl()).media_type == "application/pdf"
 
     def test_content_disposition_contains_menu_id(self, mock_weasyprint):
-        assert "shopping-list-7.pdf" in _to_pdf(_make_sl(menu_id=7)).headers["content-disposition"]
+        assert (
+            "shopping-list-7.pdf"
+            in _to_pdf(_make_sl(menu_id=7)).headers["content-disposition"]
+        )
 
     async def test_pdf_body_is_non_empty(self, mock_weasyprint):
         parts = []

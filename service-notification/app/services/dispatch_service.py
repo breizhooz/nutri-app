@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class DispatchResult:
     """Résultat agrégé d'un dispatch vers tous les devices d'un user."""
+
     notification_slug: str
     status: NotificationStatus
     sent: int
@@ -65,7 +66,9 @@ class DispatchService:
             else:
                 failed += 1
 
-        final_status = NotificationStatus.SENT if sent > 0 else NotificationStatus.FAILED
+        final_status = (
+            NotificationStatus.SENT if sent > 0 else NotificationStatus.FAILED
+        )
         updated = await self._notif_repo.update_status(notification, final_status)
 
         return DispatchResult(

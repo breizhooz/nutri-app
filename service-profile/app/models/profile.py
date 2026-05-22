@@ -1,10 +1,11 @@
 """Modèle Profile — noyau central, données anthropométriques de base."""
+
 import logging
 import uuid
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Date, Numeric, String
+from sqlalchemy import Date, Numeric
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -34,4 +35,6 @@ class Profile(Base, SlugMixin, TimestampMixin, UpdatedAtMixin):
     )
     height_cm: Mapped[Decimal | None] = mapped_column(Numeric(5, 1), nullable=True)
     weight_kg: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
-    target_weight_kg: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+    target_weight_kg: Mapped[Decimal | None] = mapped_column(
+        Numeric(5, 2), nullable=True
+    )

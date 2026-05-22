@@ -10,6 +10,7 @@ _NULL_UUID = "00000000-0000-0000-0000-000000000000"
 
 # ── Fixtures user / auth ─────────────────────────────────────────────────────────
 
+
 @pytest.fixture()
 def create_user():
     with httpx.Client() as client:
@@ -18,7 +19,9 @@ def create_user():
         user = resp.json()
         user["password"] = _NUTRITION_USER["password"]
         yield user
-        login = client.post(f"{SERVICE_USER_URL}/api/v1/auth/login", json=_NUTRITION_USER)
+        login = client.post(
+            f"{SERVICE_USER_URL}/api/v1/auth/login", json=_NUTRITION_USER
+        )
         if login.status_code == 200:
             token = login.json()["access_token"]
             client.delete(
@@ -30,7 +33,9 @@ def create_user():
 @pytest.fixture()
 def auth_token(create_user):
     with httpx.Client() as client:
-        resp = client.post(f"{SERVICE_USER_URL}/api/v1/auth/login", json=_NUTRITION_USER)
+        resp = client.post(
+            f"{SERVICE_USER_URL}/api/v1/auth/login", json=_NUTRITION_USER
+        )
         assert resp.status_code == 200
         return resp.json()["access_token"]
 
@@ -43,6 +48,7 @@ def user_id(create_user):
 # ── Health ───────────────────────────────────────────────────────────────────────
 # Note : service-nutrition ne renvoie PAS de champ "service" dans /health
 
+
 @pytest.mark.smoke
 def test_nutrition_health():
     with httpx.Client() as client:
@@ -53,10 +59,13 @@ def test_nutrition_health():
 
 # ── Nutrition items (public) ─────────────────────────────────────────────────────
 
+
 @pytest.mark.smoke
 def test_get_nutrition_item_not_found():
     with httpx.Client() as client:
-        response = client.get(f"{SERVICE_NUTRITION_URL}/api/v1/nutrition-items/slug-inexistant")
+        response = client.get(
+            f"{SERVICE_NUTRITION_URL}/api/v1/nutrition-items/slug-inexistant"
+        )
     assert response.status_code == 404
 
 
@@ -73,6 +82,7 @@ def test_update_nutrition_item_not_found(auth_token):
 
 
 # ── Macro errors ─────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.smoke
 def test_macro_errors_empty_for_new_user(auth_token, user_id):
@@ -111,6 +121,7 @@ def test_resolve_macro_error_not_found(auth_token):
 
 
 # ── Stats ────────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.smoke
 def test_stats_empty_for_new_user(auth_token, user_id):

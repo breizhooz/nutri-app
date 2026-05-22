@@ -17,16 +17,19 @@ app = FastAPI(title="service-notification", version="0.1.0")
 app.add_middleware(LocaleMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 
-
 register_error_handlers(app)
 
-app.include_router(subscriptions.router, prefix="/api/v1/subscriptions", tags=["subscriptions"])
+app.include_router(
+    subscriptions.router, prefix="/api/v1/subscriptions", tags=["subscriptions"]
+)
 app.include_router(notify.router, prefix="/api/v1/notify", tags=["notify"])
 app.include_router(history.router, prefix="/api/v1/users", tags=["history"])
+
 
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "service-notification"}
+
 
 @app.get("/health/db")
 async def health_db():

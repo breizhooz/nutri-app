@@ -9,6 +9,7 @@ from app.models.menu_slot import MenuSlot
 from app.schemas.weekly_menu import WeeklyMenuCreate, WeeklyMenuUpdate
 from app.core.utils import slugify
 
+
 async def _load_with_slots(session: AsyncSession, menu_id: int) -> WeeklyMenu | None:
     result = await session.execute(
         select(WeeklyMenu)
@@ -17,6 +18,7 @@ async def _load_with_slots(session: AsyncSession, menu_id: int) -> WeeklyMenu | 
     )
 
     return result.scalar_one_or_none()
+
 
 async def _unique_slug(session: AsyncSession, start_date: date) -> str:
     base = slugify(f"menu-{start_date.strftime('%Y-%m-%d')}")
@@ -31,10 +33,9 @@ async def _unique_slug(session: AsyncSession, start_date: date) -> str:
         slug = f"{base} - {i}"
         i += 1
 
+
 async def create_menu(
-        session: AsyncSession,
-        menu_data: WeeklyMenuCreate,
-        user_id: str
+    session: AsyncSession, menu_data: WeeklyMenuCreate, user_id: str
 ) -> WeeklyMenu:
     slug = menu_data.slug or await _unique_slug(session, menu_data.start_date)
 
@@ -53,20 +54,26 @@ async def create_menu(
     await session.flush()
 
     for slot_data in menu_data.slots:
-        session.add(MenuSlot(
-            menu_id=menu.id,
-            day_of_week=slot_data.day_of_week,
-            meal_type=slot_data.meal_type,
-            recipe_id=slot_data.recipe_id,
-        ))
+        session.add(
+            MenuSlot(
+                menu_id=menu.id,
+                day_of_week=slot_data.day_of_week,
+                meal_type=slot_data.meal_type,
+                recipe_id=slot_data.recipe_id,
+            )
+        )
 
     await session.commit()
     return await _load_with_slots(session, menu.id)
 
+
 async def get_menu(session: AsyncSession, menu_id: int) -> WeeklyMenu | None:
     return await _load_with_slots(session, menu_id)
 
-async def get_menu_by_user(session: AsyncSession, user_id: str, skip: int = 0, limit: int = 20) -> list[WeeklyMenu]:
+
+async def get_menu_by_user(
+    session: AsyncSession, user_id: str, skip: int = 0, limit: int = 20
+) -> list[WeeklyMenu]:
     result = await session.execute(
         select(WeeklyMenu)
         .where(WeeklyMenu.user_id == user_id)
@@ -79,29 +86,29 @@ async def get_menu_by_user(session: AsyncSession, user_id: str, skip: int = 0, l
 
 
 async def update_menu(
-        session: AsyncSession,
-        menu_id: str,
-        menu_data: WeeklyMenuUpdate
+    session: AsyncSession, menu_id: str, menu_data: WeeklyMenuUpdate
 ) -> WeeklyMenu | None:
     menu = await _load_with_slots(session, menu_id)
     if not menu:
         return None
-    
+
     update_fields = menu_data.model_dump(exclude_unset=True, exclude={"slots"})
     if "exclusions" in update_fields and menu_data.exclusions is not None:
         update_fields["exclusions"] = [e.value for e in menu_data.exclusions]
-    
+
     for field, value in update_fields.items():
         setattr(menu, field, value)
-    
+
     if menu_data.slots is not None:
         menu.slots.clear()
         for slot_data in menu_data.slots:
-            menu.slots.append(MenuSlot(
-                day_of_week=slot_data.day_of_week,
-                meal_type=slot_data.meal_type,
-                recipe_id=slot_data.recipe_id,
-            ))
+            menu.slots.append(
+                MenuSlot(
+                    day_of_week=slot_data.day_of_week,
+                    meal_type=slot_data.meal_type,
+                    recipe_id=slot_data.recipe_id,
+                )
+            )
 
     await session.commit()
     return await _load_with_slots(session, menu_id)
@@ -114,4 +121,3 @@ async def delete_menu(session: AsyncSession, menu_id: int) -> bool:
     await session.delete(menu)
     await session.commit()
     return True
-

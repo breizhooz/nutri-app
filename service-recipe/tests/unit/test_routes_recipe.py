@@ -17,13 +17,16 @@ def mock_session():
     session.execute.return_value = mock_result
     return session
 
+
 @pytest.fixture(autouse=False)
 def override_db(mock_session):
     async def _get_session():
         yield mock_session
+
     app.dependency_overrides[get_session] = _get_session
     yield mock_session
     app.dependency_overrides.clear()
+
 
 @pytest.mark.asyncio
 async def test_get_recipe_by_slug_not_found_returns_404(override_db):
@@ -31,10 +34,13 @@ async def test_get_recipe_by_slug_not_found_returns_404(override_db):
     mock_result.scalar_one_or_none.return_value = None
     override_db.execute.return_value = mock_result
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
         response = await client.get("/api/v1/recipe/slug-inexistant")
 
     assert response.status_code == 404
+
 
 @pytest.fixture
 def override_user_client_exists():
@@ -49,10 +55,13 @@ def override_user_client_exists():
     yield mock_client
     app.dependency_overrides.pop(get_user_client, None)
 
+
 @pytest.mark.asyncio
-async def test_create_recipe_with_valid_user_returns_201(override_db, override_user_client_exists):
+async def test_create_recipe_with_valid_user_returns_201(
+    override_db, override_user_client_exists
+):
     from datetime import datetime
-    from unittest.mock import patch, AsyncMock 
+    from unittest.mock import patch, AsyncMock
     from app.core.deps import get_current_user_id
 
     async def mock_refresh(obj):
@@ -66,21 +75,28 @@ async def test_create_recipe_with_valid_user_returns_201(override_db, override_u
             obj.course_type = CourseType.MAIN_COURSE
         if obj.tags is None:
             obj.tags = {}
+
     override_db.refresh.side_effect = mock_refresh
 
-    app.dependency_overrides[get_current_user_id] = lambda: "123e4567-e89b-12d3-a456-426614174000"
+    app.dependency_overrides[get_current_user_id] = lambda: (
+        "123e4567-e89b-12d3-a456-426614174000"
+    )
 
     payload = {
         "title": "Poulet rôti",
         "instructions": "Cuire au four 1h à 180°C.",
-        "recipe_ingredients": []
+        "recipe_ingredients": [],
     }
 
     # ← Patch ES pour ne pas avoir besoin d'un ES qui tourne
-    with patch("app.api.routes.recipes.search_service.index_recipe", new_callable=AsyncMock):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+    with patch(
+        "app.api.routes.recipes.search_service.index_recipe", new_callable=AsyncMock
+    ):
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
             response = await client.post("/api/v1/recipe", json=payload)
-    
+
     app.dependency_overrides.pop(get_current_user_id, None)
 
     assert response.status_code == 201

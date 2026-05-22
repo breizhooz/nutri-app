@@ -58,7 +58,9 @@ async def calculate_macros(
         for r in result.resolved
     ]
 
-    total, per_serving = MacroCalculator().calculate(ingredient_macros, payload.servings)
+    total, per_serving = MacroCalculator().calculate(
+        ingredient_macros, payload.servings
+    )
 
     return CalculateResponse(
         recipe_slug=payload.recipe_slug,

@@ -1,4 +1,5 @@
 """Repository Medical — blessures, pathologies, allergies, médicaments."""
+
 import logging
 import uuid
 
@@ -34,7 +35,9 @@ class MedicalRepository(BaseRepository):
     async def list_injuries(self, profile_id: uuid.UUID) -> list[Injury]:
         """Retourne toutes les blessures d'un profil."""
         result = await self._session.execute(
-            select(Injury).where(Injury.profile_id == profile_id).order_by(Injury.created_at.desc())
+            select(Injury)
+            .where(Injury.profile_id == profile_id)
+            .order_by(Injury.created_at.desc())
         )
         return list(result.scalars().all())
 
@@ -54,7 +57,9 @@ class MedicalRepository(BaseRepository):
         )
         return list(result.scalars().all())
 
-    async def get_condition(self, slug: str, profile_id: uuid.UUID) -> MedicalCondition | None:
+    async def get_condition(
+        self, slug: str, profile_id: uuid.UUID
+    ) -> MedicalCondition | None:
         """Retourne une pathologie par slug et profile_id, ou None."""
         result = await self._session.execute(
             select(MedicalCondition).where(
@@ -90,7 +95,9 @@ class MedicalRepository(BaseRepository):
         )
         return list(result.scalars().all())
 
-    async def get_medication(self, slug: str, profile_id: uuid.UUID) -> Medication | None:
+    async def get_medication(
+        self, slug: str, profile_id: uuid.UUID
+    ) -> Medication | None:
         """Retourne un traitement par slug et profile_id, ou None."""
         result = await self._session.execute(
             select(Medication).where(

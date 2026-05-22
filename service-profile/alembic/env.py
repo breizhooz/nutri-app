@@ -1,4 +1,5 @@
 """Configuration Alembic pour les migrations asynchrones du service-profile."""
+
 import asyncio
 from logging.config import fileConfig
 
@@ -19,6 +20,7 @@ target_metadata = Base.metadata
 def _get_url() -> str:
     """Lit l'URL depuis la config applicative, jamais depuis alembic.ini."""
     from app.core.config import settings
+
     return settings.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://")
 
 
@@ -45,7 +47,9 @@ async def _run_async_migrations() -> None:
     """Mode online : exécute les migrations sur la base réelle."""
     cfg = config.get_section(config.config_ini_section) or {}
     cfg["sqlalchemy.url"] = _get_url()
-    connectable = async_engine_from_config(cfg, prefix="sqlalchemy.", poolclass=pool.NullPool)
+    connectable = async_engine_from_config(
+        cfg, prefix="sqlalchemy.", poolclass=pool.NullPool
+    )
     async with connectable.connect() as connection:
         await connection.run_sync(_do_run_migrations)
     await connectable.dispose()

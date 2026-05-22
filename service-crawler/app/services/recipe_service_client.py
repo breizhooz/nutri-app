@@ -30,7 +30,9 @@ class RecipeServiceClient:
     async def find_ingredient_by_name(self, name: str) -> int | None:
         """Return the id of the ingredient matching `name` (case-insensitive), or None."""
         async with self._client() as client:
-            resp = await client.get("/api/v1/ingredient/", params={"skip": 0, "limit": 1000})
+            resp = await client.get(
+                "/api/v1/ingredient/", params={"skip": 0, "limit": 1000}
+            )
             resp.raise_for_status()
         name_lower = name.strip().lower()
         for item in resp.json():

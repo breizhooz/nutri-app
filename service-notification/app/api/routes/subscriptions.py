@@ -12,7 +12,9 @@ from app.schemas.subscription import SubscriptionCreate, SubscriptionResponse
 router = APIRouter()
 
 
-@router.post("", response_model=SubscriptionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=SubscriptionResponse, status_code=status.HTTP_201_CREATED
+)
 async def register_subscription(
     data: SubscriptionCreate,
     session: AsyncSession = Depends(get_session),

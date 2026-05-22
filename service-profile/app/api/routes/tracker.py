@@ -1,4 +1,5 @@
 """Routes de suivi corporel : composition et mensurations datées."""
+
 import logging
 import uuid
 
@@ -10,8 +11,10 @@ from app.db.session import get_session
 from app.i18n import t
 from app.repositories.profile_repository import ProfileRepository
 from app.schemas.tracker import (
-    BodyCompositionCreate, BodyCompositionResponse,
-    BodyMeasurementsCreate, BodyMeasurementsResponse,
+    BodyCompositionCreate,
+    BodyCompositionResponse,
+    BodyMeasurementsCreate,
+    BodyMeasurementsResponse,
 )
 from app.services.tracker_service import TrackerService
 
@@ -25,11 +28,17 @@ async def _get_profile_id(
     """Résout le profile_id depuis le user_id. Lève 404 si le profil est absent."""
     profile = await ProfileRepository(session).get_by_user_id(user_id)
     if not profile:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale)
+        )
     return profile.id
 
 
-@router.post("/me/composition", response_model=BodyCompositionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/me/composition",
+    response_model=BodyCompositionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def add_composition(
     request: Request,
     data: BodyCompositionCreate,
@@ -67,10 +76,16 @@ async def delete_composition(
     locale = get_locale(request)
     profile_id = await _get_profile_id(user_id, session, locale)
     if not await TrackerService(session).delete_composition(slug, profile_id):
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("composition.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("composition.not_found", locale)
+        )
 
 
-@router.post("/me/measurements", response_model=BodyMeasurementsResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/me/measurements",
+    response_model=BodyMeasurementsResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def add_measurements(
     request: Request,
     data: BodyMeasurementsCreate,
@@ -108,4 +123,6 @@ async def delete_measurements(
     locale = get_locale(request)
     profile_id = await _get_profile_id(user_id, session, locale)
     if not await TrackerService(session).delete_measurements(slug, profile_id):
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("measurement.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("measurement.not_found", locale)
+        )

@@ -31,7 +31,9 @@ async def test_fetch_extracts_title_and_content():
 
 @pytest.mark.asyncio
 async def test_fetch_falls_back_to_h1_when_no_title_tag():
-    html = f"<html><body><h1>Ma Recette</h1><article>{_LONG_TEXT}</article></body></html>"
+    html = (
+        f"<html><body><h1>Ma Recette</h1><article>{_LONG_TEXT}</article></body></html>"
+    )
     mock_response = MagicMock()
     mock_response.text = html
     mock_response.raise_for_status = MagicMock()
@@ -80,7 +82,12 @@ async def test_fetch_triggers_playwright_fallback_on_js_site():
     mock_response.text = html_js
     mock_response.raise_for_status = MagicMock()
 
-    playwright_result = {"title": "JS App", "raw_content": _LONG_TEXT, "images": [], "video_url": None}
+    playwright_result = {
+        "title": "JS App",
+        "raw_content": _LONG_TEXT,
+        "images": [],
+        "video_url": None,
+    }
 
     with patch("app.services.web_service.httpx.AsyncClient") as mock_cls:
         mock_client = AsyncMock()
@@ -89,7 +96,9 @@ async def test_fetch_triggers_playwright_fallback_on_js_site():
         mock_client.__aexit__ = AsyncMock(return_value=None)
         mock_cls.return_value = mock_client
 
-        with patch.object(WebService, "_fetch_with_playwright", new_callable=AsyncMock) as mock_pw:
+        with patch.object(
+            WebService, "_fetch_with_playwright", new_callable=AsyncMock
+        ) as mock_pw:
             mock_pw.return_value = playwright_result
             result = await WebService().fetch("https://js-app.com")
 
@@ -107,8 +116,15 @@ async def test_fetch_triggers_playwright_fallback_on_http_error():
         mock_client.__aexit__ = AsyncMock(return_value=None)
         mock_cls.return_value = mock_client
 
-        with patch.object(WebService, "_fetch_with_playwright", new_callable=AsyncMock) as mock_pw:
-            mock_pw.return_value = {"title": "Fallback", "raw_content": "content", "images": [], "video_url": None}
+        with patch.object(
+            WebService, "_fetch_with_playwright", new_callable=AsyncMock
+        ) as mock_pw:
+            mock_pw.return_value = {
+                "title": "Fallback",
+                "raw_content": "content",
+                "images": [],
+                "video_url": None,
+            }
             result = await WebService().fetch("https://example.com")
 
         mock_pw.assert_called_once()

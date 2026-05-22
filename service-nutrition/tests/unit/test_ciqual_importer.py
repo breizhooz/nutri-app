@@ -35,8 +35,14 @@ def _macros(**overrides) -> dict:
 
 def _patch_parser(aliments: dict, macros: dict):
     return (
-        patch("app.services.ciqual_importer.CiqualXmlParser.parse_aliments", return_value=aliments),
-        patch("app.services.ciqual_importer.CiqualXmlParser.parse_compo", return_value=macros),
+        patch(
+            "app.services.ciqual_importer.CiqualXmlParser.parse_aliments",
+            return_value=aliments,
+        ),
+        patch(
+            "app.services.ciqual_importer.CiqualXmlParser.parse_compo",
+            return_value=macros,
+        ),
     )
 
 
@@ -49,7 +55,9 @@ class TestCiqualImporter:
 
         pa, pc = _patch_parser(aliments, macros)
         with pa, pc:
-            count = await CiqualImporter(db_session).import_archive("/fake", "sha1", "ciqual_2024_01_01.7z")
+            count = await CiqualImporter(db_session).import_archive(
+                "/fake", "sha1", "ciqual_2024_01_01.7z"
+            )
 
         assert count == 2
 
@@ -61,7 +69,9 @@ class TestCiqualImporter:
 
         pa, pc = _patch_parser(aliments, macros)
         with pa, pc:
-            await CiqualImporter(db_session).import_archive("/fake", "sha2", "ciqual_2024_01_01.7z")
+            await CiqualImporter(db_session).import_archive(
+                "/fake", "sha2", "ciqual_2024_01_01.7z"
+            )
 
         result = await db_session.execute(
             select(NutritionItem).where(NutritionItem.ciqual_id == 2001)
@@ -96,7 +106,9 @@ class TestCiqualImporter:
         """import_archive enregistre une ligne dans ciqual_archives."""
         pa, pc = _patch_parser({}, {})
         with pa, pc:
-            await CiqualImporter(db_session).import_archive("/fake", "sha-arc", "ciqual_2024_06_01.7z")
+            await CiqualImporter(db_session).import_archive(
+                "/fake", "sha-arc", "ciqual_2024_06_01.7z"
+            )
 
         result = await db_session.execute(
             select(CiqualArchive).where(CiqualArchive.sha256 == "sha-arc")
@@ -114,7 +126,9 @@ class TestCiqualImporter:
     async def test_already_imported_true_after_import(self, db_session):
         pa, pc = _patch_parser({}, {})
         with pa, pc:
-            await CiqualImporter(db_session).import_archive("/fake", "sha-known", "ciqual_2024_01_01.7z")
+            await CiqualImporter(db_session).import_archive(
+                "/fake", "sha-known", "ciqual_2024_01_01.7z"
+            )
 
         assert await CiqualImporter(db_session).already_imported("sha-known") is True
 

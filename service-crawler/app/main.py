@@ -19,13 +19,21 @@ app.add_middleware(RequestLoggingMiddleware)
 
 register_error_handlers(app)
 
-app.include_router(sources_routes.router, prefix="/api/v1/crawler/sources", tags=["sources"])
-app.include_router(results_routes.router, prefix="/api/v1/crawler/results", tags=["results"])
-app.include_router(settings_routes.router, prefix="/api/v1/crawler/settings", tags=["settings"])
+app.include_router(
+    sources_routes.router, prefix="/api/v1/crawler/sources", tags=["sources"]
+)
+app.include_router(
+    results_routes.router, prefix="/api/v1/crawler/results", tags=["results"]
+)
+app.include_router(
+    settings_routes.router, prefix="/api/v1/crawler/settings", tags=["settings"]
+)
+
 
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "service-crawler"}
+
 
 @app.get("/health/db")
 async def health_db():

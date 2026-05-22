@@ -31,3 +31,8 @@ http://api-crawler.localhost/docs	Swagger service-crawler
 http://api-nutrition.localhost/docs	Swagger service-nutrition
 http://api-notification.localhost/docs	Swagger service-notification
 http://api-profile.localhost/docs	Swagger service-profile
+
+Service	URL
+Grafana	http://grafana.localhost (admin / ton mot de passe)
+Prometheus	http://prometheus.localhost
+Traefik dashboard	http://traefik.localhost

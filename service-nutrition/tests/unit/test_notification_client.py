@@ -18,7 +18,9 @@ class TestNotificationClient:
         return NotificationClient(http_client=mock_http)
 
     @pytest.mark.unit
-    async def test_notify_macro_error_posts_correct_payload(self, notif_client, mock_http):
+    async def test_notify_macro_error_posts_correct_payload(
+        self, notif_client, mock_http
+    ):
         """notify_macro_error() appelle POST /api/v1/notify avec le bon payload."""
         await notif_client.notify_macro_error(
             user_id="00000000-0000-0000-0000-000000000001",
@@ -27,7 +29,6 @@ class TestNotificationClient:
         )
         mock_http.post.assert_called_once()
         call_kwargs = mock_http.post.call_args
-        url = call_kwargs[0][0] if call_kwargs[0] else call_kwargs[1].get("url", "")
         payload = call_kwargs[1]["json"]
 
         assert payload["type"] == "macro_error"
@@ -35,11 +36,11 @@ class TestNotificationClient:
         assert payload["data"]["macro_error_slug"] == "gochujank-err"
 
     @pytest.mark.unit
-    async def test_notify_macro_error_http_error_not_raised(self, notif_client, mock_http):
+    async def test_notify_macro_error_http_error_not_raised(
+        self, notif_client, mock_http
+    ):
         """HTTPError loguée, pas propagée."""
-        mock_http.post = AsyncMock(
-            side_effect=httpx.HTTPError("connection refused")
-        )
+        mock_http.post = AsyncMock(side_effect=httpx.HTTPError("connection refused"))
         await notif_client.notify_macro_error(
             user_id="00000000-0000-0000-0000-000000000001",
             raw_ingredient="x",

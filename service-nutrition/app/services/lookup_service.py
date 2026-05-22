@@ -35,6 +35,7 @@ class LookupService:
         if self._es is not None:
             return self._es
         from elasticsearch import AsyncElasticsearch
+
         if not hasattr(self, "_owned_client"):
             self._owned_client = AsyncElasticsearch(settings.ELASTICSEARCH_URL)
         return self._owned_client

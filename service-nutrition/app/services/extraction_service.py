@@ -76,11 +76,13 @@ class ExtractionService:
                     raw_ingredient=raw_text,
                     recipe_id=recipe_id,
                 )
-                failed.append(FailedIngredient(
-                    raw_text=raw_text,
-                    macro_error_slug=error.slug,
-                    suggested=None,
-                ))
+                failed.append(
+                    FailedIngredient(
+                        raw_text=raw_text,
+                        macro_error_slug=error.slug,
+                        suggested=None,
+                    )
+                )
                 continue
 
             ingredient = extracted[0]
@@ -93,11 +95,13 @@ class ExtractionService:
                     recipe_id=recipe_id,
                     suggested_match=ingredient.nom,
                 )
-                failed.append(FailedIngredient(
-                    raw_text=raw_text,
-                    macro_error_slug=error.slug,
-                    suggested=ingredient.nom,
-                ))
+                failed.append(
+                    FailedIngredient(
+                        raw_text=raw_text,
+                        macro_error_slug=error.slug,
+                        suggested=ingredient.nom,
+                    )
+                )
                 continue
 
             grammes = await self._converter.to_grammes(
@@ -106,10 +110,12 @@ class ExtractionService:
             if grammes is None:
                 grammes = ingredient.quantite
 
-            resolved.append(ResolvedIngredient(
-                raw_text=raw_text,
-                matched=candidates[0],
-                grammes=grammes,
-            ))
+            resolved.append(
+                ResolvedIngredient(
+                    raw_text=raw_text,
+                    matched=candidates[0],
+                    grammes=grammes,
+                )
+            )
 
         return ExtractionResult(resolved=resolved, failed=failed)

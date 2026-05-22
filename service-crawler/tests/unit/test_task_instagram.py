@@ -1,4 +1,5 @@
 """Tests unitaires — InstagramService."""
+
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
@@ -10,8 +11,11 @@ from app.services.instagram_service import InstagramPost, InstagramService
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
+
 class _MockSidecarNode:
-    def __init__(self, display_url: str, is_video: bool = False, video_url: str | None = None):
+    def __init__(
+        self, display_url: str, is_video: bool = False, video_url: str | None = None
+    ):
         self.display_url = display_url
         self.is_video = is_video
         self.video_url = video_url
@@ -50,6 +54,7 @@ def _mock_profile(posts: list[_MockPost]) -> MagicMock:
 
 # ─── normalize_account ────────────────────────────────────────────────────────
 
+
 def test_normalize_account_strips_at_prefix():
     assert InstagramService.normalize_account("@johndoe") == "johndoe"
 
@@ -63,6 +68,7 @@ def test_normalize_account_strips_multiple_at():
 
 
 # ─── _ensure_session ──────────────────────────────────────────────────────────
+
 
 def test_ensure_session_loads_existing_session():
     mock_loader = MagicMock()
@@ -88,6 +94,7 @@ def test_ensure_session_saves_after_login():
 
 # ─── _make_authenticated_loader ───────────────────────────────────────────────
 
+
 def test_make_authenticated_loader_calls_ensure_session_when_configured():
     with patch("app.services.instagram_service.settings") as mock_settings:
         mock_settings.INSTAGRAM_USERNAME = "mybot"
@@ -112,8 +119,11 @@ def test_make_authenticated_loader_skips_auth_when_no_username():
 
 # ─── _normalize_post ──────────────────────────────────────────────────────────
 
+
 def test_normalize_post_image_post():
-    post = _MockPost(shortcode="img01", url="https://cdn.ig.com/img.jpg", is_video=False)
+    post = _MockPost(
+        shortcode="img01", url="https://cdn.ig.com/img.jpg", is_video=False
+    )
     result = InstagramService._normalize_post(post)
     assert result.shortcode == "img01"
     assert result.url == InstagramService.POST_URL.format(shortcode="img01")
@@ -122,23 +132,38 @@ def test_normalize_post_image_post():
 
 
 def test_normalize_post_video_post():
-    post = _MockPost(shortcode="vid01", is_video=True, video_url="https://cdn.ig.com/video.mp4", typename="GraphVideo")
+    post = _MockPost(
+        shortcode="vid01",
+        is_video=True,
+        video_url="https://cdn.ig.com/video.mp4",
+        typename="GraphVideo",
+    )
     result = InstagramService._normalize_post(post)
     assert result.video_url == "https://cdn.ig.com/video.mp4"
 
 
 def test_normalize_post_sidecar_images_only():
-    nodes = [_MockSidecarNode("https://cdn.ig.com/img1.jpg"), _MockSidecarNode("https://cdn.ig.com/img2.jpg")]
+    nodes = [
+        _MockSidecarNode("https://cdn.ig.com/img1.jpg"),
+        _MockSidecarNode("https://cdn.ig.com/img2.jpg"),
+    ]
     post = _MockPost(shortcode="side01", typename="GraphSidecar", sidecar_nodes=nodes)
     result = InstagramService._normalize_post(post)
-    assert result.images == ["https://cdn.ig.com/img1.jpg", "https://cdn.ig.com/img2.jpg"]
+    assert result.images == [
+        "https://cdn.ig.com/img1.jpg",
+        "https://cdn.ig.com/img2.jpg",
+    ]
     assert result.video_url is None
 
 
 def test_normalize_post_sidecar_with_video_node():
     nodes = [
         _MockSidecarNode("https://cdn.ig.com/img1.jpg"),
-        _MockSidecarNode("https://cdn.ig.com/thumb.jpg", is_video=True, video_url="https://cdn.ig.com/vid.mp4"),
+        _MockSidecarNode(
+            "https://cdn.ig.com/thumb.jpg",
+            is_video=True,
+            video_url="https://cdn.ig.com/vid.mp4",
+        ),
     ]
     post = _MockPost(shortcode="side02", typename="GraphSidecar", sidecar_nodes=nodes)
     result = InstagramService._normalize_post(post)
@@ -147,8 +172,12 @@ def test_normalize_post_sidecar_with_video_node():
 
 def test_normalize_post_sidecar_keeps_only_first_video_url():
     nodes = [
-        _MockSidecarNode("t1.jpg", is_video=True, video_url="https://cdn.ig.com/v1.mp4"),
-        _MockSidecarNode("t2.jpg", is_video=True, video_url="https://cdn.ig.com/v2.mp4"),
+        _MockSidecarNode(
+            "t1.jpg", is_video=True, video_url="https://cdn.ig.com/v1.mp4"
+        ),
+        _MockSidecarNode(
+            "t2.jpg", is_video=True, video_url="https://cdn.ig.com/v2.mp4"
+        ),
     ]
     post = _MockPost(typename="GraphSidecar", sidecar_nodes=nodes)
     result = InstagramService._normalize_post(post)
@@ -195,10 +224,14 @@ def test_normalize_post_timestamp_is_utc_aware():
 
 # ─── fetch_posts ──────────────────────────────────────────────────────────────
 
+
 def test_fetch_posts_returns_all_posts():
     posts = [_MockPost(shortcode=f"p{i}") for i in range(3)]
     profile = _mock_profile(posts)
-    with patch("app.services.instagram_service.instaloader.Profile.from_username", return_value=profile):
+    with patch(
+        "app.services.instagram_service.instaloader.Profile.from_username",
+        return_value=profile,
+    ):
         result = InstagramService(loader=MagicMock()).fetch_posts("@testuser")
     assert len(result) == 3
     assert all(isinstance(p, InstagramPost) for p in result)
@@ -206,7 +239,10 @@ def test_fetch_posts_returns_all_posts():
 
 def test_fetch_posts_strips_at_from_username():
     profile = _mock_profile([])
-    with patch("app.services.instagram_service.instaloader.Profile.from_username", return_value=profile) as mock_fn:
+    with patch(
+        "app.services.instagram_service.instaloader.Profile.from_username",
+        return_value=profile,
+    ) as mock_fn:
         InstagramService(loader=MagicMock()).fetch_posts("@myaccount")
     _, called_username = mock_fn.call_args[0]
     assert called_username == "myaccount"
@@ -214,7 +250,10 @@ def test_fetch_posts_strips_at_from_username():
 
 def test_fetch_posts_empty_account_returns_empty():
     profile = _mock_profile([])
-    with patch("app.services.instagram_service.instaloader.Profile.from_username", return_value=profile):
+    with patch(
+        "app.services.instagram_service.instaloader.Profile.from_username",
+        return_value=profile,
+    ):
         result = InstagramService(loader=MagicMock()).fetch_posts("emptyaccount")
     assert result == []
 
@@ -230,6 +269,7 @@ def test_fetch_posts_propagates_profile_not_found():
 
 # ─── fetch_new_posts ──────────────────────────────────────────────────────────
 
+
 def test_fetch_new_posts_returns_only_recent():
     since = datetime(2024, 6, 1, 0, 0, 0, tzinfo=timezone.utc)
     posts = [
@@ -238,8 +278,13 @@ def test_fetch_new_posts_returns_only_recent():
         _MockPost(shortcode="old1", date_utc=datetime(2024, 5, 30)),
     ]
     profile = _mock_profile(posts)
-    with patch("app.services.instagram_service.instaloader.Profile.from_username", return_value=profile):
-        result = InstagramService(loader=MagicMock()).fetch_new_posts("@testuser", since)
+    with patch(
+        "app.services.instagram_service.instaloader.Profile.from_username",
+        return_value=profile,
+    ):
+        result = InstagramService(loader=MagicMock()).fetch_new_posts(
+            "@testuser", since
+        )
     assert len(result) == 2
     assert {p.shortcode for p in result} == {"new1", "new2"}
 
@@ -248,15 +293,28 @@ def test_fetch_new_posts_all_old_returns_empty():
     since = datetime(2024, 6, 1, 0, 0, 0, tzinfo=timezone.utc)
     posts = [_MockPost(date_utc=datetime(2024, 5, 1))]
     profile = _mock_profile(posts)
-    with patch("app.services.instagram_service.instaloader.Profile.from_username", return_value=profile):
-        result = InstagramService(loader=MagicMock()).fetch_new_posts("@testuser", since)
+    with patch(
+        "app.services.instagram_service.instaloader.Profile.from_username",
+        return_value=profile,
+    ):
+        result = InstagramService(loader=MagicMock()).fetch_new_posts(
+            "@testuser", since
+        )
     assert result == []
 
 
 def test_fetch_new_posts_all_new_returns_all():
     since = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-    posts = [_MockPost(shortcode=f"p{i}", date_utc=datetime(2024, 6, i + 1)) for i in range(3)]
+    posts = [
+        _MockPost(shortcode=f"p{i}", date_utc=datetime(2024, 6, i + 1))
+        for i in range(3)
+    ]
     profile = _mock_profile(posts)
-    with patch("app.services.instagram_service.instaloader.Profile.from_username", return_value=profile):
-        result = InstagramService(loader=MagicMock()).fetch_new_posts("@testuser", since)
+    with patch(
+        "app.services.instagram_service.instaloader.Profile.from_username",
+        return_value=profile,
+    ):
+        result = InstagramService(loader=MagicMock()).fetch_new_posts(
+            "@testuser", since
+        )
     assert len(result) == 3

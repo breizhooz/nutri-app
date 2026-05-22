@@ -1,4 +1,5 @@
 """Schémas Pydantic pour les résultats de calcul métabolique."""
+
 from pydantic import BaseModel, ConfigDict
 
 from app.models.enums import MainGoal

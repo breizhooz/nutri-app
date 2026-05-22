@@ -8,21 +8,30 @@ from app.i18n import t
 from app.db.session import get_session
 from app.repositories.profile_repository import ProfileRepository
 from app.schemas.preferences import (
-    ExcludedFoodCreate, ExcludedFoodResponse,
-    LifestyleProfileCreate, LifestyleProfileResponse,
-    NutritionPreferencesCreate, NutritionPreferencesResponse,
-    PerformanceMetricCreate, PerformanceMetricResponse,
-    SportsProfileCreate, SportsProfileResponse,
+    ExcludedFoodCreate,
+    ExcludedFoodResponse,
+    LifestyleProfileCreate,
+    LifestyleProfileResponse,
+    NutritionPreferencesCreate,
+    NutritionPreferencesResponse,
+    PerformanceMetricCreate,
+    PerformanceMetricResponse,
+    SportsProfileCreate,
+    SportsProfileResponse,
 )
 from app.services.preferences_service import PreferencesService
 
 router = APIRouter()
 
 
-async def _require_profile_id(user_id: uuid.UUID, session: AsyncSession, locale: str) -> uuid.UUID:
+async def _require_profile_id(
+    user_id: uuid.UUID, session: AsyncSession, locale: str
+) -> uuid.UUID:
     profile = await ProfileRepository(session).get_by_user_id(user_id)
     if not profile:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale)
+        )
     return profile.id
 
 
@@ -49,11 +58,17 @@ async def get_sports(
     profile_id = await _require_profile_id(user_id, session, locale)
     obj = await PreferencesService(session).get_sports(profile_id)
     if not obj:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("sports_profile.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("sports_profile.not_found", locale)
+        )
     return SportsProfileResponse.model_validate(obj)
 
 
-@router.post("/me/performance", response_model=PerformanceMetricResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/me/performance",
+    response_model=PerformanceMetricResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def add_performance(
     request: Request,
     data: PerformanceMetricCreate,
@@ -88,7 +103,9 @@ async def delete_performance(
     locale = get_locale(request)
     profile_id = await _require_profile_id(user_id, session, locale)
     if not await PreferencesService(session).delete_performance(slug, profile_id):
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("performance.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("performance.not_found", locale)
+        )
 
 
 @router.put("/me/lifestyle", response_model=LifestyleProfileResponse)
@@ -114,7 +131,9 @@ async def get_lifestyle(
     profile_id = await _require_profile_id(user_id, session, locale)
     obj = await PreferencesService(session).get_lifestyle(profile_id)
     if not obj:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("lifestyle.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("lifestyle.not_found", locale)
+        )
     return LifestyleProfileResponse.model_validate(obj)
 
 
@@ -141,11 +160,17 @@ async def get_nutrition(
     profile_id = await _require_profile_id(user_id, session, locale)
     obj = await PreferencesService(session).get_nutrition(profile_id)
     if not obj:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("nutrition.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("nutrition.not_found", locale)
+        )
     return NutritionPreferencesResponse.model_validate(obj)
 
 
-@router.post("/me/excluded-foods", response_model=ExcludedFoodResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/me/excluded-foods",
+    response_model=ExcludedFoodResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def add_excluded_food(
     request: Request,
     data: ExcludedFoodCreate,
@@ -180,4 +205,6 @@ async def delete_excluded_food(
     locale = get_locale(request)
     profile_id = await _require_profile_id(user_id, session, locale)
     if not await PreferencesService(session).delete_excluded_food(slug, profile_id):
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("excluded_food.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("excluded_food.not_found", locale)
+        )

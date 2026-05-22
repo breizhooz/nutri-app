@@ -17,6 +17,7 @@ _FULL_PROFILE = {
 
 # ── Fixtures user / auth ─────────────────────────────────────────────────────────
 
+
 @pytest.fixture()
 def create_user():
     with httpx.Client() as client:
@@ -57,6 +58,7 @@ def profile_setup(auth_token):
 
 # ── Health ───────────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.smoke
 def test_profile_health():
     with httpx.Client() as client:
@@ -75,6 +77,7 @@ def test_profile_health_db():
 
 
 # ── Profil CRUD ──────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.smoke
 def test_create_profile(profile_setup):
@@ -129,7 +132,9 @@ def test_update_profile(auth_token, profile_setup):
 def test_calculate_profile_full(auth_token, profile_setup):
     headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        resp = client.get(f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/calculate", headers=headers)
+        resp = client.get(
+            f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/calculate", headers=headers
+        )
     assert resp.status_code == 200
     body = resp.json()
     assert body["bmi"] > 0
@@ -144,11 +149,14 @@ def test_calculate_profile_no_data_returns_422(auth_token):
     headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
         client.post(f"{SERVICE_PROFILE_URL}/api/v1/profiles", json={}, headers=headers)
-        resp = client.get(f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/calculate", headers=headers)
+        resp = client.get(
+            f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/calculate", headers=headers
+        )
     assert resp.status_code == 422
 
 
 # ── Médical : blessures ──────────────────────────────────────────────────────────
+
 
 @pytest.mark.smoke
 def test_injury_lifecycle(auth_token, profile_setup):
@@ -162,7 +170,9 @@ def test_injury_lifecycle(auth_token, profile_setup):
         assert create.status_code == 201
         slug = create.json()["slug"]
 
-        lst = client.get(f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/injuries", headers=headers)
+        lst = client.get(
+            f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/injuries", headers=headers
+        )
         assert lst.status_code == 200
         assert any(i["slug"] == slug for i in lst.json())
 
@@ -174,6 +184,7 @@ def test_injury_lifecycle(auth_token, profile_setup):
 
 
 # ── Médical : allergies ──────────────────────────────────────────────────────────
+
 
 @pytest.mark.smoke
 def test_allergy_lifecycle(auth_token, profile_setup):
@@ -188,7 +199,9 @@ def test_allergy_lifecycle(auth_token, profile_setup):
         assert create.json()["allergen"] == "Gluten"
         slug = create.json()["slug"]
 
-        lst = client.get(f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/allergies", headers=headers)
+        lst = client.get(
+            f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/allergies", headers=headers
+        )
         assert lst.status_code == 200
         assert any(a["slug"] == slug for a in lst.json())
 
@@ -200,6 +213,7 @@ def test_allergy_lifecycle(auth_token, profile_setup):
 
 
 # ── Médical : pathologies & médicaments ──────────────────────────────────────────
+
 
 @pytest.mark.smoke
 def test_add_medical_condition(auth_token, profile_setup):
@@ -229,19 +243,26 @@ def test_add_medication(auth_token, profile_setup):
 
 # ── Tracker : composition corporelle ─────────────────────────────────────────────
 
+
 @pytest.mark.smoke
 def test_body_composition_lifecycle(auth_token, profile_setup):
     headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
         create = client.post(
             f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/composition",
-            json={"measured_at": "2026-05-21", "body_fat_percentage": 18.5, "lean_mass_kg": 65.2},
+            json={
+                "measured_at": "2026-05-21",
+                "body_fat_percentage": 18.5,
+                "lean_mass_kg": 65.2,
+            },
             headers=headers,
         )
         assert create.status_code == 201
         slug = create.json()["slug"]
 
-        lst = client.get(f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/composition", headers=headers)
+        lst = client.get(
+            f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/composition", headers=headers
+        )
         assert lst.status_code == 200
         assert any(c["slug"] == slug for c in lst.json())
 
@@ -253,6 +274,7 @@ def test_body_composition_lifecycle(auth_token, profile_setup):
 
 
 # ── Tracker : mensurations ────────────────────────────────────────────────────────
+
 
 @pytest.mark.smoke
 def test_body_measurements_lifecycle(auth_token, profile_setup):
@@ -266,7 +288,9 @@ def test_body_measurements_lifecycle(auth_token, profile_setup):
         assert create.status_code == 201
         slug = create.json()["slug"]
 
-        lst = client.get(f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/measurements", headers=headers)
+        lst = client.get(
+            f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/measurements", headers=headers
+        )
         assert lst.status_code == 200
         assert any(m["slug"] == slug for m in lst.json())
 
@@ -278,6 +302,7 @@ def test_body_measurements_lifecycle(auth_token, profile_setup):
 
 
 # ── Préférences : sport ──────────────────────────────────────────────────────────
+
 
 @pytest.mark.smoke
 def test_sports_profile_lifecycle(auth_token, profile_setup):
@@ -298,7 +323,9 @@ def test_sports_profile_lifecycle(auth_token, profile_setup):
         assert put.status_code == 200
         assert put.json()["sessions_per_week"] == 4
 
-        get = client.get(f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/sports", headers=headers)
+        get = client.get(
+            f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/sports", headers=headers
+        )
         assert get.status_code == 200
         assert get.json()["sessions_per_week"] == 4
 
@@ -307,11 +334,14 @@ def test_sports_profile_lifecycle(auth_token, profile_setup):
 def test_get_sports_not_found_without_setup(auth_token, profile_setup):
     headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        resp = client.get(f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/sports", headers=headers)
+        resp = client.get(
+            f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/sports", headers=headers
+        )
     assert resp.status_code == 404
 
 
 # ── Préférences : lifestyle ──────────────────────────────────────────────────────
+
 
 @pytest.mark.smoke
 def test_lifestyle_upsert(auth_token, profile_setup):
@@ -331,11 +361,14 @@ def test_lifestyle_upsert(auth_token, profile_setup):
         assert put.status_code == 200
         assert put.json()["sleep_hours"] == pytest.approx(7.5, abs=0.01)
 
-        get = client.get(f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/lifestyle", headers=headers)
+        get = client.get(
+            f"{SERVICE_PROFILE_URL}/api/v1/profiles/me/lifestyle", headers=headers
+        )
         assert get.status_code == 200
 
 
 # ── Préférences : nutrition ──────────────────────────────────────────────────────
+
 
 @pytest.mark.smoke
 def test_nutrition_preferences_upsert(auth_token, profile_setup):

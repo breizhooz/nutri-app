@@ -22,7 +22,9 @@ class ResultService:
     def __init__(self, repository: ResultRepository) -> None:
         self._repository = repository
 
-    async def list_results(self, params: CrawlResultListParams) -> PaginatedCrawlResultResponse:
+    async def list_results(
+        self, params: CrawlResultListParams
+    ) -> PaginatedCrawlResultResponse:
         items, total = await self._repository.list_by_filters(
             status=params.status,
             source_id=params.source_id,
@@ -45,7 +47,9 @@ class ResultService:
             )
         return result
 
-    async def update_result(self, result_id: uuid.UUID, data: CrawlResultUpdate) -> CrawlResult:
+    async def update_result(
+        self, result_id: uuid.UUID, data: CrawlResultUpdate
+    ) -> CrawlResult:
         result = await self._repository.get_by_id(result_id)
         if result is None:
             raise HTTPException(

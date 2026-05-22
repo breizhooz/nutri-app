@@ -1,9 +1,12 @@
 import httpx
 from app.core.config import settings
 
+
 class ServiceUnavailableError(Exception):
     """Raise a exception if service-user doesnt responding."""
+
     pass
+
 
 class ServicesUserClient:
     """
@@ -15,12 +18,9 @@ class ServicesUserClient:
         self._client = None
 
     async def __aenter__(self):
-        self._client = httpx.AsyncClient(
-            base_url=self.base_url,
-            timeout=5.0
-        )
+        self._client = httpx.AsyncClient(base_url=self.base_url, timeout=5.0)
         return self
-    
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self._client:
             await self._client.aclose()
@@ -36,9 +36,12 @@ class ServicesUserClient:
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
                 return False
-            raise ServiceUnavailableError(f"service-user responded {e.response.status_code}") from e
+            raise ServiceUnavailableError(
+                f"service-user responded {e.response.status_code}"
+            ) from e
         except httpx.HTTPError as e:
             raise ServiceUnavailableError(f"service-user unavailable: {e}") from e
+
 
 async def get_user_client():
     async with ServicesUserClient() as client:

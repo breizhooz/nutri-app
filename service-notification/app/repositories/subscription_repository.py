@@ -57,9 +57,7 @@ class SubscriptionRepository:
         await self._session.delete(subscription)
         await self._session.commit()
 
-    async def _unique_slug(
-        self, user_id: uuid.UUID, device_label: str | None
-    ) -> str:
+    async def _unique_slug(self, user_id: uuid.UUID, device_label: str | None) -> str:
         """Génère un slug unique : <user_prefix>-<device_label>[-N] en cas de collision."""
         base = slugify(f"{str(user_id)[:8]}-{device_label or 'device'}")
         slug, counter = base, 2

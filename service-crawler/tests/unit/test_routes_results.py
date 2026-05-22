@@ -11,17 +11,22 @@ from app.main import app
 from app.models.enums import CrawlStatus, CrawlType
 from app.schemas.crawl_result import PaginatedCrawlResultResponse
 
+
 @pytest.fixture
 def mock_mapper() -> AsyncMock:
     return AsyncMock()
+
 
 @pytest.fixture
 async def results_client(mock_service: AsyncMock, mock_mapper: AsyncMock):
     app.dependency_overrides[ResultServiceFactory.inject] = lambda: mock_service
     app.dependency_overrides[RecipeMapperFactory.inject] = lambda: mock_mapper
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as c:
         yield c, mock_service
     app.dependency_overrides.clear()
+
 
 class CrawlResultFactory:
     @staticmethod
@@ -65,14 +70,6 @@ class CrawlResultFactory:
 @pytest.fixture
 def mock_service() -> AsyncMock:
     return AsyncMock()
-
-
-@pytest.fixture
-async def results_client(mock_service: AsyncMock):
-    app.dependency_overrides[ResultServiceFactory.inject] = lambda: mock_service
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
-        yield c, mock_service
-    app.dependency_overrides.clear()
 
 
 class TestListResults:
@@ -149,7 +146,7 @@ class TestGetResult:
             "/api/v1/crawler/results/00000000-0000-0000-0000-000000000099"
         )
         assert response.status_code == 404
-        assert response.json()['error']['message'] == "Résultat introuvable."
+        assert response.json()["error"]["message"] == "Résultat introuvable."
 
 
 class TestUpdateResult:
@@ -167,7 +164,9 @@ class TestUpdateResult:
 
     async def test_not_found_returns_404(self, results_client):
         client, service = results_client
-        service.update_result.side_effect = HTTPException(status_code=404, detail="Not found")
+        service.update_result.side_effect = HTTPException(
+            status_code=404, detail="Not found"
+        )
         response = await client.patch(
             "/api/v1/crawler/results/00000000-0000-0000-0000-000000000099",
             json={"title": "X"},
@@ -176,7 +175,9 @@ class TestUpdateResult:
 
     async def test_conflict_on_non_waiting_returns_409(self, results_client):
         client, service = results_client
-        service.update_result.side_effect = HTTPException(status_code=409, detail="Conflict")
+        service.update_result.side_effect = HTTPException(
+            status_code=409, detail="Conflict"
+        )
         r = CrawlResultFactory.make()
         response = await client.patch(
             f"/api/v1/crawler/results/{r.id}", json={"title": "X"}
@@ -198,7 +199,9 @@ class TestValidateResult:
 
     async def test_not_found_returns_404(self, results_client):
         client, service = results_client
-        service.validate_result.side_effect = HTTPException(status_code=404, detail="Not found")
+        service.validate_result.side_effect = HTTPException(
+            status_code=404, detail="Not found"
+        )
         response = await client.patch(
             "/api/v1/crawler/results/00000000-0000-0000-0000-000000000099/validate"
         )
@@ -220,7 +223,9 @@ class TestValidateResult:
         service.validate_result.return_value = validated
         await client.patch(f"/api/v1/crawler/results/{r.id}/validate")
         _, kwargs = service.validate_result.call_args
-        assert kwargs["validated_by"] == uuid.UUID("00000000-0000-0000-0000-000000000001")
+        assert kwargs["validated_by"] == uuid.UUID(
+            "00000000-0000-0000-0000-000000000001"
+        )
 
     async def test_mapper_kwarg_passed_to_service(self, results_client):
         client, service = results_client
@@ -240,7 +245,6 @@ class TestValidateResult:
         r = CrawlResultFactory.make()
         response = await client.patch(f"/api/v1/crawler/results/{r.id}/validate")
         assert response.status_code == 503
-    
 
 
 class TestRejectResult:
@@ -255,7 +259,9 @@ class TestRejectResult:
 
     async def test_not_found_returns_404(self, results_client):
         client, service = results_client
-        service.reject_result.side_effect = HTTPException(status_code=404, detail="Not found")
+        service.reject_result.side_effect = HTTPException(
+            status_code=404, detail="Not found"
+        )
         response = await client.patch(
             "/api/v1/crawler/results/00000000-0000-0000-0000-000000000099/reject"
         )
@@ -263,9 +269,9 @@ class TestRejectResult:
 
     async def test_conflict_returns_409(self, results_client):
         client, service = results_client
-        service.reject_result.side_effect = HTTPException(status_code=409, detail="Conflict")
+        service.reject_result.side_effect = HTTPException(
+            status_code=409, detail="Conflict"
+        )
         r = CrawlResultFactory.make()
         response = await client.patch(f"/api/v1/crawler/results/{r.id}/reject")
         assert response.status_code == 409
-
-    

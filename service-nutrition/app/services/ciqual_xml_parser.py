@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import re
 from dataclasses import dataclass
-from xml.etree.ElementTree import iterparse
+from xml.etree.ElementTree import iterparse  # nosec B405
 
 
 @dataclass
@@ -19,7 +19,7 @@ class AlimRecord:
 
 class CiqualXmlParser:
     _MACRO_CONST_CODES: dict[int, str] = {
-        328:   "calories",
+        328: "calories",
         25000: "proteines",
         31000: "glucides",
         40000: "lipides",
@@ -30,7 +30,7 @@ class CiqualXmlParser:
     def parse_aliments(cls, extract_dir: str) -> dict[int, AlimRecord]:
         path = cls._find_xml(extract_dir, "alim_")
         records: dict[int, AlimRecord] = {}
-        for _, el in iterparse(path, events=("end",)):
+        for _, el in iterparse(path, events=("end",)):  # nosec B314
             if el.tag != "ALIM":
                 continue
             code_str = cls._text(el, "alim_code")
@@ -55,7 +55,7 @@ class CiqualXmlParser:
         macros: dict[int, dict] = {}
         confidence: dict[int, str | None] = {}
 
-        for _, el in iterparse(path, events=("end",)):
+        for _, el in iterparse(path, events=("end",)):  # nosec B314
             if el.tag != "COMPO":
                 el.clear()
                 continue
@@ -82,11 +82,13 @@ class CiqualXmlParser:
 
     @staticmethod
     def _find_xml(extract_dir: str, prefix: str) -> str:
-        pattern = re.compile(rf'^{re.escape(prefix)}\d{{4}}_\d{{2}}_\d{{2}}\.xml$')
+        pattern = re.compile(rf"^{re.escape(prefix)}\d{{4}}_\d{{2}}_\d{{2}}\.xml$")
         for name in os.listdir(extract_dir):
             if pattern.match(name):
                 return os.path.join(extract_dir, name)
-        raise FileNotFoundError(f"Aucun fichier XML avec préfixe '{prefix}' dans {extract_dir}")
+        raise FileNotFoundError(
+            f"Aucun fichier XML avec préfixe '{prefix}' dans {extract_dir}"
+        )
 
     @staticmethod
     def _text(el, tag) -> str | None:

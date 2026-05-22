@@ -12,12 +12,14 @@ logger = logging.getLogger(__name__)
 
 # ── Langue configuration ──────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class LanguageConfig:
     """Vocabulary used by IngredientParser for one language or a language group."""
-    units: tuple[str, ...]       # regex patterns, longest-first to avoid partial matches
+
+    units: tuple[str, ...]  # regex patterns, longest-first to avoid partial matches
     connectors: tuple[str, ...]  # optional word linking quantity to name ("de", "of"…)
-    default_unit: str            # label when no unit is detected in the line
+    default_unit: str  # label when no unit is detected in the line
 
 
 FR_CONFIG = LanguageConfig(
@@ -25,11 +27,23 @@ FR_CONFIG = LanguageConfig(
         r"cuill[eè]res?\s+[aà]\s+soupe",
         r"cuill[eè]res?\s+[aà]\s+dessert",
         r"cuill[eè]res?\s+[aà]\s+caf[eé]",
-        r"tasses?", r"verres?", r"tranches?",
-        r"gousses?", r"sachets?", r"bo[îi]tes?",
-        r"pinc[eé]es?", r"filets?", r"brins?",
-        r"feuilles?", r"morceaux?",
-        r"kg", r"g", r"cl", r"dl", r"ml", r"l",
+        r"tasses?",
+        r"verres?",
+        r"tranches?",
+        r"gousses?",
+        r"sachets?",
+        r"bo[îi]tes?",
+        r"pinc[eé]es?",
+        r"filets?",
+        r"brins?",
+        r"feuilles?",
+        r"morceaux?",
+        r"kg",
+        r"g",
+        r"cl",
+        r"dl",
+        r"ml",
+        r"l",
     ),
     connectors=(r"d[eu]\s+la\s+", r"d[eu]s?\s+", r"d'", r"de\s+"),
     default_unit="pièce",
@@ -37,15 +51,32 @@ FR_CONFIG = LanguageConfig(
 
 EN_CONFIG = LanguageConfig(
     units=(
-        r"tablespoons?", r"tbsps?\.?",
-        r"teaspoons?", r"tsps?\.?",
-        r"cups?", r"pints?", r"quarts?", r"gallons?",
-        r"pounds?", r"lbs?\.?",
-        r"ounces?", r"ozs?\.?",
-        r"sticks?", r"cans?", r"jars?", r"bags?",
-        r"slices?", r"cloves?", r"bunches?",
-        r"handfuls?", r"pinches?", r"dashes?",
-        r"kg", r"g", r"ml", r"l",
+        r"tablespoons?",
+        r"tbsps?\.?",
+        r"teaspoons?",
+        r"tsps?\.?",
+        r"cups?",
+        r"pints?",
+        r"quarts?",
+        r"gallons?",
+        r"pounds?",
+        r"lbs?\.?",
+        r"ounces?",
+        r"ozs?\.?",
+        r"sticks?",
+        r"cans?",
+        r"jars?",
+        r"bags?",
+        r"slices?",
+        r"cloves?",
+        r"bunches?",
+        r"handfuls?",
+        r"pinches?",
+        r"dashes?",
+        r"kg",
+        r"g",
+        r"ml",
+        r"l",
     ),
     connectors=(r"of\s+",),
     default_unit="piece",
@@ -76,6 +107,7 @@ MULTILINGUAL_CONFIG: LanguageConfig = _merge(FR_CONFIG, EN_CONFIG, default_unit=
 
 
 # ── Parser ────────────────────────────────────────────────────────────────────
+
 
 @dataclass
 class ParsedIngredient:
@@ -128,7 +160,11 @@ class IngredientParser:
             except ValueError:
                 quantity = 1.0
             raw_unit = match.group("unit") or ""
-            unit = self._normalize_unit(raw_unit) if raw_unit else self._config.default_unit
+            unit = (
+                self._normalize_unit(raw_unit)
+                if raw_unit
+                else self._config.default_unit
+            )
             key = name.lower()
             if key not in seen:
                 seen[key] = ParsedIngredient(name=name, quantity=quantity, unit=unit)
@@ -139,13 +175,16 @@ class IngredientParser:
         """Lowercase and remove trailing plural 's' for single-word units."""
         unit = raw.strip().lower()
         if " " in unit:
-            return unit  # multi-word units: "cuillère à soupe", "tablespoon" → unchanged
+            return (
+                unit  # multi-word units: "cuillère à soupe", "tablespoon" → unchanged
+            )
         if unit.endswith("s") and len(unit) > 2:
             return unit[:-1]
         return unit
 
 
 # ── Mapper ────────────────────────────────────────────────────────────────────
+
 
 class RecipeMapper:
     """Maps a validated CrawlResult to a recipe payload and sends it to service-recipe."""
@@ -170,12 +209,16 @@ class RecipeMapper:
         resolved: list[dict] = []
         for ingredient in parsed:
             try:
-                ingredient_id = await self._recipe_client.get_or_create_ingredient(ingredient.name)
-                resolved.append({
-                    "ingredient_id": ingredient_id,
-                    "quantity": ingredient.quantity,
-                    "unit": ingredient.unit,
-                })
+                ingredient_id = await self._recipe_client.get_or_create_ingredient(
+                    ingredient.name
+                )
+                resolved.append(
+                    {
+                        "ingredient_id": ingredient_id,
+                        "quantity": ingredient.quantity,
+                        "unit": ingredient.unit,
+                    }
+                )
             except (httpx.HTTPStatusError, httpx.RequestError):
                 logger.warning(
                     "Skipping ingredient %r — service-recipe returned an error",
@@ -183,7 +226,9 @@ class RecipeMapper:
                 )
         return resolved
 
-    def _build_payload(self, crawl_result: CrawlResult, recipe_ingredients: list[dict]) -> dict:
+    def _build_payload(
+        self, crawl_result: CrawlResult, recipe_ingredients: list[dict]
+    ) -> dict:
         """Build the RecipeCreate-compatible dict from a CrawlResult."""
         return {
             "title": crawl_result.title or "Recette importée",

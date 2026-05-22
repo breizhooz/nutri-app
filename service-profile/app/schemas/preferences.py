@@ -1,13 +1,21 @@
 """Schémas Pydantic pour les endpoints de personnalisation."""
+
 import uuid
 from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from app.models.enums import (
-    ActivityLevel, AlcoholFrequency, Chronotype,
-    CookingFor, CookingLevel, CookingTime,
-    DietType, MainGoal, PracticeLevel, StressLevel,
+    ActivityLevel,
+    AlcoholFrequency,
+    Chronotype,
+    CookingFor,
+    CookingLevel,
+    CookingTime,
+    DietType,
+    MainGoal,
+    PracticeLevel,
+    StressLevel,
 )
 
 

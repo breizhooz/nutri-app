@@ -1,8 +1,15 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy import Integer, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.models.abstract_model import AbstractModel
 from app.models.enums import DayOfWeek, MealType
+
+if TYPE_CHECKING:
+    from app.models.weekly_menu import WeeklyMenu
 
 
 class MenuSlot(AbstractModel):
@@ -13,6 +20,7 @@ class MenuSlot(AbstractModel):
     day_of_week: Mapped[DayOfWeek] = mapped_column(
         SQLEnum(DayOfWeek, native_enum=False, length=50)
     )
+
     @validates("day_of_week")
     def validate_day(self, key, value):
         return self._generic_enum_validator(key, value, DayOfWeek)
@@ -20,6 +28,7 @@ class MenuSlot(AbstractModel):
     meal_type: Mapped[MealType] = mapped_column(
         SQLEnum(MealType, native_enum=False, length=50)
     )
+
     @validates("meal_type")
     def validate_meal(self, key, value):
         return self._generic_enum_validator(key, value, MealType)

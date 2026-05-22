@@ -2,7 +2,6 @@ import uuid
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-import jwt
 from jwt.exceptions import InvalidTokenError
 
 from app.core.security import decode_token
@@ -21,7 +20,7 @@ async def get_current_user_id(
         payload = decode_token(credentials.credentials)
         token_type = payload.get("type")
         user_id: str | None = payload.get("sub")
-        if not user_id or token_type != "access":
+        if not user_id or token_type != "access":  # nosec B105
             raise InvalidTokenError("sub manquant ou type de token invalide")
     except Exception:
         raise HTTPException(

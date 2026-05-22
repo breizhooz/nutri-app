@@ -1,4 +1,3 @@
-import pytest
 from app.i18n.loader import t
 
 

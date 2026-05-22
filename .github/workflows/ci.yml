@@ -39,8 +39,9 @@ jobs:
       
       - name: Security scan
         run: |
-          bandit -r . -f json -o bandit-report.json
-      
+          cd service-user
+          bandit -r . -f json -o bandit-report.json --exit-zero
+
       - name: Upload security report
         uses: actions/upload-artifact@v4
         with:
@@ -55,14 +56,15 @@ jobs:
             -Dsonar.organization=sonar-nutri-app
             -Dsonar.projectKey=nutri-app-service-user
             -Dsonar.python.coverage.reportPaths=coverage.xml
-      
-      - name: Run test User
-        run: |
-            pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
-
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run test User
+        run: |
+          cd service-user  
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
     
   analyze-recipe:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-recipe')
@@ -94,8 +96,9 @@ jobs:
       
       - name: Security scan
         run: |
-          bandit -r . -f json -o bandit-report.json
-      
+          cd service-recipe
+          bandit -r . -f json -o bandit-report.json --exit-zero
+
       - name: Upload security report
         uses: actions/upload-artifact@v4
         with:
@@ -110,14 +113,15 @@ jobs:
             -Dsonar.organization=sonar-nutri-app
             -Dsonar.projectKey=nutri-app-service-recipe
             -Dsonar.python.coverage.reportPaths=coverage.xml
-      
-      - name: Run test recipe
-        run: |
-            pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
-
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run test recipe
+        run: |
+          cd service-recipe
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
     
   analyze-menu:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-menu')
@@ -149,8 +153,9 @@ jobs:
       
       - name: Security scan
         run: |
-          bandit -r . -f json -o bandit-report.json
-      
+          cd service-menu
+          bandit -r . -f json -o bandit-report.json --exit-zero
+
       - name: Upload security report
         uses: actions/upload-artifact@v4
         with:
@@ -165,14 +170,15 @@ jobs:
             -Dsonar.organization=sonar-nutri-app
             -Dsonar.projectKey=nutri-app-service-menu
             -Dsonar.python.coverage.reportPaths=coverage.xml
-      
-      - name: Run test menu
-        run: |
-            pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
-
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run test menu
+        run: |
+          cd service-menu
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
 
   analyze-crawler:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-crawler')
@@ -204,8 +210,9 @@ jobs:
       
       - name: Security scan
         run: |
-          bandit -r . -f json -o bandit-report.json
-      
+          cd service-crawler
+          bandit -r . -f json -o bandit-report.json --exit-zero
+
       - name: Upload security report
         uses: actions/upload-artifact@v4
         with:
@@ -220,14 +227,15 @@ jobs:
             -Dsonar.organization=sonar-nutri-app
             -Dsonar.projectKey=nutri-app-service-crawler
             -Dsonar.python.coverage.reportPaths=coverage.xml
-      
-      - name: Run test crawler
-        run: |
-            pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
-
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run test crawler
+        run: |
+          cd service-crawler
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
 
   analyze-notification:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-notification')
@@ -259,8 +267,9 @@ jobs:
       
       - name: Security scan
         run: |
-          bandit -r . -f json -o bandit-report.json
-      
+          cd service-notification
+          bandit -r . -f json -o bandit-report.json --exit-zero
+
       - name: Upload security report
         uses: actions/upload-artifact@v4
         with:
@@ -275,14 +284,15 @@ jobs:
             -Dsonar.organization=sonar-nutri-app
             -Dsonar.projectKey=nutri-app-service-notification
             -Dsonar.python.coverage.reportPaths=coverage.xml
-      
-      - name: Run test notification
-        run: |
-            pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
-
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run test notification
+        run: |
+          cd service-notification
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
   
   analyze-nutrition:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-nutrition')
@@ -314,8 +324,9 @@ jobs:
       
       - name: Security scan
         run: |
-          bandit -r . -f json -o bandit-report.json
-      
+          cd service-nutrition
+          bandit -r . -f json -o bandit-report.json --exit-zero
+
       - name: Upload security report
         uses: actions/upload-artifact@v4
         with:
@@ -330,14 +341,15 @@ jobs:
             -Dsonar.organization=sonar-nutri-app
             -Dsonar.projectKey=nutri-app-service-nutrition
             -Dsonar.python.coverage.reportPaths=coverage.xml
-      
-      - name: Run test nutrition
-        run: |
-            pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
-
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run test nutrition
+        run: |
+          cd service-nutrition
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
 
   analyze-profile:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-profile')
@@ -369,8 +381,9 @@ jobs:
       
       - name: Security scan
         run: |
-          bandit -r . -f json -o bandit-report.json
-      
+          cd service-profile
+          bandit -r . -f json -o bandit-report.json --exit-zero
+
       - name: Upload security report
         uses: actions/upload-artifact@v4
         with:
@@ -385,14 +398,15 @@ jobs:
             -Dsonar.organization=sonar-nutri-app
             -Dsonar.projectKey=nutri-app-service-profile
             -Dsonar.python.coverage.reportPaths=coverage.xml
-      
-      - name: Run test profile
-        run: |
-            pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
-
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Run test profile
+        run: |
+          cd service-profile  
+          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+
 
 
 

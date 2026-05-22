@@ -1,4 +1,5 @@
 """Service métier pour les préférences et personnalisation."""
+
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -12,8 +13,11 @@ from app.models.performance_metric import PerformanceMetric
 from app.models.sports_profile import SportsProfile
 from app.repositories.preferences_repository import PreferencesRepository
 from app.schemas.preferences import (
-    ExcludedFoodCreate, LifestyleProfileCreate,
-    NutritionPreferencesCreate, PerformanceMetricCreate, SportsProfileCreate,
+    ExcludedFoodCreate,
+    LifestyleProfileCreate,
+    NutritionPreferencesCreate,
+    PerformanceMetricCreate,
+    SportsProfileCreate,
 )
 
 logger = logging.getLogger(__name__)
@@ -27,7 +31,9 @@ class PreferencesService:
         self._session = session
         self._repo = PreferencesRepository(session)
 
-    async def upsert_sports(self, profile_id: uuid.UUID, data: SportsProfileCreate) -> SportsProfile:
+    async def upsert_sports(
+        self, profile_id: uuid.UUID, data: SportsProfileCreate
+    ) -> SportsProfile:
         """Crée ou met à jour le profil sportif (upsert)."""
         existing = await self._repo.get_sports(profile_id)
         if existing:
@@ -39,7 +45,9 @@ class PreferencesService:
             logger.info("Profil sportif mis à jour : profile_id=%s", profile_id)
             return existing
 
-        slug = await self._repo.resolve_slug(SportsProfile, f"sports-{str(profile_id)[:8]}")
+        slug = await self._repo.resolve_slug(
+            SportsProfile, f"sports-{str(profile_id)[:8]}"
+        )
         obj = SportsProfile(profile_id=profile_id, slug=slug, **data.model_dump())
         self._repo.add_sports(obj)
         await self._session.commit()
@@ -51,7 +59,9 @@ class PreferencesService:
         """Retourne le profil sportif ou None."""
         return await self._repo.get_sports(profile_id)
 
-    async def upsert_lifestyle(self, profile_id: uuid.UUID, data: LifestyleProfileCreate) -> LifestyleProfile:
+    async def upsert_lifestyle(
+        self, profile_id: uuid.UUID, data: LifestyleProfileCreate
+    ) -> LifestyleProfile:
         """Crée ou met à jour le profil de mode de vie (upsert)."""
         existing = await self._repo.get_lifestyle(profile_id)
         if existing:
@@ -62,7 +72,9 @@ class PreferencesService:
             await self._session.refresh(existing)
             return existing
 
-        slug = await self._repo.resolve_slug(LifestyleProfile, f"lifestyle-{str(profile_id)[:8]}")
+        slug = await self._repo.resolve_slug(
+            LifestyleProfile, f"lifestyle-{str(profile_id)[:8]}"
+        )
         obj = LifestyleProfile(profile_id=profile_id, slug=slug, **data.model_dump())
         self._repo.add_lifestyle(obj)
         await self._session.commit()
@@ -73,7 +85,9 @@ class PreferencesService:
         """Retourne le lifestyle ou None."""
         return await self._repo.get_lifestyle(profile_id)
 
-    async def upsert_nutrition(self, profile_id: uuid.UUID, data: NutritionPreferencesCreate) -> NutritionPreferences:
+    async def upsert_nutrition(
+        self, profile_id: uuid.UUID, data: NutritionPreferencesCreate
+    ) -> NutritionPreferences:
         """Crée ou met à jour les préférences nutritionnelles (upsert)."""
         existing = await self._repo.get_nutrition(profile_id)
         if existing:
@@ -84,8 +98,12 @@ class PreferencesService:
             await self._session.refresh(existing)
             return existing
 
-        slug = await self._repo.resolve_slug(NutritionPreferences, f"nutrition-{str(profile_id)[:8]}")
-        obj = NutritionPreferences(profile_id=profile_id, slug=slug, **data.model_dump())
+        slug = await self._repo.resolve_slug(
+            NutritionPreferences, f"nutrition-{str(profile_id)[:8]}"
+        )
+        obj = NutritionPreferences(
+            profile_id=profile_id, slug=slug, **data.model_dump()
+        )
         self._repo.add_nutrition(obj)
         await self._session.commit()
         await self._session.refresh(obj)
@@ -95,7 +113,9 @@ class PreferencesService:
         """Retourne les préférences nutritionnelles ou None."""
         return await self._repo.get_nutrition(profile_id)
 
-    async def add_performance(self, profile_id: uuid.UUID, data: PerformanceMetricCreate) -> PerformanceMetric:
+    async def add_performance(
+        self, profile_id: uuid.UUID, data: PerformanceMetricCreate
+    ) -> PerformanceMetric:
         """Ajoute une métrique de performance datée."""
         slug = await self._repo.resolve_slug(
             PerformanceMetric, f"perf-{str(profile_id)[:8]}-{data.measured_at}"
@@ -104,7 +124,11 @@ class PreferencesService:
         self._repo.add_performance(obj)
         await self._session.commit()
         await self._session.refresh(obj)
-        logger.info("Métrique perf ajoutée : profile_id=%s date=%s", profile_id, data.measured_at)
+        logger.info(
+            "Métrique perf ajoutée : profile_id=%s date=%s",
+            profile_id,
+            data.measured_at,
+        )
         return obj
 
     async def list_performance(self, profile_id: uuid.UUID) -> list[PerformanceMetric]:
@@ -120,7 +144,9 @@ class PreferencesService:
         await self._session.commit()
         return True
 
-    async def add_excluded_food(self, profile_id: uuid.UUID, data: ExcludedFoodCreate) -> ExcludedFood:
+    async def add_excluded_food(
+        self, profile_id: uuid.UUID, data: ExcludedFoodCreate
+    ) -> ExcludedFood:
         """Ajoute un aliment à la liste d'exclusion."""
         slug = await self._repo.resolve_slug(ExcludedFood, data.food_name)
         obj = ExcludedFood(profile_id=profile_id, slug=slug, **data.model_dump())

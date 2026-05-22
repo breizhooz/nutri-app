@@ -1,5 +1,6 @@
 from enum import Enum as PyEnum
 
+
 class Nutrition(str, PyEnum):
     HIGH_PROTEIN = "enums.nutrition.high_protein"
     LOW_PROTEIN = "enums.nutrition.low_protein"
@@ -28,6 +29,7 @@ class Nutrition(str, PyEnum):
     LOW_GI = "enums.nutrition.low_gi"
     HIGH_GI = "enums.nutrition.high_gi"
 
+
 class Diet(str, PyEnum):
     VEGAN = "enums.diet.vegan"
     VEGETARIAN = "enums.diet.vegetarian"
@@ -49,6 +51,7 @@ class Diet(str, PyEnum):
     LOW_SUGAR = "enums.diet.low_sugar"
     HIGH_PROTEIN = "enums.diet.high_protein"
     DIABETIC = "enums.diet.diabetic"
+
 
 class Allergen(str, PyEnum):
     GLUTEN = "enums.allergen.gluten"

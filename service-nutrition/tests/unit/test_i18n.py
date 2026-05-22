@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 
 import pytest
 
@@ -10,18 +9,28 @@ from app.i18n.loader import TranslationLoader
 def loader(tmp_path) -> TranslationLoader:
     locales = tmp_path / "locales"
     locales.mkdir()
-    (locales / "fr.json").write_text(json.dumps({
-        "nutrition_item": {
-            "not_found": "Aliment introuvable.",
-            "errors": {"invalid_macros": "Macros invalides."}
-        },
-        "greeting": "Bonjour {name} !",
-        "errors": {"forbidden": "Accès refusé."},
-    }), encoding="utf-8")
-    (locales / "en.json").write_text(json.dumps({
-        "nutrition_item": {"not_found": "Food not found."},
-        "errors": {"forbidden": "Access denied."},
-    }), encoding="utf-8")
+    (locales / "fr.json").write_text(
+        json.dumps(
+            {
+                "nutrition_item": {
+                    "not_found": "Aliment introuvable.",
+                    "errors": {"invalid_macros": "Macros invalides."},
+                },
+                "greeting": "Bonjour {name} !",
+                "errors": {"forbidden": "Accès refusé."},
+            }
+        ),
+        encoding="utf-8",
+    )
+    (locales / "en.json").write_text(
+        json.dumps(
+            {
+                "nutrition_item": {"not_found": "Food not found."},
+                "errors": {"forbidden": "Access denied."},
+            }
+        ),
+        encoding="utf-8",
+    )
     return TranslationLoader(locales_dir=locales)
 
 
@@ -36,7 +45,10 @@ class TestTranslationLoader:
 
     @pytest.mark.unit
     def test_get_nested_key(self, loader):
-        assert loader.get("nutrition_item.not_found", locale="fr") == "Aliment introuvable."
+        assert (
+            loader.get("nutrition_item.not_found", locale="fr")
+            == "Aliment introuvable."
+        )
 
     @pytest.mark.unit
     def test_get_deeply_nested_key(self, loader):

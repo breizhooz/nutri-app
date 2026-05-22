@@ -10,15 +10,24 @@ def _es_response(hits=None, total=0):
 
 def _es_hit(recipe_id, title, score=1.0, **extra):
     return {
-        "_id": str(recipe_id), "_score": score,
+        "_id": str(recipe_id),
+        "_score": score,
         "_source": {
-            "title": title, "slug": title.lower().replace(" ", "-"),
-            "description": None, "difficulty": "enums.difficulty.easy",
-            "cuisine_origin": "enums.cuisine.french", "origin_recipe": "enums.origin.personal",
-            "course_type": "enums.course.main", "prep_time_minutes": 20,
-            "cook_time_minutes": 30, "servings": 4, "ingredient_names": [],
-            "allergens": [], "created_by_user_id": TEST_USER_ID,
-            "created_at": "2026-01-01T12:00:00", **extra,
+            "title": title,
+            "slug": title.lower().replace(" ", "-"),
+            "description": None,
+            "difficulty": "enums.difficulty.easy",
+            "cuisine_origin": "enums.cuisine.french",
+            "origin_recipe": "enums.origin.personal",
+            "course_type": "enums.course.main",
+            "prep_time_minutes": 20,
+            "cook_time_minutes": 30,
+            "servings": 4,
+            "ingredient_names": [],
+            "allergens": [],
+            "created_by_user_id": TEST_USER_ID,
+            "created_at": "2026-01-01T12:00:00",
+            **extra,
         },
     }
 
@@ -26,7 +35,9 @@ def _es_hit(recipe_id, title, score=1.0, **extra):
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_search_returns_structured_response(mock_es, http_client):
-    mock_es.search.return_value = _es_response(hits=[_es_hit(1, "Tarte aux pommes", score=1.8)], total=1)
+    mock_es.search.return_value = _es_response(
+        hits=[_es_hit(1, "Tarte aux pommes", score=1.8)], total=1
+    )
 
     async with http_client as client:
         response = await client.get(SEARCH_BASE, params={"q": "tarte"})
@@ -88,10 +99,13 @@ async def test_search_max_prep_time_filter(mock_es, http_client):
 async def test_search_exclude_allergens(mock_es, http_client):
     mock_es.search.return_value = _es_response()
     async with http_client as client:
-        await client.get(SEARCH_BASE, params=[
-            ("exclude_allergens", "enums.allergen.gluten"),
-            ("exclude_allergens", "enums.allergen.milk"),
-        ])
+        await client.get(
+            SEARCH_BASE,
+            params=[
+                ("exclude_allergens", "enums.allergen.gluten"),
+                ("exclude_allergens", "enums.allergen.milk"),
+            ],
+        )
     must_not = mock_es.search.call_args.kwargs["query"]["bool"]["must_not"]
     excluded = [c["term"]["allergens"] for c in must_not]
     assert "enums.allergen.gluten" in excluded

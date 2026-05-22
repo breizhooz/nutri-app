@@ -25,6 +25,7 @@ def create_smoke_user():
 
 # ── Health ───────────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.smoke
 def test_user_health():
     with httpx.Client() as client:
@@ -44,6 +45,7 @@ def test_user_health_db():
 
 # ── Utilisateurs ─────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.smoke
 def test_create_user(create_smoke_user):
     assert create_smoke_user["id"] is not None
@@ -59,10 +61,13 @@ def test_create_user_duplicate(create_smoke_user):
 
 # ── Auth ─────────────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.smoke
 def test_login_returns_token(create_smoke_user):
     with httpx.Client() as client:
-        response = client.post(f"{SERVICE_USER_URL}/api/v1/auth/login", json=_SMOKE_USER)
+        response = client.post(
+            f"{SERVICE_USER_URL}/api/v1/auth/login", json=_SMOKE_USER
+        )
     assert response.status_code == 200
     body = response.json()
     assert "access_token" in body

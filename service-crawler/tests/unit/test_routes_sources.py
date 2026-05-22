@@ -10,11 +10,14 @@ from tests.unit.conftest import TEST_USER_ID
 
 @pytest.mark.asyncio
 async def test_create_source(client: AsyncClient):
-    response = await client.post("/api/v1/crawler/sources", json={
-        "type": CrawlType.WEB.value,
-        "url": "https://example.com",
-        "frequency_hours": 24,
-    })
+    response = await client.post(
+        "/api/v1/crawler/sources",
+        json={
+            "type": CrawlType.WEB.value,
+            "url": "https://example.com",
+            "frequency_hours": 24,
+        },
+    )
     assert response.status_code == 201
     data = response.json()
     assert data["url"] == "https://example.com"
@@ -31,9 +34,15 @@ async def test_list_sources_empty(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_list_sources_after_create(client: AsyncClient):
-    await client.post("/api/v1/crawler/sources", json={"type": CrawlType.WEB.value, "url": "https://a.com"})
+    await client.post(
+        "/api/v1/crawler/sources",
+        json={"type": CrawlType.WEB.value, "url": "https://a.com"},
+    )
     with patch("app.api.routes.sources.crawl_instagram"):
-        await client.post("/api/v1/crawler/sources", json={"type": CrawlType.INSTAGRAM.value, "account": "@compte"})
+        await client.post(
+            "/api/v1/crawler/sources",
+            json={"type": CrawlType.INSTAGRAM.value, "account": "@compte"},
+        )
     response = await client.get("/api/v1/crawler/sources")
     assert response.status_code == 200
     assert len(response.json()) == 2
@@ -41,7 +50,10 @@ async def test_list_sources_after_create(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_get_source(client: AsyncClient):
-    create = await client.post("/api/v1/crawler/sources", json={"type": CrawlType.WEB.value, "url": "https://b.com"})
+    create = await client.post(
+        "/api/v1/crawler/sources",
+        json={"type": CrawlType.WEB.value, "url": "https://b.com"},
+    )
     source_id = create.json()["id"]
     response = await client.get(f"/api/v1/crawler/sources/{source_id}")
     assert response.status_code == 200
@@ -50,16 +62,23 @@ async def test_get_source(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_get_source_not_found(client: AsyncClient):
-    response = await client.get("/api/v1/crawler/sources/00000000-0000-0000-0000-000000000099")
+    response = await client.get(
+        "/api/v1/crawler/sources/00000000-0000-0000-0000-000000000099"
+    )
     assert response.status_code == 404
-    assert response.json()['error']['message'] == "Source introuvable."
+    assert response.json()["error"]["message"] == "Source introuvable."
 
 
 @pytest.mark.asyncio
 async def test_update_source(client: AsyncClient):
-    create = await client.post("/api/v1/crawler/sources", json={"type": CrawlType.WEB.value, "url": "https://c.com"})
+    create = await client.post(
+        "/api/v1/crawler/sources",
+        json={"type": CrawlType.WEB.value, "url": "https://c.com"},
+    )
     source_id = create.json()["id"]
-    response = await client.patch(f"/api/v1/crawler/sources/{source_id}", json={"actif": False})
+    response = await client.patch(
+        f"/api/v1/crawler/sources/{source_id}", json={"actif": False}
+    )
     assert response.status_code == 200
     assert response.json()["actif"] is False
 
@@ -75,7 +94,10 @@ async def test_update_source_not_found(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_delete_source(client: AsyncClient):
-    create = await client.post("/api/v1/crawler/sources", json={"type": CrawlType.WEB.value, "url": "https://d.com"})
+    create = await client.post(
+        "/api/v1/crawler/sources",
+        json={"type": CrawlType.WEB.value, "url": "https://d.com"},
+    )
     source_id = create.json()["id"]
     response = await client.delete(f"/api/v1/crawler/sources/{source_id}")
     assert response.status_code == 204
@@ -85,13 +107,18 @@ async def test_delete_source(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_delete_source_not_found(client: AsyncClient):
-    response = await client.delete("/api/v1/crawler/sources/00000000-0000-0000-0000-000000000099")
+    response = await client.delete(
+        "/api/v1/crawler/sources/00000000-0000-0000-0000-000000000099"
+    )
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_trigger_crawl(client: AsyncClient):
-    create = await client.post("/api/v1/crawler/sources", json={"type": CrawlType.WEB.value, "url": "https://e.com"})
+    create = await client.post(
+        "/api/v1/crawler/sources",
+        json={"type": CrawlType.WEB.value, "url": "https://e.com"},
+    )
     source_id = create.json()["id"]
     with patch("app.api.routes.sources.crawl_url") as mock_task:
         mock_task.delay.return_value.id = "fake-task-id"
@@ -104,7 +131,9 @@ async def test_trigger_crawl(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_trigger_crawl_not_found(client: AsyncClient):
-    response = await client.post("/api/v1/crawler/sources/00000000-0000-0000-0000-000000000099/crawl")
+    response = await client.post(
+        "/api/v1/crawler/sources/00000000-0000-0000-0000-000000000099/crawl"
+    )
     assert response.status_code == 404
 
 
@@ -116,10 +145,17 @@ async def test_health(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_trigger_crawl_unsupported_type(client: AsyncClient, db_session: AsyncSession):
-    source = CrawlSource(user_id=TEST_USER_ID, type=CrawlType.YOUTUBE, url="https://youtube.com/@chef")
+async def test_trigger_crawl_unsupported_type(
+    client: AsyncClient, db_session: AsyncSession
+):
+    source = CrawlSource(
+        user_id=TEST_USER_ID, type=CrawlType.YOUTUBE, url="https://youtube.com/@chef"
+    )
     db_session.add(source)
     await db_session.commit()
     response = await client.post(f"/api/v1/crawler/sources/{source.id}/crawl")
     assert response.status_code == 400
-    assert response.json()['error']['message'] == "Ce type de source n'est pas encore pris en charge."
+    assert (
+        response.json()["error"]["message"]
+        == "Ce type de source n'est pas encore pris en charge."
+    )

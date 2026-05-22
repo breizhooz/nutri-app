@@ -1,4 +1,5 @@
 """Schémas Pydantic pour les endpoints Profile."""
+
 import uuid
 from datetime import date, datetime
 

@@ -1,13 +1,19 @@
 """Modèle ORM pour le profil de style de vie."""
+
 import logging
 import uuid
 
-from sqlalchemy import Boolean, DateTime, Float, Integer, String, UUID
+from sqlalchemy import Boolean, Float, String, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base_class import Base
 from app.models.base_model import SlugMixin, UpdatedAtMixin
-from app.models.enums.enums import ActivityLevel, AlcoholFrequency, Chronotype, StressLevel
+from app.models.enums.enums import (
+    ActivityLevel,
+    AlcoholFrequency,
+    Chronotype,
+    StressLevel,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,13 +29,9 @@ class LifestyleProfile(Base, SlugMixin, UpdatedAtMixin):
     profession_activity_level: Mapped[ActivityLevel | None] = mapped_column(
         String(32), nullable=True
     )
-    stress_level: Mapped[StressLevel | None] = mapped_column(
-        String(32), nullable=True
-    )
+    stress_level: Mapped[StressLevel | None] = mapped_column(String(32), nullable=True)
     sleep_hours: Mapped[float | None] = mapped_column(Float, nullable=True)
-    chronotype: Mapped[Chronotype | None] = mapped_column(
-        String(32), nullable=True
-    )
+    chronotype: Mapped[Chronotype | None] = mapped_column(String(32), nullable=True)
     alcohol_frequency: Mapped[AlcoholFrequency | None] = mapped_column(
         String(32), nullable=True
     )

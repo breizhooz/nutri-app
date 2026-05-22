@@ -2,6 +2,7 @@
 
 Chaque import enregistre la table correspondante dans Base.metadata.
 """
+
 from app.db.base_class import Base  # noqa: F401
 from app.models.body_composition_snapshot import BodyCompositionSnapshot  # noqa: F401
 from app.models.body_measurements_snapshot import BodyMeasurementsSnapshot  # noqa: F401

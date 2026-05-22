@@ -1,4 +1,5 @@
 """Tests des routes du profil principal."""
+
 import uuid
 import pytest
 from httpx import AsyncClient
@@ -10,12 +11,15 @@ class TestProfileRoutes:
     @pytest.mark.unit
     async def test_create_profile_nominal(self, client: AsyncClient) -> None:
         """Création d'un profil retourne 201 avec slug et données correctes."""
-        resp = await client.post("/api/v1/profiles", json={
-            "date_of_birth": "1992-03-15",
-            "biological_sex": "male",
-            "height_cm": 181.0,
-            "weight_kg": 88.5,
-        })
+        resp = await client.post(
+            "/api/v1/profiles",
+            json={
+                "date_of_birth": "1992-03-15",
+                "biological_sex": "male",
+                "height_cm": 181.0,
+                "weight_kg": 88.5,
+            },
+        )
         assert resp.status_code == 201
         body = resp.json()
         assert body["biological_sex"] == "male"
@@ -23,7 +27,9 @@ class TestProfileRoutes:
         assert body["weight_kg"] == pytest.approx(88.5, abs=0.01)
 
     @pytest.mark.unit
-    async def test_create_profile_duplicate_returns_409(self, client: AsyncClient) -> None:
+    async def test_create_profile_duplicate_returns_409(
+        self, client: AsyncClient
+    ) -> None:
         """Deuxième création pour le même utilisateur retourne 409."""
         await client.post("/api/v1/profiles", json={"height_cm": 175.0})
         resp = await client.post("/api/v1/profiles", json={"height_cm": 175.0})
@@ -52,7 +58,9 @@ class TestProfileRoutes:
         assert resp.json()["weight_kg"] == pytest.approx(85.0, abs=0.01)
 
     @pytest.mark.unit
-    async def test_calculate_missing_data_returns_422(self, client: AsyncClient) -> None:
+    async def test_calculate_missing_data_returns_422(
+        self, client: AsyncClient
+    ) -> None:
         """Calcul sans données anthropométriques retourne 422."""
         await client.post("/api/v1/profiles", json={})
         resp = await client.get("/api/v1/profiles/me/calculate")
@@ -61,12 +69,15 @@ class TestProfileRoutes:
     @pytest.mark.unit
     async def test_calculate_full_returns_metrics(self, client: AsyncClient) -> None:
         """Calcul complet retourne IMC, MB et TDEE cohérents."""
-        await client.post("/api/v1/profiles", json={
-            "date_of_birth": "1992-03-15",
-            "biological_sex": "male",
-            "height_cm": 181.0,
-            "weight_kg": 88.5,
-        })
+        await client.post(
+            "/api/v1/profiles",
+            json={
+                "date_of_birth": "1992-03-15",
+                "biological_sex": "male",
+                "height_cm": 181.0,
+                "weight_kg": 88.5,
+            },
+        )
         resp = await client.get("/api/v1/profiles/me/calculate")
         assert resp.status_code == 200
         body = resp.json()
@@ -84,7 +95,9 @@ class TestProfileRoutes:
         assert resp.status_code == 200
 
     @pytest.mark.unit
-    async def test_inter_service_rejected_without_token(self, client: AsyncClient, test_user_id: uuid.UUID) -> None:
+    async def test_inter_service_rejected_without_token(
+        self, client: AsyncClient, test_user_id: uuid.UUID
+    ) -> None:
         """L'endpoint inter-service retourne 403 avec un token utilisateur."""
         await client.post("/api/v1/profiles", json={"height_cm": 175.0})
         resp = await client.get(f"/api/v1/profiles/{test_user_id}")

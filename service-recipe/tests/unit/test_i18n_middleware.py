@@ -1,5 +1,5 @@
-import pytest
 from fastapi.testclient import TestClient
+
 
 class TestLocaleMiddleware:
     """Tests pour le middleware de détection de locale"""
@@ -43,8 +43,7 @@ class TestLocaleMiddleware:
         """
         client = TestClient(app_with_middleware)
         response = client.get(
-            "/test",
-            headers={"Accept-Language": "en-US,en;q=0.9,fr;q=0.8"}
+            "/test", headers={"Accept-Language": "en-US,en;q=0.9,fr;q=0.8"}
         )
 
         assert response.status_code == 200

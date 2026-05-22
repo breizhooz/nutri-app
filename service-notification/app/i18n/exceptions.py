@@ -21,20 +21,37 @@ class LocalizedHTTPException(AppException):
 
     @staticmethod
     def subscription_not_found(request: Request) -> "LocalizedHTTPException":
-        return LocalizedHTTPException(404, "subscription.errors.not_found", request, code="SUBSCRIPTION_NOT_FOUND")
+        return LocalizedHTTPException(
+            404, "subscription.errors.not_found", request, code="SUBSCRIPTION_NOT_FOUND"
+        )
 
     @staticmethod
     def subscription_already_exists(request: Request) -> "LocalizedHTTPException":
-        return LocalizedHTTPException(409, "subscription.errors.already_exists", request, code="SUBSCRIPTION_ALREADY_EXISTS")
+        return LocalizedHTTPException(
+            409,
+            "subscription.errors.already_exists",
+            request,
+            code="SUBSCRIPTION_ALREADY_EXISTS",
+        )
 
     @staticmethod
     def notification_not_found(request: Request) -> "LocalizedHTTPException":
-        return LocalizedHTTPException(404, "notification.errors.not_found", request, code="NOTIFICATION_NOT_FOUND")
+        return LocalizedHTTPException(
+            404, "notification.errors.not_found", request, code="NOTIFICATION_NOT_FOUND"
+        )
 
     @staticmethod
     def unauthorized(request: Request) -> "LocalizedHTTPException":
-        return LocalizedHTTPException(403, "common.errors.unauthorized", request, code="UNAUTHORIZED")
+        return LocalizedHTTPException(
+            403, "common.errors.unauthorized", request, code="UNAUTHORIZED"
+        )
 
     @staticmethod
     def dispatch_failed(request: Request, e: Exception) -> "LocalizedHTTPException":
-        return LocalizedHTTPException(500, "notification.errors.dispatch_failed", request, code="NOTIFICATION_DISPATCH_FAILED", message=str(e))
+        return LocalizedHTTPException(
+            500,
+            "notification.errors.dispatch_failed",
+            request,
+            code="NOTIFICATION_DISPATCH_FAILED",
+            message=str(e),
+        )

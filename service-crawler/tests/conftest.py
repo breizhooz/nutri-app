@@ -16,7 +16,9 @@ os.environ.setdefault("MINIO_SECRET_KEY", "test-secret-key")
 os.environ.setdefault("MINIO_BUCKET_CRAWLER", "crawler-test")
 os.environ.setdefault("SERVICE_RECIPE_URL", "http://service-recipe-test:8000")
 os.environ.setdefault("SERVICE_RECIPE_TOKEN", "test-service-token")
-os.environ.setdefault("SERVICE_NOTIFICATION_URL", "http://service-notification-test:8000")
+os.environ.setdefault(
+    "SERVICE_NOTIFICATION_URL", "http://service-notification-test:8000"
+)
 os.environ.setdefault("SERVICE_NOTIFICATION_TOKEN", "test-notification-token")
 os.environ.setdefault("JWT_SECRET", "test-jwt-secret-for-unit-tests")
 os.environ.setdefault("INSTAGRAM_USERNAME", "")

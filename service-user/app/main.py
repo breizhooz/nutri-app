@@ -9,7 +9,6 @@ from app.api.routes import auth as auth_routes
 from nutri_shared.core.logger import configure_logging
 from nutri_shared.core.middleware import RequestLoggingMiddleware
 
-
 configure_logging("service-user")
 app = FastAPI(title="service-user", version="0.1.0")
 
@@ -20,9 +19,11 @@ register_error_handlers(app)
 app.include_router(auth_routes.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(users_routes.router, prefix="/api/v1/users", tags=["users"])
 
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "service-user"}
+
 
 @app.get("/health/db")
 async def health_db():

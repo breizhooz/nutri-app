@@ -1,26 +1,34 @@
 from enum import Enum as PyEnum
 
+
 class DifficultyLevel(str, PyEnum):
     """Level of difficulty"""
+
     EASY = "enums.difficulty.easy"
     MEDIUM = "enums.difficulty.medium"
     HARD = "enums.difficulty.hard"
 
+
 class RecipeOrigin(str, PyEnum):
     """Origin of recipe"""
+
     WEB = "enums.origin_recipe.web"
     BOOK = "enums.origin_recipe.book"
     TV = "enums.origin_recipe.tv"
     PERSONAL = "enums.origin_recipe.personal"
 
+
 class CourseType(str, PyEnum):
     """Type of moment recipe"""
+
     STARTER = "enums.course_type.starter"
     MAIN_COURSE = "enums.course_type.main"
     DESSERT = "enums.course_type.dessert"
 
+
 class CuisineOrigin(str, PyEnum):
     """Origin of cuisine"""
+
     EUROPE = "enums.origin_recipe.cuisine_origine.europe"
     FRENCH = "enums.origin_recipe.cuisine_origine.french"
     ITALIAN = "enums.origin_recipe.cuisine_origine.italian"

@@ -8,14 +8,20 @@ from app.db.session import get_session
 from app.i18n.loader import t
 from app.models.enums import CrawlType
 from app.repositories.source_repository import SourceRepository
-from app.schemas.crawl_source import CrawlSourceCreate, CrawlSourceResponse, CrawlSourceUpdate
+from app.schemas.crawl_source import (
+    CrawlSourceCreate,
+    CrawlSourceResponse,
+    CrawlSourceUpdate,
+)
 from tasks.instagram import crawl_instagram
 from tasks.web import crawl_url
 
 router = APIRouter()
 
 
-@router.post("", response_model=CrawlSourceResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=CrawlSourceResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_source(
     data: CrawlSourceCreate,
     session: AsyncSession = Depends(get_session),
@@ -46,9 +52,14 @@ async def get_source(
     repo = SourceRepository(session)
     source = await repo.get_by_id(source_id)
     if not source:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=t.get("crawl_source.not_found"))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=t.get("crawl_source.not_found"),
+        )
     if source.user_id != current_user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=t.get("errors.forbidden"))
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=t.get("errors.forbidden")
+        )
     return source
 
 
@@ -62,9 +73,14 @@ async def update_source(
     repo = SourceRepository(session)
     source = await repo.get_by_id(source_id)
     if not source:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=t.get("crawl_source.not_found"))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=t.get("crawl_source.not_found"),
+        )
     if source.user_id != current_user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=t.get("errors.forbidden"))
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=t.get("errors.forbidden")
+        )
     return await repo.update(source, data)
 
 
@@ -77,9 +93,14 @@ async def delete_source(
     repo = SourceRepository(session)
     source = await repo.get_by_id(source_id)
     if not source:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=t.get("crawl_source.not_found"))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=t.get("crawl_source.not_found"),
+        )
     if source.user_id != current_user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=t.get("errors.forbidden"))
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=t.get("errors.forbidden")
+        )
     await repo.delete(source)
 
 
@@ -92,9 +113,14 @@ async def trigger_crawl(
     repo = SourceRepository(session)
     source = await repo.get_by_id(source_id)
     if not source:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=t.get("crawl_source.not_found"))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=t.get("crawl_source.not_found"),
+        )
     if source.user_id != current_user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=t.get("errors.forbidden"))
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=t.get("errors.forbidden")
+        )
 
     if source.type == CrawlType.WEB:
         task = crawl_url.delay(str(source.id), source.url)
@@ -106,4 +132,8 @@ async def trigger_crawl(
             detail=t.get("errors.crawl_type_not_supported"),
         )
 
-    return {"detail": t.get("crawl_source.crawl_queued"), "source_id": str(source_id), "task_id": task.id}
+    return {
+        "detail": t.get("crawl_source.crawl_queued"),
+        "source_id": str(source_id),
+        "task_id": task.id,
+    }

@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum as SQLEnum, ForeignKey, String, Text, func
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
@@ -7,6 +10,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_class import Base
 from app.models.enums import CrawlStatus, CrawlType
+
+if TYPE_CHECKING:
+    from app.models.crawl_source import CrawlSource
 
 
 class CrawlResult(Base):
@@ -27,15 +33,21 @@ class CrawlResult(Base):
     url_origin: Mapped[str] = mapped_column(String(1000), nullable=False)
     title: Mapped[str] = mapped_column(String(500), nullable=False, default="")
     raw_content: Mapped[str | None] = mapped_column(Text, nullable=True)
-    images: Mapped[list[str]] = mapped_column(ARRAY(String), default=[], server_default="{}")
+    images: Mapped[list[str]] = mapped_column(
+        ARRAY(String), default=[], server_default="{}"
+    )
     video_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     status: Mapped[CrawlStatus] = mapped_column(
         SQLEnum(CrawlStatus, native_enum=False, length=20),
         default=CrawlStatus.WAITING,
         nullable=False,
     )
-    validate_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
-    validate_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    validate_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True
+    )
+    validate_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

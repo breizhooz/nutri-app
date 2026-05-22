@@ -1,4 +1,5 @@
 """Routes du profil principal : CRUD + calcul métabolique + endpoint inter-service."""
+
 import logging
 import uuid
 
@@ -31,7 +32,9 @@ async def create_profile(
     try:
         profile = await ProfileService(session).create(user_id, data)
     except ValueError:
-        raise HTTPException(status.HTTP_409_CONFLICT, detail=t.get("profile.already_exists", locale))
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, detail=t.get("profile.already_exists", locale)
+        )
     return ProfileResponse.model_validate(profile)
 
 
@@ -45,7 +48,9 @@ async def get_my_profile(
     locale = get_locale(request)
     profile = await ProfileService(session).get_by_user_id(user_id)
     if not profile:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale)
+        )
     return ProfileResponse.model_validate(profile)
 
 
@@ -60,7 +65,9 @@ async def update_my_profile(
     locale = get_locale(request)
     profile = await ProfileService(session).update(user_id, data)
     if not profile:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale)
+        )
     return ProfileResponse.model_validate(profile)
 
 
@@ -77,14 +84,18 @@ async def calculate_my_profile(
 
     profile = await profile_repo.get_by_user_id(user_id)
     if not profile:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale)
+        )
 
     lifestyle = await pref_repo.get_lifestyle(profile.id)
     sports = await pref_repo.get_sports(profile.id)
     nutrition = await pref_repo.get_nutrition(profile.id)
 
     try:
-        return CalculationService().calculate(profile, lifestyle, sports, nutrition, locale)
+        return CalculationService().calculate(
+            profile, lifestyle, sports, nutrition, locale
+        )
     except ValueError:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -92,7 +103,11 @@ async def calculate_my_profile(
         )
 
 
-@router.get("/{user_id}", response_model=ProfileResponse, dependencies=[Depends(verify_service_token)])
+@router.get(
+    "/{user_id}",
+    response_model=ProfileResponse,
+    dependencies=[Depends(verify_service_token)],
+)
 async def get_profile_for_service(
     request: Request,
     user_id: uuid.UUID,
@@ -102,5 +117,7 @@ async def get_profile_for_service(
     locale = get_locale(request)
     profile = await ProfileService(session).get_by_user_id(user_id)
     if not profile:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale))
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale)
+        )
     return ProfileResponse.model_validate(profile)

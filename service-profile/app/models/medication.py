@@ -1,7 +1,7 @@
 """Modèle Medication — traitement médicamenteux en cours."""
+
 import logging
 import uuid
-from datetime import datetime
 
 from sqlalchemy import Boolean, Text, String
 from sqlalchemy.dialects.postgresql import UUID
@@ -18,7 +18,11 @@ class Medication(Base, SlugMixin, TimestampMixin):
 
     __tablename__ = "medications"
 
-    profile_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False, index=True
+    )
     medication_name: Mapped[str] = mapped_column(String(200), nullable=False)
-    impacts_metabolism: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    impacts_metabolism: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)

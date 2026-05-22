@@ -3,6 +3,7 @@
 Chaque membre expose i18n_key() pour la résolution de traduction
 et label(locale) pour le libellé traduit direct.
 """
+
 import enum
 import re
 
@@ -28,6 +29,7 @@ class TranslatableEnum(str, enum.Enum):
     def label(self, locale: str = "fr") -> str:
         """Retourne le libellé traduit dans la locale demandée."""
         from app.i18n import t
+
         return t.get(self.i18n_key(), locale)
 
 

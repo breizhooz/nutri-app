@@ -1,4 +1,5 @@
 """Tests des routes de personnalisation : sports, performances, lifestyle, nutrition."""
+
 import pytest
 from httpx import AsyncClient
 
@@ -17,6 +18,7 @@ _PROFILE_PAYLOAD: dict = {
     "height_cm": 178.0,
     "weight_kg": 80.0,
 }
+
 
 class TestPreferencesRoutes:
     """Tests des endpoints de personnalisation du profil."""
@@ -90,7 +92,9 @@ class TestLifestyleRoutes:
     @pytest.mark.unit
     async def test_upsert_lifestyle_create(self, client: AsyncClient) -> None:
         """PUT /lifestyle crée le profil lifestyle."""
-        resp = await client.put("/api/v1/profiles/me/lifestyle", json=_LIFESTYLE_PAYLOAD)
+        resp = await client.put(
+            "/api/v1/profiles/me/lifestyle", json=_LIFESTYLE_PAYLOAD
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert data["stress_level"] == "moderate"
@@ -133,7 +137,9 @@ class TestNutritionRoutes:
     @pytest.mark.unit
     async def test_upsert_nutrition_create(self, client: AsyncClient) -> None:
         """PUT /nutrition crée les préférences nutritionnelles."""
-        resp = await client.put("/api/v1/profiles/me/nutrition", json=_NUTRITION_PAYLOAD)
+        resp = await client.put(
+            "/api/v1/profiles/me/nutrition", json=_NUTRITION_PAYLOAD
+        )
         assert resp.status_code == 200
         data = resp.json()
         assert data["diet_type"] == "omnivore"

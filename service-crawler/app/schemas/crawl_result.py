@@ -31,12 +31,14 @@ class CrawlResultResponse(BaseModel):
     validate_date: datetime | None
     created_at: datetime
 
+
 class CrawlResultListParams(BaseModel):
     status: CrawlStatus | None = CrawlStatus.WAITING
     source_id: uuid.UUID | None = None
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=20, ge=1, le=100)
-    
+
+
 class PaginatedCrawlResultResponse(BaseModel):
     items: list[CrawlResultResponse]
     total: int
@@ -55,6 +57,6 @@ class PaginatedCrawlResultResponse(BaseModel):
         page_size: int,
     ) -> "PaginatedCrawlResultResponse":
         pages = math.ceil(total / page_size) if total > 0 else 0
-        return cls(items=items, total=total, page=page, page_size=page_size, pages=pages)
-
-    
+        return cls(
+            items=items, total=total, page=page, page_size=page_size, pages=pages
+        )

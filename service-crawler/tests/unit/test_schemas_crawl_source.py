@@ -1,4 +1,5 @@
 """Tests unitaires — schemas CrawlSource (union discriminée)."""
+
 import pytest
 from datetime import time
 from pydantic import ValidationError
@@ -12,6 +13,7 @@ from app.schemas.crawl_source import (
 
 
 # ─── WebSourceCreate ──────────────────────────────────────────────────────────
+
 
 def test_web_source_accepts_valid_http_url():
     s = WebSourceCreate(type=CrawlType.WEB, url="https://example.com/recipe")
@@ -47,6 +49,7 @@ def test_web_source_model_dump_contains_url_key():
 
 
 # ─── InstagramSourceCreate ────────────────────────────────────────────────────
+
 
 def test_instagram_source_normalizes_at_prefix():
     s = InstagramSourceCreate(type=CrawlType.INSTAGRAM, account="@chef_paul")
@@ -99,6 +102,7 @@ def test_instagram_source_default_frequency():
 
 
 # ─── Union discriminée CrawlSourceCreate ─────────────────────────────────────
+
 
 def test_union_dispatches_to_web_on_type_web():
     from pydantic import TypeAdapter

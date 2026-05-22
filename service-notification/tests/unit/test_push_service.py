@@ -73,7 +73,9 @@ class TestPushService:
     async def test_send_includes_data_in_json_payload(self, svc, sub):
         """Le champ data est sérialisé dans le payload JSON."""
         with patch("app.services.push_service.webpush", return_value=None) as mock_wp:
-            await svc.send(sub, "T", "B", data={"macro_error_slug": "gochujank-20260518"})
+            await svc.send(
+                sub, "T", "B", data={"macro_error_slug": "gochujank-20260518"}
+            )
         raw = mock_wp.call_args[1]["data"]
         parsed = json.loads(raw)
         assert parsed["data"]["macro_error_slug"] == "gochujank-20260518"
@@ -87,11 +89,12 @@ class TestPushService:
             await svc.send(sub, "T", "B")
         claims = mock_wp.call_args[1]["vapid_claims"]
         assert claims["sub"] == "mailto:admin@nutriplanner.app"
-    
+
     @pytest.mark.unit
     async def test_send_with_no_data_uses_empty_dict(self, svc, sub):
         """data=None → payload JSON contient data={}."""
         import json
+
         with patch("app.services.push_service.webpush", return_value=None) as mock_wp:
             await svc.send(sub, "T", "B", data=None)
         raw = mock_wp.call_args[1]["data"]

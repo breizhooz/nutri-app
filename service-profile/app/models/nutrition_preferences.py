@@ -1,7 +1,7 @@
 """Modèle NutritionPreferences — préférences alimentaires et objectifs."""
+
 import logging
 import uuid
-from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import Boolean, Integer, JSON, Numeric, SmallInteger, String, Text
@@ -34,7 +34,9 @@ class NutritionPreferences(Base, SlugMixin, UpdatedAtMixin):
     meals_per_day: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     snacks_per_day: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
     practices_if: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    fasting_window_hours: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    fasting_window_hours: Mapped[int | None] = mapped_column(
+        SmallInteger, nullable=True
+    )
     cooking_level: Mapped[CookingLevel | None] = mapped_column(
         SQLEnum(CookingLevel, native_enum=False, length=15), nullable=True
     )
@@ -46,6 +48,10 @@ class NutritionPreferences(Base, SlugMixin, UpdatedAtMixin):
     )
     hydration_target_ml: Mapped[int | None] = mapped_column(Integer, nullable=True)
     supplements: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
-    budget_per_day_eur: Mapped[Decimal | None] = mapped_column(Numeric(7, 2), nullable=True)
+    budget_per_day_eur: Mapped[Decimal | None] = mapped_column(
+        Numeric(7, 2), nullable=True
+    )
     medical_contraindications: Mapped[str | None] = mapped_column(Text, nullable=True)
-    excluded_foods: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    excluded_foods: Mapped[list[str]] = mapped_column(
+        JSON, nullable=False, default=list
+    )

@@ -2,7 +2,6 @@ import uuid
 from datetime import time, timedelta
 from unittest.mock import MagicMock
 
-import pytest
 from celery.schedules import crontab
 
 from app.models.crawl_source import CrawlSource
@@ -72,7 +71,9 @@ class TestSourceKey:
         assert SchedulerService.source_key(sid) == SchedulerService.source_key(sid)
 
     def test_different_ids_give_different_keys(self):
-        assert SchedulerService.source_key(uuid.uuid4()) != SchedulerService.source_key(uuid.uuid4())
+        assert SchedulerService.source_key(uuid.uuid4()) != SchedulerService.source_key(
+            uuid.uuid4()
+        )
 
 
 class TestBuildEntry:
@@ -159,17 +160,23 @@ class TestEntrySignature:
     def test_same_params_equal_signatures(self):
         s1 = _make_source(frequency_hours=24, hour=3, minute=0)
         s2 = _make_source(frequency_hours=24, hour=3, minute=0)
-        assert SchedulerService.entry_signature(s1) == SchedulerService.entry_signature(s2)
+        assert SchedulerService.entry_signature(s1) == SchedulerService.entry_signature(
+            s2
+        )
 
     def test_different_frequency_different_sig(self):
         s1 = _make_source(frequency_hours=24, hour=3, minute=0)
         s2 = _make_source(frequency_hours=12, hour=3, minute=0)
-        assert SchedulerService.entry_signature(s1) != SchedulerService.entry_signature(s2)
+        assert SchedulerService.entry_signature(s1) != SchedulerService.entry_signature(
+            s2
+        )
 
     def test_different_hour_different_sig(self):
         s1 = _make_source(frequency_hours=24, hour=3, minute=0)
         s2 = _make_source(frequency_hours=24, hour=9, minute=0)
-        assert SchedulerService.entry_signature(s1) != SchedulerService.entry_signature(s2)
+        assert SchedulerService.entry_signature(s1) != SchedulerService.entry_signature(
+            s2
+        )
 
     def test_returns_tuple(self):
         result = SchedulerService.entry_signature(_make_source())
