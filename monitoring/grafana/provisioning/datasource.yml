@@ -8,3 +8,16 @@ datasources:
     editable: false
     jsonData:
       timeInterval: '15s'
+
+  - name: Elasticsearch-Logs
+    type: elasticsearch
+    url: http://elasticsearch:9200
+    isDefault: false
+    editable: false
+    jsonData:
+      index: "nutrilogs-*"
+      timeField: "@timestamp"
+      esVersion: "8.0.0"
+      logMessageField: "event"
+      logLevelField: "level"
+      maxConcurrentShardRequests: 5

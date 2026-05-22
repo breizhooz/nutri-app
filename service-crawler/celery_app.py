@@ -1,5 +1,8 @@
 from celery import Celery
 from app.core.config import settings
+from nutri_shared.core.logger import configure_logging
+
+configure_logging("service-crawler-worker")
 
 celery_app = Celery(
     "service-crawler",

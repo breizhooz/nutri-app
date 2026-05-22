@@ -14,8 +14,12 @@ from app.db.session import get_engine
 from app.i18n.middleware import LocaleMiddleware
 from app.models.nutrition_item import NutritionItem, NutritionSource
 
+from nutri_shared.core.logger import configure_logging
+from nutri_shared.core.middleware import RequestLoggingMiddleware
+
 logger = logging.getLogger(__name__)
 
+configure_logging("service-nutrition")
 
 async def _bootstrap_ciqual() -> None:
     try:
@@ -56,6 +60,7 @@ def create_app() -> FastAPI:
         debug=settings.DEBUG,
         lifespan=lifespan,
     )
+    app.add_middleware(RequestLoggingMiddleware)
 
     app.add_middleware(LocaleMiddleware)
     register_error_handlers(app)

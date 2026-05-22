@@ -9,14 +9,19 @@ from app.i18n.middleware import LocaleMiddleware
 from app.api.routes import shopping_list as shopping_list_router
 from app.api.routes import weekly_menu as weekly_menu_router
 
+from nutri_shared.core.logger import configure_logging
+from nutri_shared.core.middleware import RequestLoggingMiddleware
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     yield
     await get_engine().dispose()
 
+configure_logging("service-menu")
 app = FastAPI(title="service-menu", version="0.1.0", lifespan=lifespan)
-
 app.add_middleware(LocaleMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
+
 register_error_handlers(app)
 
 app.include_router(weekly_menu_router.router, prefix="/api/v1/menus", tags=["menus"])
