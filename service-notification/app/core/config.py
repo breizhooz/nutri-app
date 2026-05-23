@@ -1,11 +1,12 @@
+"""Application settings loaded from environment variables."""
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file="conf/.env",
-        extra="ignore",
-    )
+    """Central configuration for service-notification."""
+
+    model_config = SettingsConfigDict(env_file="conf/.env", extra="ignore")
 
     DATABASE_URL: str
     DEBUG: bool = False
@@ -17,8 +18,14 @@ class Settings(BaseSettings):
     VAPID_PUBLIC_KEY: str
     VAPID_CLAIMS_EMAIL: str = "admin@nutriplanner.app"
 
-    # Token partagé avec les autres services pour les appels inter-services
     SERVICE_NOTIFICATION_TOKEN: str = ""
 
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = "noreply@nutri-app.com"
+    SMTP_USE_TLS: bool = True
 
-settings = Settings()
+
+settings: Settings = Settings()

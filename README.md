@@ -128,6 +128,187 @@ docker compose down -v
 ```
 
 ---
+## Flows d'authentification
+
+### Login sans 2FA
+
+```
+POST /api/v1/auth/login
+  └──→ { access_token, refresh_token, token_type }
+```
+
+### Login avec 2FA activé
+
+```
+POST /api/v1/auth/login
+  └──→ { mfa_token, mfa_method }   ← token JWT court (5 min), stateless
+             │
+             ├── mfa_method = "totp"  → l'utilisateur ouvre son appli authenticator
+             └── mfa_method = "email" → un code est envoyé automatiquement par mail
+
+POST /api/v1/auth/2fa/verify  { mfa_token, code }
+  └──→ { access_token, refresh_token, token_type }
+```
+
+### Activation du TOTP (setup)
+
+```
+POST /api/v1/auth/2fa/setup/totp
+  └──→ { provisioning_uri }   ← URI otpauth:// à afficher en QR code côté client
+
+POST /api/v1/auth/2fa/confirm/totp  { code }    ← l'utilisateur scanne le QR et saisit le premier code
+  └──→ { access_token, refresh_token }           ← 2FA activé
+```
+
+### Login OAuth2
+
+```
+GET /api/v1/auth/oauth/google/authorize
+  └──→ 302 redirect → Google (avec state JWT anti-CSRF)
+             │
+             │  (l'utilisateur autorise sur Google)
+             ↓
+GET /api/v1/auth/oauth/google/callback?code=...&state=...
+  └──→ { access_token, refresh_token }   ← ou { mfa_token } si 2FA actif sur ce compte
+```
+
+**Règle de compte unifié** : si l'email renvoyé par le provider correspond à un compte local existant, les deux sont liés automatiquement. Un compte créé via OAuth peut fonctionner sans mot de passe local.
+
+---
+
+## OAuth2 — Configuration providers
+
+### Google
+
+**Console** : [console.cloud.google.com](https://console.cloud.google.com)
+
+1. Créer ou sélectionner un projet Google Cloud
+2. Menu **APIs & Services → Bibliothèque** → activer **"Google People API"**
+3. Menu **APIs & Services → Identifiants → Créer des identifiants → ID client OAuth 2.0**
+4. Type d'application : **Application Web**
+5. **URI de redirection autorisés** — ajouter :
+
+```
+# Production
+https://api.nutri-app.com/api/v1/auth/oauth/google/callback
+
+# Développement local
+http://localhost:8001/api/v1/auth/oauth/google/callback
+```
+
+6. Récupérer :
+   - **Client ID** → `GOOGLE_CLIENT_ID`
+   - **Client Secret** → `GOOGLE_CLIENT_SECRET`
+
+---
+
+### Facebook / Instagram
+
+**Console** : [developers.facebook.com](https://developers.facebook.com)
+
+1. **Mes applications → Créer une application** → type : **Consommateur**
+2. Ajouter le produit **Facebook Login**
+3. **Paramètres de Facebook Login → URI de redirection OAuth valides** — ajouter :
+
+```
+# Production
+https://api.nutri-app.com/api/v1/auth/oauth/facebook/callback
+
+# Développement local
+http://localhost:8001/api/v1/auth/oauth/facebook/callback
+```
+
+4. **Paramètres → Basique** — récupérer :
+   - **App ID** → `FACEBOOK_CLIENT_ID`
+   - **App Secret** → `FACEBOOK_CLIENT_SECRET`
+
+> Pour **Instagram Login**, ajouter le produit **Instagram** sur la même application Meta. Le `FACEBOOK_CLIENT_ID` et `FACEBOOK_CLIENT_SECRET` sont partagés.
+
+---
+
+## Double facteur (2FA)
+
+### TOTP (Google Authenticator, Authy…)
+
+Le secret TOTP est généré côté serveur, chiffré avec Fernet avant stockage en base, et jamais transmis en clair après l'étape de setup.
+
+Applications compatibles : Google Authenticator, Authy, 1Password, Bitwarden, tout client TOTP RFC 6238.
+
+### Email
+
+Le code à 6 chiffres est généré avec `secrets.randbelow` (cryptographiquement sûr), hashé avec Argon2 avant stockage dans `mfa_pending_codes`, et envoyé via `service-notification`. Il expire après 5 minutes et ne peut être utilisé qu'une seule fois.
+
+---
+
+## Variables d'environnement
+
+### Base
+
+| Variable | Description | Exemple |
+|----------|-------------|---------|
+| `DATABASE_URL` | Connexion PostgreSQL async | `postgresql+asyncpg://user:pass@postgres-user:5432/user_db` |
+| `JWT_SECRET` | Clé de signature JWT — garder secrète | chaîne aléatoire longue |
+| `JWT_ACCESS_TOKEN_EXPIRES_MINUTES` | Durée de vie de l'access token | `30` |
+| `JWT_REFRESH_TOKEN_EXPIRE_DAYS` | Durée de vie du refresh token | `30` |
+| `DEBUG` | Mode debug FastAPI | `false` |
+
+### OAuth2
+
+| Variable | Description | Où la générer |
+|----------|-------------|---------------|
+| `GOOGLE_CLIENT_ID` | Client ID OAuth2 Google | Google Cloud Console |
+| `GOOGLE_CLIENT_SECRET` | Client Secret OAuth2 Google | Google Cloud Console |
+| `FACEBOOK_CLIENT_ID` | App ID Meta | Meta for Developers |
+| `FACEBOOK_CLIENT_SECRET` | App Secret Meta | Meta for Developers |
+| `OAUTH_REDIRECT_BASE_URL` | URL de base de l'API (sans slash final) | `https://api.nutri-app.com` en prod, `http://localhost:8001` en dev |
+
+### 2FA
+
+| Variable | Description | Comment la générer |
+|----------|-------------|-------------------|
+| `MFA_TOTP_ENCRYPTION_KEY` | Clé Fernet pour chiffrer les secrets TOTP en base | Voir section suivante |
+| `MFA_TOKEN_EXPIRE_MINUTES` | Durée de vie du `mfa_token` | `5` (défaut) |
+| `MFA_EMAIL_CODE_EXPIRE_MINUTES` | Durée de vie du code email 2FA | `5` (défaut) |
+
+### Inter-services
+
+| Variable | Description |
+|----------|-------------|
+| `NOTIFICATION_SERVICE_URL` | URL interne de service-notification (ex: `http://service-notification:8006`) |
+| `NOTIFICATION_SERVICE_TOKEN` | Token partagé pour les appels inter-services |
+
+---
+
+## Générer les clés et secrets
+
+### Clé Fernet (MFA_TOTP_ENCRYPTION_KEY)
+
+La clé Fernet protège les secrets TOTP stockés en base. Elle doit être générée **une seule fois par environnement** et ne **jamais changer en production** (changer la clé invalide tous les secrets TOTP existants).
+
+```bash
+python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+Exemple de sortie :
+```
+bXlzZWNyZXRrZXkxMjM0NTY3ODkwMTIzNDU2Nzg=
+```
+
+### JWT_SECRET
+
+```bash
+python3 -c "import secrets; print(secrets.token_hex(32))"
+```
+
+### NOTIFICATION_SERVICE_TOKEN
+
+```bash
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+> Stocker toutes ces valeurs dans un secret manager (HashiCorp Vault, AWS Secrets Manager, GitHub Secrets, Doppler…) — **jamais en clair dans le dépôt**.
+
+---
 
 ## Migrations (Alembic)
 
@@ -194,14 +375,30 @@ done
 ```
 GET     /health
 GET     /health/db
-POST    /api/v1/auth/login
-POST    /api/v1/auth/refresh
-POST    /api/v1/users
-GET     /api/v1/users
-GET     /api/v1/users/me
-GET     /api/v1/users/{user_id}
-GET     /api/v1/users/{user_id}/exists
-DELETE  /api/v1/users/{user_id}
+
+# Auth
+POST    /api/v1/auth/login                         Connexion (retourne tokens ou mfa_token si 2FA actif)
+POST    /api/v1/auth/refresh                        Rafraîchit le JWT
+
+# Utilisateurs
+POST    /api/v1/users                               Créer un utilisateur
+GET     /api/v1/users                               Lister les utilisateurs
+GET     /api/v1/users/me                            Utilisateur courant (JWT requis)
+GET     /api/v1/users/{user_id}                     Utilisateur par ID
+GET     /api/v1/users/{user_id}/exists              Vérifier si l'utilisateur existe (inter-service)
+DELETE  /api/v1/users/{user_id}                     Supprimer utilisateur
+
+# Double facteur (2FA)
+POST    /api/v1/auth/2fa/setup/totp                 Génère un secret TOTP + URI otpauth://
+POST    /api/v1/auth/2fa/confirm/totp               Active le 2FA TOTP après vérification du premier code
+POST    /api/v1/auth/2fa/setup/email                Active le 2FA par email
+POST    /api/v1/auth/2fa/verify                     Échange un mfa_token + code OTP contre des tokens définitifs
+DELETE  /api/v1/auth/2fa/disable                    Désactive le 2FA
+POST    /api/v1/auth/setup/totp                     Génération de l'image qr code pour le TOTP
+
+# OAuth2
+GET     /api/v1/auth/oauth/{provider}/authorize     Redirige vers la page d'autorisation du provider
+GET     /api/v1/auth/oauth/{provider}/callback      Reçoit le code OAuth2, crée ou lie le compte
 ```
 
 ### service-recipe — `api-recipe.localhost`
