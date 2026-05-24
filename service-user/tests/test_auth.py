@@ -38,7 +38,9 @@ async def _create_user(
 
 
 @pytest.mark.unit
-async def test_login_no_2fa_returns_token_pair(anon_client: AsyncClient, db_session: AsyncSession) -> None:
+async def test_login_no_2fa_returns_token_pair(
+    anon_client: AsyncClient, db_session: AsyncSession
+) -> None:
     """Login without 2FA returns access and refresh tokens immediately."""
     await _create_user(db_session)
     resp = await anon_client.post(
@@ -52,11 +54,14 @@ async def test_login_no_2fa_returns_token_pair(anon_client: AsyncClient, db_sess
 
 
 @pytest.mark.unit
-async def test_login_wrong_password_returns_401(anon_client: AsyncClient, db_session: AsyncSession) -> None:
+async def test_login_wrong_password_returns_401(
+    anon_client: AsyncClient, db_session: AsyncSession
+) -> None:
     """Login with wrong password returns 401."""
     await _create_user(db_session)
     resp = await anon_client.post(
-        "/api/v1/auth/login", json={"email": "auth@test.com", "password": "wrongpassword"}
+        "/api/v1/auth/login",
+        json={"email": "auth@test.com", "password": "wrongpassword"},
     )
     assert resp.status_code == 401
 
@@ -65,13 +70,16 @@ async def test_login_wrong_password_returns_401(anon_client: AsyncClient, db_ses
 async def test_login_unknown_email_returns_401(anon_client: AsyncClient) -> None:
     """Login with unknown email returns 401."""
     resp = await anon_client.post(
-        "/api/v1/auth/login", json={"email": "nobody@test.com", "password": "password123"}
+        "/api/v1/auth/login",
+        json={"email": "nobody@test.com", "password": "password123"},
     )
     assert resp.status_code == 401
 
 
 @pytest.mark.unit
-async def test_login_inactive_user_returns_400(anon_client: AsyncClient, db_session: AsyncSession) -> None:
+async def test_login_inactive_user_returns_400(
+    anon_client: AsyncClient, db_session: AsyncSession
+) -> None:
     """Login with inactive account returns 400."""
     user = await _create_user(db_session)
     user.is_active = False
@@ -115,13 +123,16 @@ async def test_login_oauth_only_user_no_password_returns_401(
     db_session.add(user)
     await db_session.commit()
     resp = await anon_client.post(
-        "/api/v1/auth/login", json={"email": "oauth@test.com", "password": "password123"}
+        "/api/v1/auth/login",
+        json={"email": "oauth@test.com", "password": "password123"},
     )
     assert resp.status_code == 401
 
 
 @pytest.mark.unit
-async def test_refresh_valid_token(anon_client: AsyncClient, db_session: AsyncSession) -> None:
+async def test_refresh_valid_token(
+    anon_client: AsyncClient, db_session: AsyncSession
+) -> None:
     """Valid refresh token returns a new token pair."""
     user = await _create_user(db_session)
     refresh = create_refresh_token(str(user.id))

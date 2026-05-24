@@ -1,7 +1,5 @@
 """OAuth2 social login routes for Google and Facebook."""
 
-import uuid
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
@@ -135,7 +133,9 @@ async def oauth_callback(
             detail="Failed to retrieve user info from provider",
         )
 
-    provider_user_id, provider_email = OAuthService.extract_user_info(provider, raw_user)
+    provider_user_id, provider_email = OAuthService.extract_user_info(
+        provider, raw_user
+    )
     if not provider_email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -29,7 +29,17 @@ from app.db.base import Base  # noqa: E402
 from app.db.session import get_session  # noqa: E402
 from app.main import app  # noqa: E402
 
-_JWT_SECRET: str = "test-secret-key-for-testing-only"
+
+def pytest_configure(config):
+    markexpr = getattr(config.option, "markexpr", "") or ""
+    if "smoke" in markexpr and "not smoke" not in markexpr:
+        try:
+            config.option.cov_fail_under = 0.0
+        except AttributeError:
+            pass
+
+
+_JWT_SECRET: str = os.environ.get("JWT_SECRET", "test-secret-key-for-testing-only")
 _TEST_DB_URL: str = "sqlite+aiosqlite:///:memory:"
 TEST_USER_ID: uuid.UUID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 

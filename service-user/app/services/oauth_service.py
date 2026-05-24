@@ -16,13 +16,13 @@ class OAuthService:
     _PROVIDERS: dict[str, dict] = {
         "google": {
             "authorize_url": "https://accounts.google.com/o/oauth2/auth",
-            "token_url": "https://oauth2.googleapis.com/token",
+            "token_url": "https://oauth2.googleapis.com/token",  # nosec B105
             "userinfo_url": "https://www.googleapis.com/oauth2/v3/userinfo",
             "scopes": "openid email profile",
         },
         "facebook": {
             "authorize_url": "https://www.facebook.com/dialog/oauth",
-            "token_url": "https://graph.facebook.com/oauth/access_token",
+            "token_url": "https://graph.facebook.com/oauth/access_token",  # nosec B105
             "userinfo_url": "https://graph.facebook.com/me?fields=id,email,name",
             "scopes": "email,public_profile",
         },

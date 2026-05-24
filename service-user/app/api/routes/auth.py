@@ -64,7 +64,9 @@ async def login(
             detail="Incorrect email or password",
         )
     if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
+        )
 
     if not user.two_factor_enabled:
         return TokenResponse(

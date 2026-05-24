@@ -3,11 +3,20 @@
 import httpx
 import pyotp
 import pytest
+import uuid as _uuid
 
 SERVICE_USER_URL = "http://localhost:8001"
 
-_SMOKE_USER = {"email": "smoke_user@test.internal", "password": "SmokeTest!99"}
-_SMOKE_MFA_USER = {"email": "smoke_mfa@test.internal", "password": "SmokeTest!99"}
+_SESSION_SUFFIX = _uuid.uuid4().hex[:8]
+
+_SMOKE_USER = {
+    "email": f"smoke_user_{_SESSION_SUFFIX}@test.internal",
+    "password": "SmokeTest!99",
+}
+_SMOKE_MFA_USER = {
+    "email": f"smoke_mfa_{_SESSION_SUFFIX}@test.internal",
+    "password": "SmokeTest!99",
+}
 
 
 @pytest.fixture()
@@ -33,20 +42,27 @@ def create_mfa_smoke_user():
     """Create and tear down a smoke test user with TOTP 2FA enabled."""
     with httpx.Client() as client:
         resp = client.post(f"{SERVICE_USER_URL}/api/v1/users", json=_SMOKE_MFA_USER)
-        assert resp.status_code == 201
+        assert resp.status_code == 201, (
+            f"User creation failed: {resp.status_code} {resp.text}"
+        )
         user = resp.json()
 
-        login = client.post(f"{SERVICE_USER_URL}/api/v1/auth/login", json=_SMOKE_MFA_USER)
+        login = client.post(
+            f"{SERVICE_USER_URL}/api/v1/auth/login", json=_SMOKE_MFA_USER
+        )
         token = login.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
 
         setup_resp = client.post(
             f"{SERVICE_USER_URL}/api/v1/auth/2fa/setup/totp", headers=headers
         )
-        assert setup_resp.status_code == 200
+        assert setup_resp.status_code == 200, (
+            f"TOTP setup failed: {setup_resp.status_code} {setup_resp.text}"
+        )
         uri = setup_resp.json()["provisioning_uri"]
 
         import re
+
         secret_match = re.search(r"secret=([A-Z2-7]+)", uri)
         assert secret_match, "Could not parse TOTP secret from URI"
         secret = secret_match.group(1)
@@ -62,7 +78,9 @@ def create_mfa_smoke_user():
         user["secret"] = secret
         yield user
 
-        login2 = client.post(f"{SERVICE_USER_URL}/api/v1/auth/login", json=_SMOKE_MFA_USER)
+        login2 = client.post(
+            f"{SERVICE_USER_URL}/api/v1/auth/login", json=_SMOKE_MFA_USER
+        )
         if login2.status_code == 200:
             mfa_token = login2.json()["mfa_token"]
             code2 = pyotp.TOTP(secret).now()

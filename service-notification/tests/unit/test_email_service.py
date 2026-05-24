@@ -27,8 +27,8 @@ class TestEmailServiceBuildMessage:
     def test_message_contains_code_in_text_part(self) -> None:
         """Plain-text payload includes the OTP code."""
         msg = EmailService._build_mfa_message("user@test.com", "654321")
-        payloads = [p.get_payload() for p in msg.get_payload()]
-        assert any("654321" in str(p) for p in payloads)
+        payloads = [p.get_payload(decode=True) for p in msg.get_payload()]
+        assert any("654321" in p.decode("utf-8") for p in payloads if p)
 
     @pytest.mark.unit
     def test_message_is_multipart(self) -> None:
@@ -46,7 +46,9 @@ class TestEmailServiceSendMfaCode:
         """send_mfa_code returns True when aiosmtplib.send succeeds."""
         with (
             patch("app.services.email_service.settings") as mock_settings,
-            patch("app.services.email_service.aiosmtplib.send", new=AsyncMock()) as mock_send,
+            patch(
+                "app.services.email_service.aiosmtplib.send", new=AsyncMock()
+            ) as mock_send,
         ):
             mock_settings.SMTP_HOST = "smtp.test.com"
             mock_settings.SMTP_PORT = 587

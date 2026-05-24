@@ -79,7 +79,9 @@ async def test_callback_creates_new_user_and_returns_tokens(
         ),
         patch(
             "app.api.routes.oauth.OAuthService.fetch_user_info",
-            new=AsyncMock(return_value={"sub": "google-uid-123", "email": "new@oauth.com"}),
+            new=AsyncMock(
+                return_value={"sub": "google-uid-123", "email": "new@oauth.com"}
+            ),
         ),
     ):
         resp = await anon_client.get(

@@ -63,7 +63,9 @@ class EmailService:
         msg["From"] = settings.SMTP_FROM
         msg["To"] = recipient_email
 
-        text_body = f"Votre code de vérification est : {code}\n\nIl expire dans 5 minutes."
+        text_body = (
+            f"Votre code de vérification est : {code}\n\nIl expire dans 5 minutes."
+        )
         html_body = f"""
         <html><body>
           <p>Votre code de vérification NutriApp :</p>
@@ -71,6 +73,6 @@ class EmailService:
           <p>Ce code expire dans <strong>5 minutes</strong>.</p>
         </body></html>
         """
-        msg.attach(MIMEText(text_body, "plain"))
-        msg.attach(MIMEText(html_body, "html"))
+        msg.attach(MIMEText(text_body, "plain", "utf-8"))
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
         return msg

@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.deps import get_current_user, get_mfa_pending_user
+from app.core.deps import get_current_user
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -33,7 +33,7 @@ async def setup_totp(
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> TotpSetupResponse:
-    """Generate a TOTP secret and provisioning URI for the authenticated user.
+    """Generate a TOTP secret, QR code and provisioning URI for the authenticated user.
 
     Does not activate 2FA yet — the user must confirm with a valid code via
     POST /auth/2fa/confirm/totp.
@@ -43,7 +43,7 @@ async def setup_totp(
         session: Async database session.
 
     Returns:
-        A TotpSetupResponse containing the otpauth:// URI for QR display.
+        A TotpSetupResponse with the otpauth:// URI and a base64 PNG QR code.
 
     Raises:
         HTTPException: 409 if 2FA is already enabled.
@@ -59,8 +59,14 @@ async def setup_totp(
     )
     session.add(current_user)
     await session.commit()
+
     uri = TotpService.get_provisioning_uri(secret, current_user.email)
-    return TotpSetupResponse(provisioning_uri=uri)
+    qr_base64 = TotpService.generate_qr_code_base64(uri)
+
+    return TotpSetupResponse(
+        provisioning_uri=uri,
+        qr_code_base64=qr_base64,
+    )
 
 
 @router.post("/confirm/totp", response_model=TokenResponse)
@@ -156,15 +162,9 @@ async def verify_mfa(
         HTTPException: 401 if the mfa_token is invalid.
         HTTPException: 400 if the OTP code is wrong or expired.
     """
-    from app.core.deps import get_mfa_pending_user as _resolve  # local to avoid cycle
-    from fastapi.security import HTTPAuthorizationCredentials
-
-    credentials = HTTPAuthorizationCredentials(
-        scheme="Bearer", credentials=data.mfa_token
-    )
-
     try:
         from app.core.security import decode_token
+
         payload = decode_token(data.mfa_token)
         if payload.get("type") != "mfa_pending":
             raise ValueError("Wrong token type")
@@ -175,8 +175,11 @@ async def verify_mfa(
             detail="Invalid or expired MFA token",
         )
 
-    from sqlalchemy import select as _select
-    result = await session.execute(select(User).where(User.id == user_id_str))
+    import uuid as _uuid
+
+    result = await session.execute(
+        select(User).where(User.id == _uuid.UUID(user_id_str))
+    )
     user: User | None = result.scalar_one_or_none()
     if not user or not user.is_active:
         raise HTTPException(
@@ -249,43 +252,3 @@ async def disable_mfa(
     current_user.totp_secret = None
     session.add(current_user)
     await session.commit()
-
-@router.post("/setup/totp", response_model=TotpSetupResponse)
-async def setup_totp(
-    current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session),
-) -> TotpSetupResponse:
-    """Generate a TOTP secret, QR code and provisioning URI for the authenticated user.
-
-    Does not activate 2FA yet — the user must confirm with a valid code via
-    POST /auth/2fa/confirm/totp.
-
-    Args:
-        current_user: The authenticated user.
-        session: Async database session.
-
-    Returns:
-        A TotpSetupResponse with the otpauth:// URI and a base64 PNG QR code.
-
-    Raises:
-        HTTPException: 409 if 2FA is already enabled.
-    """
-    if current_user.two_factor_enabled:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="2FA is already enabled",
-        )
-    secret = TotpService.generate_secret()
-    current_user.totp_secret = CryptoService.encrypt(
-        secret, settings.MFA_TOTP_ENCRYPTION_KEY
-    )
-    session.add(current_user)
-    await session.commit()
-
-    uri = TotpService.get_provisioning_uri(secret, current_user.email)
-    qr_base64 = TotpService.generate_qr_code_base64(uri)
-
-    return TotpSetupResponse(
-        provisioning_uri=uri,
-        qr_code_base64=qr_base64,
-    )

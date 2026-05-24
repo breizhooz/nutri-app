@@ -1,8 +1,9 @@
 """End-to-end smoke tests for service-notification — requires the full Docker stack."""
 
+import os
+
 import httpx
 import pytest
-from unittest.mock import patch, AsyncMock
 
 SERVICE_USER_URL = "http://localhost:8001"
 SERVICE_NOTIFICATION_URL = "http://localhost:8006"
@@ -17,7 +18,7 @@ _FAKE_SUBSCRIPTION = {
     "device_label": "Smoke Test Device",
 }
 
-_SERVICE_TOKEN = "test-service-token"
+_SERVICE_TOKEN = os.getenv("SERVICE_NOTIFICATION_TOKEN", "change-me-internal-token")
 
 
 @pytest.fixture()
@@ -103,7 +104,10 @@ def test_notification_health_db() -> None:
 def test_create_subscription(auth_token) -> None:
     """Creating a push subscription returns 201 with slug and endpoint."""
     headers = {"Authorization": f"Bearer {auth_token}"}
-    payload = {**_FAKE_SUBSCRIPTION, "endpoint": "https://smoke-create.example.com/push"}
+    payload = {
+        **_FAKE_SUBSCRIPTION,
+        "endpoint": "https://smoke-create.example.com/push",
+    }
     with httpx.Client() as client:
         resp = client.post(
             f"{SERVICE_NOTIFICATION_URL}/api/v1/subscriptions",
@@ -163,7 +167,10 @@ def test_get_subscription_not_found(auth_token) -> None:
 def test_delete_subscription(auth_token) -> None:
     """Creating then deleting a subscription returns 204."""
     headers = {"Authorization": f"Bearer {auth_token}"}
-    payload = {**_FAKE_SUBSCRIPTION, "endpoint": "https://smoke-delete.example.com/push"}
+    payload = {
+        **_FAKE_SUBSCRIPTION,
+        "endpoint": "https://smoke-delete.example.com/push",
+    }
     with httpx.Client() as client:
         create = client.post(
             f"{SERVICE_NOTIFICATION_URL}/api/v1/subscriptions",
