@@ -37,5 +37,7 @@ class TranslationLoader:
         except KeyError:
             return value
 
-    def translate_enum(self, enum_value: Any, enum_type: str, locale: str = "fr") -> str:
+    def translate_enum(
+        self, enum_value: Any, enum_type: str, locale: str = "fr"
+    ) -> str:
         return self.get(f"enums.{enum_type}.{enum_value.value}", locale=locale)

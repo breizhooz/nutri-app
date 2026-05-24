@@ -24,10 +24,15 @@ os.environ.setdefault(
 )
 os.environ.setdefault("NOTIFICATION_SERVICE_URL", "http://localhost:8006")
 os.environ.setdefault("NOTIFICATION_SERVICE_TOKEN", "test-notification-token")
+os.environ.setdefault("PASSWORD_RESET_BASE_URL", "http://localhost:3000")
+os.environ.setdefault("PASSWORD_RESET_TOKEN_EXPIRE_MINUTES", "30")
+os.environ.setdefault("PASSWORD_HISTORY_COUNT", "5")
 
 from app.db.base import Base  # noqa: E402
 from app.db.session import get_session  # noqa: E402
 from app.main import app  # noqa: E402
+from app.models.password_history import PasswordHistory  # noqa: F401
+from app.models.password_reset_token import PasswordResetToken  # noqa: F401
 
 
 def pytest_configure(config):

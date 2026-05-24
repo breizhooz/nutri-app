@@ -8,6 +8,13 @@ from alembic import context
 
 from app.db.base import Base
 from app.models.user import User  # noqa — doit être importé pour être détecté
+from app.models import (
+    user as user,
+    mfa_pending_code as mfa_pending_code,
+    oauth_account as oauth_account,
+    password_history as password_history,
+    password_reset_token as password_reset_token,
+)
 
 # Alembic lit sa propre config
 config = context.config

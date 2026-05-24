@@ -32,5 +32,9 @@ class Settings(BaseSettings):
     NOTIFICATION_SERVICE_URL: str = ""
     NOTIFICATION_SERVICE_TOKEN: str = ""
 
+    PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 30
+    PASSWORD_RESET_BASE_URL: str = "http://localhost:3000"
+    PASSWORD_HISTORY_COUNT: int = 5
+
 
 settings: Settings = Settings()

@@ -76,3 +76,53 @@ class EmailService:
         msg.attach(MIMEText(text_body, "plain", "utf-8"))
         msg.attach(MIMEText(html_body, "html", "utf-8"))
         return msg
+
+    @staticmethod
+    async def send_password_reset_email(recipient_email: str, reset_url: str) -> bool:
+        if not settings.SMTP_HOST:
+            logger.warning("SMTP_HOST not configured — skipping email send")
+            return False
+
+        message = EmailService._build_password_reset_message(recipient_email, reset_url)
+        try:
+            await aiosmtplib.send(
+                message,
+                hostname=settings.SMTP_HOST,
+                port=settings.SMTP_PORT,
+                username=settings.SMTP_USER or None,
+                password=settings.SMTP_PASSWORD or None,
+                use_tls=settings.SMTP_USE_TLS,
+            )
+            return True
+        except Exception as exc:
+            logger.error(
+                "Failed to send password reset email to %s: %s", recipient_email, exc
+            )
+            return False
+
+    @staticmethod
+    def _build_password_reset_message(
+        recipient_email: str, reset_url: str
+    ) -> MIMEMultipart:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "Réinitialisation de votre mot de passe NutriApp"
+        msg["From"] = settings.SMTP_FROM
+        msg["To"] = recipient_email
+
+        text_body = (
+            f"Pour réinitialiser votre mot de passe, visitez le lien suivant :\n\n"
+            f"{reset_url}\n\n"
+            f"Ce lien expire dans 30 minutes. Si vous n'avez pas demandé cette "
+            f"réinitialisation, ignorez ce message."
+        )
+        html_body = f"""
+        <html><body>
+          <p>Pour réinitialiser votre mot de passe NutriApp, cliquez sur le lien ci-dessous :</p>
+          <p><a href="{reset_url}">Réinitialiser mon mot de passe</a></p>
+          <p>Ce lien expire dans <strong>30 minutes</strong>.</p>
+          <p>Si vous n'avez pas demandé cette réinitialisation, ignorez ce message.</p>
+        </body></html>
+        """
+        msg.attach(MIMEText(text_body, "plain", "utf-8"))
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
+        return msg
