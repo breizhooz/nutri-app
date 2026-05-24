@@ -45,3 +45,6 @@ Thumbs.db
 #local ci
 ci-local*
 bandit*
+
+#front
+frontend/

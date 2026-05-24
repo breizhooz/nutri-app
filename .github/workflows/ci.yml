@@ -63,7 +63,7 @@ jobs:
       - name: Run test User
         run: |
           cd service-user  
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pytest --cov=app --cov-report=xml:coverage.xml --cov-fail-under=80 -m "not smoke"
 
     
   analyze-recipe:
@@ -120,7 +120,7 @@ jobs:
       - name: Run test recipe
         run: |
           cd service-recipe
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pytest --cov=app --cov-report=xml:coverage.xml --cov-fail-under=80 -m "not smoke"
 
     
   analyze-menu:
@@ -177,7 +177,7 @@ jobs:
       - name: Run test menu
         run: |
           cd service-menu
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pytest --cov=app --cov-report=xml:coverage.xml --cov-fail-under=80 -m "not smoke"
 
 
   analyze-crawler:
@@ -234,7 +234,7 @@ jobs:
       - name: Run test crawler
         run: |
           cd service-crawler
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pytest --cov=app --cov-report=xml:coverage.xml --cov-fail-under=80 -m "not smoke"
 
 
   analyze-notification:
@@ -291,7 +291,7 @@ jobs:
       - name: Run test notification
         run: |
           cd service-notification
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pytest --cov=app --cov-report=xml:coverage.xml --cov-fail-under=80 -m "not smoke"
 
   
   analyze-nutrition:
@@ -348,7 +348,7 @@ jobs:
       - name: Run test nutrition
         run: |
           cd service-nutrition
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pytest --cov=app --cov-report=xml:coverage.xml --cov-fail-under=80 -m "not smoke"
 
 
   analyze-profile:
@@ -405,7 +405,7 @@ jobs:
       - name: Run test profile
         run: |
           cd service-profile  
-          pytest --cov=app --cov-report=xml:coverage.xml -m "not smoke"
+          pytest --cov=app --cov-report=xml:coverage.xml --cov-fail-under=80 -m "not smoke"
 
 
 
@@ -424,7 +424,7 @@ jobs:
           with: { python-version: '3.12' }
 
         - name: Install smoke test dependencies
-          run: pip install httpx pytest
+          run: pip install httpx pytest pyotp
 
         - name: Create .env file
           run: |
@@ -489,7 +489,16 @@ jobs:
             echo "VAPID_CLAIMS_EMAIL=ci@nutriplanner.app" >> .env
 
             echo "SERVICE_NOTIFICATION_URL=${{ secrets.SERVICE_NOTIFICATION_URL }}" >> .env
-            echo "SERVICE_NOTIFICATION_TOKEN${{ secrets.SERVICE_NOTIFICATION_TOKEN }}" >> .env
+            echo "SERVICE_NOTIFICATION_TOKEN=${{ secrets.SERVICE_NOTIFICATION_TOKEN }}" >> .env
+
+            echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
+            echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+            echo "FACEBOOK_CLIENT_ID=${{ secrets.FACEBOOK_CLIENT_ID }}" >> .env
+            echo "FACEBOOK_CLIENT_SECRET=${{ secrets.FACEBOOK_CLIENT_SECRET }}" >> .env
+            echo "OAUTH_REDIRECT_BASE_URL=${{ secrets.OAUTH_REDIRECT_BASE_URL }}" >> .env
+            echo "MFA_TOTP_ENCRYPTION_KEY=${{ secrets.MFA_TOTP_ENCRYPTION_KEY }}" >> .env
+            echo "NOTIFICATION_SERVICE_URL=${{ secrets.NOTIFICATION_SERVICE_URL }}" >> .env
+            echo "NOTIFICATION_SERVICE_TOKEN=${{ secrets.NOTIFICATION_SERVICE_TOKEN }}" >> .env
 
             
 

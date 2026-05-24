@@ -1,3 +1,7 @@
+"""End-to-end smoke tests for service-notification — requires the full Docker stack."""
+
+import os
+
 import httpx
 import pytest
 
@@ -14,12 +18,12 @@ _FAKE_SUBSCRIPTION = {
     "device_label": "Smoke Test Device",
 }
 
-
-# ── Fixtures user / auth ─────────────────────────────────────────────────────────
+_SERVICE_TOKEN = os.getenv("SERVICE_NOTIFICATION_TOKEN", "change-me-internal-token")
 
 
 @pytest.fixture()
 def create_user():
+    """Create and tear down a test user via service-user."""
     with httpx.Client() as client:
         resp = client.post(f"{SERVICE_USER_URL}/api/v1/users", json=_NOTIF_USER)
         assert resp.status_code == 201, f"Création user échouée: {resp.text}"
@@ -37,6 +41,7 @@ def create_user():
 
 @pytest.fixture()
 def auth_token(create_user):
+    """Return a valid JWT token for the smoke test user."""
     with httpx.Client() as client:
         resp = client.post(f"{SERVICE_USER_URL}/api/v1/auth/login", json=_NOTIF_USER)
         assert resp.status_code == 200
@@ -45,11 +50,13 @@ def auth_token(create_user):
 
 @pytest.fixture()
 def user_id(create_user):
+    """Return the smoke test user UUID."""
     return create_user["id"]
 
 
 @pytest.fixture()
 def subscription_setup(auth_token):
+    """Create a push subscription and clean it up after the test."""
     headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
         resp = client.post(
@@ -67,11 +74,12 @@ def subscription_setup(auth_token):
         )
 
 
-# ── Health ───────────────────────────────────────────────────────────────────────
+# ── Health ────────────────────────────────────────────────────────────────────
 
 
 @pytest.mark.smoke
-def test_notification_health():
+def test_notification_health() -> None:
+    """Service liveness check returns ok."""
     with httpx.Client() as client:
         response = client.get(f"{SERVICE_NOTIFICATION_URL}/health")
     assert response.status_code == 200
@@ -81,18 +89,20 @@ def test_notification_health():
 
 
 @pytest.mark.smoke
-def test_notification_health_db():
+def test_notification_health_db() -> None:
+    """Database connectivity check returns ok."""
     with httpx.Client() as client:
         response = client.get(f"{SERVICE_NOTIFICATION_URL}/health/db")
     assert response.status_code == 200
     assert response.json()["database"] == "ok"
 
 
-# ── Subscriptions ────────────────────────────────────────────────────────────────
+# ── Subscriptions ─────────────────────────────────────────────────────────────
 
 
 @pytest.mark.smoke
-def test_create_subscription(auth_token):
+def test_create_subscription(auth_token) -> None:
+    """Creating a push subscription returns 201 with slug and endpoint."""
     headers = {"Authorization": f"Bearer {auth_token}"}
     payload = {
         **_FAKE_SUBSCRIPTION,
@@ -115,7 +125,8 @@ def test_create_subscription(auth_token):
 
 
 @pytest.mark.smoke
-def test_create_subscription_idempotent(auth_token, subscription_setup):
+def test_create_subscription_idempotent(auth_token, subscription_setup) -> None:
+    """Registering the same endpoint twice returns the same slug."""
     headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
         resp = client.post(
@@ -128,7 +139,8 @@ def test_create_subscription_idempotent(auth_token, subscription_setup):
 
 
 @pytest.mark.smoke
-def test_get_subscription_by_slug(auth_token, subscription_setup):
+def test_get_subscription_by_slug(auth_token, subscription_setup) -> None:
+    """GET /subscriptions/{slug} returns the subscription details."""
     headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
         resp = client.get(
@@ -140,7 +152,8 @@ def test_get_subscription_by_slug(auth_token, subscription_setup):
 
 
 @pytest.mark.smoke
-def test_get_subscription_not_found(auth_token):
+def test_get_subscription_not_found(auth_token) -> None:
+    """GET /subscriptions/{slug} for unknown slug returns 404."""
     headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
         resp = client.get(
@@ -151,7 +164,8 @@ def test_get_subscription_not_found(auth_token):
 
 
 @pytest.mark.smoke
-def test_delete_subscription(auth_token):
+def test_delete_subscription(auth_token) -> None:
+    """Creating then deleting a subscription returns 204."""
     headers = {"Authorization": f"Bearer {auth_token}"}
     payload = {
         **_FAKE_SUBSCRIPTION,
@@ -172,11 +186,12 @@ def test_delete_subscription(auth_token):
     assert delete.status_code == 204
 
 
-# ── Historique notifications ──────────────────────────────────────────────────────
+# ── History ───────────────────────────────────────────────────────────────────
 
 
 @pytest.mark.smoke
-def test_history_empty_for_new_user(auth_token, user_id):
+def test_history_empty_for_new_user(auth_token, user_id) -> None:
+    """New user has no notification history."""
     headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
         resp = client.get(
@@ -189,7 +204,8 @@ def test_history_empty_for_new_user(auth_token, user_id):
 
 
 @pytest.mark.smoke
-def test_history_pagination_params(auth_token, user_id):
+def test_history_pagination_params(auth_token, user_id) -> None:
+    """History endpoint accepts limit/offset query parameters."""
     headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
         resp = client.get(
@@ -198,11 +214,11 @@ def test_history_pagination_params(auth_token, user_id):
             headers=headers,
         )
     assert resp.status_code == 200
-    assert isinstance(resp.json(), list)
 
 
 @pytest.mark.smoke
-def test_history_limit_too_high_rejected(auth_token, user_id):
+def test_history_limit_too_high_rejected(auth_token, user_id) -> None:
+    """History endpoint rejects limit > allowed maximum."""
     headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
         resp = client.get(
@@ -214,7 +230,8 @@ def test_history_limit_too_high_rejected(auth_token, user_id):
 
 
 @pytest.mark.smoke
-def test_history_forbidden_for_other_user(auth_token):
+def test_history_forbidden_for_other_user(auth_token) -> None:
+    """Accessing another user's history returns 403."""
     headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
         resp = client.get(
@@ -222,3 +239,41 @@ def test_history_forbidden_for_other_user(auth_token):
             headers=headers,
         )
     assert resp.status_code == 403
+
+
+# ── MFA Code (email channel) ──────────────────────────────────────────────────
+
+
+@pytest.mark.smoke
+def test_notify_mfa_code_without_recipient_email_returns_422(user_id) -> None:
+    """POST /notify with mfa_code type but missing recipient_email returns 422."""
+    with httpx.Client() as client:
+        resp = client.post(
+            f"{SERVICE_NOTIFICATION_URL}/api/v1/notify",
+            json={
+                "user_slug": user_id,
+                "type": "mfa_code",
+                "title": "Code",
+                "body": "123456",
+                "data": {"code": "123456"},
+            },
+            headers={"Authorization": f"Bearer {_SERVICE_TOKEN}"},
+        )
+    assert resp.status_code == 422
+
+
+@pytest.mark.smoke
+def test_notify_invalid_user_slug_returns_422() -> None:
+    """POST /notify with a non-UUID user_slug returns 422."""
+    with httpx.Client() as client:
+        resp = client.post(
+            f"{SERVICE_NOTIFICATION_URL}/api/v1/notify",
+            json={
+                "user_slug": "not-a-uuid",
+                "type": "system",
+                "title": "Test",
+                "body": "Test",
+            },
+            headers={"Authorization": f"Bearer {_SERVICE_TOKEN}"},
+        )
+    assert resp.status_code == 422

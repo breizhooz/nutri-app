@@ -57,7 +57,6 @@ class CiqualXmlParser:
 
         for _, el in iterparse(path, events=("end",)):  # nosec B314
             if el.tag != "COMPO":
-                el.clear()
                 continue
             alim_str = cls._text(el, "alim_code")
             const_str = cls._text(el, "const_code")
