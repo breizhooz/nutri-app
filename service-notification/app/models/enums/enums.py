@@ -6,6 +6,7 @@ class NotificationType(str, PyEnum):
     CRAWL_DONE = "crawl_done"
     SYSTEM = "system"
     MFA_CODE = "mfa_code"
+    PASSWORD_RESET = "password_reset"  # ← nouveau
 
 
 class NotificationStatus(str, PyEnum):
