@@ -15,6 +15,7 @@ from app.db.session import get_engine
 
 from nutri_shared.core.logger import configure_logging
 from nutri_shared.core.middleware import RequestLoggingMiddleware
+from nutri_shared.core.telemetry import setup_telemetry
 
 logger = logging.getLogger(__name__)
 configure_logging("service-profile")
@@ -33,6 +34,7 @@ app.add_middleware(LocaleMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 
 register_error_handlers(app)
+setup_telemetry("service-profile", app)
 
 app.include_router(profile.router, prefix="/api/v1/profiles", tags=["profile"])
 app.include_router(tracker.router, prefix="/api/v1/profiles", tags=["tracker"])

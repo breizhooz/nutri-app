@@ -21,6 +21,7 @@ from app.i18n.middleware import LocaleMiddleware
 
 from nutri_shared.core.logger import configure_logging
 from nutri_shared.core.middleware import RequestLoggingMiddleware
+from nutri_shared.core.telemetry import setup_telemetry
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,7 @@ def create_app() -> FastAPI:
 
     app.add_middleware(LocaleMiddleware)
     register_error_handlers(app)
+    setup_telemetry("service-nutrition", app)
 
     app.include_router(lookup.router, prefix="/api/v1/nutrition-items")
     app.include_router(calculate.router, prefix="/api/v1/calculate")

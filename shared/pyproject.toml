@@ -12,6 +12,12 @@ dependencies = [
     "PyJWT>=2.9",
     "unidecode>=1.3",
     "structlog>=24.4",
+    # observabilité
+    "opentelemetry-sdk>=1.25",
+    "opentelemetry-exporter-otlp-proto-http>=1.25",
+    "opentelemetry-instrumentation-fastapi>=0.46b0",
+    "opentelemetry-instrumentation-httpx>=0.46b0",
+    "prometheus-fastapi-instrumentator>=7.0",
 ]
 
 [tool.setuptools.packages.find]

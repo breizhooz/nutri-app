@@ -8,7 +8,6 @@ import pytest
 
 from app.services.instagram_service import InstagramPost, InstagramService
 
-
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 

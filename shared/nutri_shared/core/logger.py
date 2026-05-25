@@ -1,10 +1,21 @@
 import logging
+import os
 import sys
 
 import structlog
 
+_LEVELS = {
+    "DEBUG": logging.DEBUG,
+    "INFO": logging.INFO,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+}
 
-def configure_logging(service_name: str, level: int = logging.INFO) -> None:
+
+def configure_logging(service_name: str, level: int | None = None) -> None:
+    if level is None:
+        raw = os.getenv("LOG_LEVEL", "INFO").upper()
+        level = _LEVELS.get(raw, logging.INFO)
     formatter = structlog.stdlib.ProcessorFormatter(
         foreign_pre_chain=[
             structlog.contextvars.merge_contextvars,

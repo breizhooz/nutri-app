@@ -295,7 +295,7 @@ class TestResultServiceValidateResultWithMapper:
     def service(self, mock_repo):
         return ResultService(mock_repo)
 
-    async def test_mapper_is_called_before_validate(self, service, mock_repo):
+    async def test_validate_is_called_before_mapper(self, service, mock_repo):
         r = CrawlResultFactory.make(status=CrawlStatus.WAITING)
         validated = CrawlResultFactory.make(result_id=r.id, status=CrawlStatus.VALID)
         mock_repo.get_by_id.return_value = r
@@ -306,78 +306,91 @@ class TestResultServiceValidateResultWithMapper:
 
         await service.validate_result(r.id, uuid.uuid4(), mapper=mock_mapper)
 
-        mock_mapper.map_and_send.assert_called_once_with(r)
         mock_repo.validate.assert_called_once()
+        mock_mapper.map_and_send.assert_called_once_with(validated)
 
-    async def test_mapper_receives_the_fetched_result(self, service, mock_repo):
+    async def test_mapper_receives_the_validated_result(self, service, mock_repo):
         r = CrawlResultFactory.make(status=CrawlStatus.WAITING)
+        validated = CrawlResultFactory.make(result_id=r.id, status=CrawlStatus.VALID)
         mock_repo.get_by_id.return_value = r
-        mock_repo.validate.return_value = r
+        mock_repo.validate.return_value = validated
 
         mock_mapper = AsyncMock()
         mock_mapper.map_and_send.return_value = {}
 
         await service.validate_result(r.id, uuid.uuid4(), mapper=mock_mapper)
 
-        mock_mapper.map_and_send.assert_called_once_with(r)
+        mock_mapper.map_and_send.assert_called_once_with(validated)
 
-    async def test_request_error_raises_503(self, service, mock_repo):
+    async def test_request_error_is_logged_validation_succeeds(
+        self, service, mock_repo
+    ):
         r = CrawlResultFactory.make(status=CrawlStatus.WAITING)
+        validated = CrawlResultFactory.make(result_id=r.id, status=CrawlStatus.VALID)
         mock_repo.get_by_id.return_value = r
+        mock_repo.validate.return_value = validated
 
         mock_mapper = AsyncMock()
         mock_mapper.map_and_send.side_effect = httpx.RequestError(
             "connection refused", request=MagicMock()
         )
 
-        with pytest.raises(HTTPException) as exc:
-            await service.validate_result(r.id, uuid.uuid4(), mapper=mock_mapper)
-        assert exc.value.status_code == 503
+        result = await service.validate_result(r.id, uuid.uuid4(), mapper=mock_mapper)
+        assert result.status == CrawlStatus.VALID
 
-    async def test_http_5xx_error_raises_503(self, service, mock_repo):
+    async def test_http_5xx_error_is_logged_validation_succeeds(
+        self, service, mock_repo
+    ):
         r = CrawlResultFactory.make(status=CrawlStatus.WAITING)
+        validated = CrawlResultFactory.make(result_id=r.id, status=CrawlStatus.VALID)
         mock_repo.get_by_id.return_value = r
+        mock_repo.validate.return_value = validated
 
         err_resp = MagicMock()
         err_resp.status_code = 503
+        err_resp.text = "service unavailable"
         mock_mapper = AsyncMock()
         mock_mapper.map_and_send.side_effect = httpx.HTTPStatusError(
             "503", request=MagicMock(), response=err_resp
         )
 
-        with pytest.raises(HTTPException) as exc:
-            await service.validate_result(r.id, uuid.uuid4(), mapper=mock_mapper)
-        assert exc.value.status_code == 503
+        result = await service.validate_result(r.id, uuid.uuid4(), mapper=mock_mapper)
+        assert result.status == CrawlStatus.VALID
 
-    async def test_http_4xx_error_raises_502(self, service, mock_repo):
-        r = CrawlResultFactory.make(status=CrawlStatus.WAITING)
-        mock_repo.get_by_id.return_value = r
-
-        err_resp = MagicMock()
-        err_resp.status_code = 404
-        mock_mapper = AsyncMock()
-        mock_mapper.map_and_send.side_effect = httpx.HTTPStatusError(
-            "404", request=MagicMock(), response=err_resp
-        )
-
-        with pytest.raises(HTTPException) as exc:
-            await service.validate_result(r.id, uuid.uuid4(), mapper=mock_mapper)
-        assert exc.value.status_code == 502
-
-    async def test_mapper_error_does_not_call_repository_validate(
+    async def test_http_4xx_error_is_logged_validation_succeeds(
         self, service, mock_repo
     ):
         r = CrawlResultFactory.make(status=CrawlStatus.WAITING)
+        validated = CrawlResultFactory.make(result_id=r.id, status=CrawlStatus.VALID)
         mock_repo.get_by_id.return_value = r
+        mock_repo.validate.return_value = validated
+
+        err_resp = MagicMock()
+        err_resp.status_code = 409
+        err_resp.text = "conflict"
+        mock_mapper = AsyncMock()
+        mock_mapper.map_and_send.side_effect = httpx.HTTPStatusError(
+            "409", request=MagicMock(), response=err_resp
+        )
+
+        result = await service.validate_result(r.id, uuid.uuid4(), mapper=mock_mapper)
+        assert result.status == CrawlStatus.VALID
+
+    async def test_mapper_error_still_calls_repository_validate(
+        self, service, mock_repo
+    ):
+        r = CrawlResultFactory.make(status=CrawlStatus.WAITING)
+        validated = CrawlResultFactory.make(result_id=r.id, status=CrawlStatus.VALID)
+        mock_repo.get_by_id.return_value = r
+        mock_repo.validate.return_value = validated
 
         mock_mapper = AsyncMock()
         mock_mapper.map_and_send.side_effect = httpx.RequestError(
             "err", request=MagicMock()
         )
 
-        with pytest.raises(HTTPException):
-            await service.validate_result(r.id, uuid.uuid4(), mapper=mock_mapper)
-        mock_repo.validate.assert_not_called()
+        await service.validate_result(r.id, uuid.uuid4(), mapper=mock_mapper)
+        mock_repo.validate.assert_called_once()
 
     async def test_no_mapper_skips_recipe_service(self, service, mock_repo):
         """Backwards compat: mapper=None validates without calling service-recipe."""

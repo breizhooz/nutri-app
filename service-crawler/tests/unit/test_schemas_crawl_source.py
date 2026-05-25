@@ -11,7 +11,6 @@ from app.schemas.crawl_source import (
     WebSourceCreate,
 )
 
-
 # ─── WebSourceCreate ──────────────────────────────────────────────────────────
 
 

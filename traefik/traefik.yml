@@ -5,7 +5,8 @@ api:
 log:
   level: INFO
 
-accessLog: {}
+accessLog:
+  format: json
 
 entryPoints:
   web:
