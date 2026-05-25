@@ -2,6 +2,8 @@ import asyncio
 import logging
 from uuid import UUID
 
+import instaloader
+
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -13,7 +15,6 @@ from app.services.instagram_service import InstagramService
 from celery_app import celery_app
 from app.services.notification_client import NotificationClient
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -22,7 +23,7 @@ def _make_session_factory():
     return sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
-@celery_app.task(bind=True, max_retries=3, default_retry_delay=300)
+@celery_app.task(bind=True, max_retries=3, default_retry_delay=3600)
 def crawl_instagram(self, source_id: str, account: str):
     """Crawl un compte Instagram et stocke les nouveaux posts EN_ATTENTE."""
     asyncio.run(_do_crawl(self, source_id, account))
@@ -52,9 +53,14 @@ async def _do_crawl(task, source_id: str, account: str) -> None:
                 if since is not None
                 else service.fetch_posts(account)
             )
+        except instaloader.exceptions.TooManyRequestsException as exc:
+            logger.warning(
+                "Instagram rate limit atteint pour %s, retry dans 60 min", account
+            )
+            raise task.retry(exc=exc, countdown=3600)
         except Exception as exc:
             logger.error("Échec du crawl Instagram pour %s : %s", account, exc)
-            raise task.retry(exc=exc)
+            raise task.retry(exc=exc, countdown=3600)
 
         for post in posts:
             if await result_repo.url_exists(post.url):

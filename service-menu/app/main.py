@@ -13,6 +13,7 @@ from nutri_shared.core.logger import configure_logging
 from nutri_shared.core.middleware import RequestLoggingMiddleware
 from nutri_shared.core.telemetry import setup_telemetry
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     yield

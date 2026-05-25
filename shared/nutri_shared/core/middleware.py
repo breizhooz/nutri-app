@@ -1,3 +1,4 @@
+import json
 import uuid
 
 import structlog
@@ -12,6 +13,9 @@ except ImportError:
     _OTEL_AVAILABLE = False
 
 _log = structlog.get_logger()
+
+_BODY_MAX_BYTES = 4096
+_SKIP_PATHS = {"/health", "/health/db", "/metrics"}
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -31,6 +35,22 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             if span_ctx.is_valid:
                 ctx["trace_id"] = format(span_ctx.trace_id, "032x")
                 ctx["span_id"] = format(span_ctx.span_id, "016x")
+
+        if request.url.path not in _SKIP_PATHS:
+            if request.query_params:
+                ctx["query_params"] = dict(request.query_params)
+
+            body_bytes = await request.body()
+            if body_bytes:
+                truncated = len(body_bytes) > _BODY_MAX_BYTES
+                sample = body_bytes[:_BODY_MAX_BYTES]
+                try:
+                    parsed = json.loads(sample)
+                    ctx["request_body"] = parsed
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    ctx["request_body"] = sample.decode("utf-8", errors="replace")
+                if truncated:
+                    ctx["request_body_truncated"] = True
 
         structlog.contextvars.bind_contextvars(**ctx)
         response = await call_next(request)

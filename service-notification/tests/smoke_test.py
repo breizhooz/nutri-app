@@ -1,12 +1,15 @@
 """End-to-end smoke tests for service-notification — requires the full Docker stack."""
 
 import os
+from pathlib import Path
 
 import httpx
 import pytest
 
-SERVICE_USER_URL = "http://localhost:8001"
-SERVICE_NOTIFICATION_URL = "http://localhost:8006"
+SERVICE_USER_URL = os.getenv("SERVICE_USER_URL", "http://localhost:8001")
+SERVICE_NOTIFICATION_URL = os.getenv(
+    "SERVICE_NOTIFICATION_URL", "http://localhost:8006"
+)
 
 _NOTIF_USER = {"email": "smoke_notification@test.internal", "password": "SmokeTest!99"}
 _NULL_UUID = "00000000-0000-0000-0000-000000000000"
@@ -18,7 +21,21 @@ _FAKE_SUBSCRIPTION = {
     "device_label": "Smoke Test Device",
 }
 
-_SERVICE_TOKEN = os.getenv("SERVICE_NOTIFICATION_TOKEN", "change-me-internal-token")
+
+def _read_service_token() -> str:
+    # conftest.py overrides SERVICE_NOTIFICATION_TOKEN in os.environ for unit tests.
+    # Smoke tests hit the real service, so we read conf/.env directly.
+    conf = Path(__file__).parent.parent / "conf" / ".env"
+    try:
+        for line in conf.read_text().splitlines():
+            if line.startswith("SERVICE_NOTIFICATION_TOKEN="):
+                return line.split("=", 1)[1].strip()
+    except FileNotFoundError:
+        pass
+    return "change-me-internal-token"
+
+
+_SERVICE_TOKEN = _read_service_token()
 
 
 @pytest.fixture()

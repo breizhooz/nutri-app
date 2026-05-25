@@ -277,6 +277,7 @@ Le code à 6 chiffres est généré avec `secrets.randbelow` (cryptographiquemen
 | `JWT_ACCESS_TOKEN_EXPIRES_MINUTES` | Durée de vie de l'access token | `30` |
 | `JWT_REFRESH_TOKEN_EXPIRE_DAYS` | Durée de vie du refresh token | `30` |
 | `DEBUG` | Mode debug FastAPI | `false` |
+| `LOG_LEVEL` | Niveau de log de tous les services (`DEBUG`, `INFO`, `WARNING`, `ERROR`) | `DEBUG` en dev, `INFO` en prod |
 
 ### OAuth2
 
@@ -736,6 +737,89 @@ from nutri_shared.core.logger import get_logger
 
 logger = get_logger(__name__)
 ```
+
+---
+
+## Monitoring
+
+### Activer / désactiver la stack
+
+La stack de monitoring (Prometheus, Grafana, Loki, Promtail, Tempo, exporters) est isolée derrière le profil Docker Compose `monitoring`. Elle ne démarre **pas** par défaut.
+
+```bash
+# Avec monitoring
+docker compose --profile monitoring up -d
+
+# Sans monitoring (prod allégée)
+docker compose up -d
+```
+
+### Dashboards Grafana
+
+| Dashboard | Description |
+|-----------|-------------|
+| NutriPlanner — Crawler | Taux HTTP, codes, tasks Celery, erreurs Instagram, logs payloads |
+
+Accès : `http://grafana.localhost` → Dashboards
+
+### Niveau de log
+
+Configurable via `LOG_LEVEL` dans le `.env` racine — partagé par tous les services et workers.
+
+| Valeur | Usage |
+|--------|-------|
+| `DEBUG` | Développement — logs détaillés, payloads des requêtes HTTP inclus |
+| `INFO` | Production — requêtes HTTP, tâches Celery, erreurs |
+| `WARNING` | Alertes et rate limits uniquement |
+| `ERROR` | Erreurs critiques uniquement |
+
+### Requêtes LogQL utiles (Grafana → Explore → Loki)
+
+```logql
+# Toutes les requêtes HTTP du crawler avec payload
+{service="service-crawler"} | json | method != `` | path != `/metrics` | path != `/health`
+
+# Requêtes POST uniquement
+{service="service-crawler"} | json | method="POST"
+
+# Logs du worker Celery Instagram
+{service="celery-worker-crawler"} |= "instagram"
+
+# Erreurs uniquement
+{service="celery-worker-crawler"} | json | level="error"
+```
+
+---
+
+## Instagram (service-crawler)
+
+### Authentification
+
+Instagram bloque les logins programmatiques. L'authentification repose sur un fichier de session généré depuis le navigateur et persisté dans le volume Docker `instagram-session`.
+
+**Générer ou renouveler la session :**
+
+1. Se connecter à Instagram dans le navigateur avec le compte configuré
+2. Ouvrir DevTools → Application (Chrome) ou Stockage (Firefox) → Cookies → `instagram.com` → copier `sessionid`
+3. Exécuter :
+
+```bash
+docker exec -i nutriplanner-service-crawler python3 scripts/generate_instagram_session.py
+```
+
+4. Redémarrer le worker :
+
+```bash
+docker compose restart celery-worker-crawler
+```
+
+> La session expire si le mot de passe change ou si Instagram la révoque. Régénérer le fichier avec la procédure ci-dessus.
+
+### Rate limiting (HTTP 429)
+
+- Le worker est libéré immédiatement sur 429 (pas de blocage)
+- Celery replanifie le retry automatiquement après **30 minutes**
+- Ne pas déclencher plusieurs crawls du même compte en rafale
 
 ---
 

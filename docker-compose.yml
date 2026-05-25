@@ -324,6 +324,7 @@ services:
       - "8004:8000"
     volumes:
       - ./service-crawler:/app
+      - instagram-session:/data
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres-crawler:5432/${POSTGRES_CRAWLER_DB}
     env_file:
@@ -531,6 +532,31 @@ services:
     networks:
       - nutriplanner
 
+  celery-worker-crawler:
+    build:
+      context: .
+      dockerfile: service-crawler/Dockerfile
+    container_name: nutriplanner-celery-worker-crawler
+    command: celery -A celery_app worker --loglevel=info -Q celery --concurrency=2
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres-crawler:5432/${POSTGRES_CRAWLER_DB}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    env_file:
+      - .env
+      - ./service-crawler/conf/.env
+    volumes:
+      - instagram-session:/data
+    mem_limit: 1g
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres-crawler:
+        condition: service_healthy
+      service-crawler:
+        condition: service_started
+    networks:
+      - nutriplanner
+
   celery-beat-nutrition:
     build:
       context: .
@@ -674,12 +700,74 @@ services:
       - nutriplanner
     restart: unless-stopped
 
+# ══════════════════════════════════════════════════════════
+# LOGS LIVE — Loki + Promtail
+# ══════════════════════════════════════════════════════════
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: nutriplanner-loki
+    profiles: [monitoring]
+    command: -config.file=/etc/loki/loki.yml
+    volumes:
+      - ./monitoring/loki:/etc/loki:ro
+      - loki-data:/loki
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.loki.loadbalancer.server.port=3100"
+      - "traefik.http.routers.loki.rule=Host(`loki.localhost`)"
+      - "traefik.http.routers.loki.entrypoints=web"
+      - "traefik.http.routers.loki.service=loki"
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: nutriplanner-promtail
+    profiles: [monitoring]
+    command: -config.file=/etc/promtail/promtail.yml
+    volumes:
+      - ./monitoring/promtail:/etc/promtail:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+# ══════════════════════════════════════════════════════════
+# TRACES — Tempo
+# ══════════════════════════════════════════════════════════
+  tempo:
+    image: grafana/tempo:2.4.0
+    container_name: nutriplanner-tempo
+    profiles: [monitoring]
+    command: ["-config.file=/etc/tempo/tempo.yml"]
+    volumes:
+      - ./monitoring/tempo:/etc/tempo:ro
+      - tempo-data:/var/tempo
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.tempo.loadbalancer.server.port=3200"
+      - "traefik.http.routers.tempo.rule=Host(`tempo.localhost`)"
+      - "traefik.http.routers.tempo.entrypoints=web"
+      - "traefik.http.routers.tempo.service=tempo"
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
   redis-exporter:
     image: oliver006/redis_exporter:latest
     container_name: nutriplanner-redis-exporter
     profiles: [monitoring]
     environment:
       REDIS_ADDR: redis://redis:6379
+      REDIS_EXPORTER_CHECK_KEYS: "celery"
+      REDIS_EXPORTER_CHECK_KEY_GROUPS: "celery.*"
     depends_on:
       redis:
         condition: service_healthy
@@ -798,6 +886,7 @@ networks:
     driver: bridge
 
 volumes:
+  instagram-session:
   pgdata-user:
   pgdata-recipe:
   pgdata-menu:
@@ -810,3 +899,5 @@ volumes:
   minio-data:
   prometheus-data:
   grafana-data:
+  loki-data:
+  tempo-data:

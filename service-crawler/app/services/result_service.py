@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import TYPE_CHECKING
 
@@ -13,6 +14,9 @@ from app.schemas.crawl_result import (
     CrawlResultUpdate,
     PaginatedCrawlResultResponse,
 )
+
+logger = logging.getLogger(__name__)
+
 
 if TYPE_CHECKING:
     from app.services.recipe_mapper import RecipeMapper
@@ -82,31 +86,32 @@ class ResultService:
                 detail=t.get("crawl_result.not_found"),
             )
         ResultService._assert_validatable(result)
+        # Commit the state change first — validation is an editorial decision
+        # independent of downstream recipe creation.
+        validated = await self._repository.validate(result, validated_by=validated_by)
+        # Best-effort: propagate to service-recipe. Failure is logged but does not
+        # roll back the validation — the result remains VALID.
         if mapper is not None:
-            await ResultService._call_mapper(result, mapper)
-        return await self._repository.validate(result, validated_by=validated_by)
+            await ResultService._call_mapper(validated, mapper)
+        return validated
 
     # ── static guards ─────────────────────────────────────────────────────────
 
     @staticmethod
     async def _call_mapper(result: CrawlResult, mapper: "RecipeMapper") -> None:
-        """Send result to service-recipe. Raises HTTP 503/502 if service is down."""
+        """Forward to service-recipe. Logs on failure; does not abort validation."""
         try:
             await mapper.map_and_send(result)
-        except httpx.RequestError:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=t.get("errors.service_recipe_unavailable"),
+        except httpx.RequestError as exc:
+            logger.warning(
+                "service-recipe unreachable for result %s: %s", result.id, exc
             )
         except httpx.HTTPStatusError as exc:
-            if exc.response.status_code >= 500:
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail=t.get("errors.service_recipe_unavailable"),
-                )
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=t.get("errors.service_recipe_unavailable"),
+            logger.warning(
+                "service-recipe rejected result %s (HTTP %s): %s",
+                result.id,
+                exc.response.status_code,
+                exc.response.text[:200],
             )
 
     @staticmethod

@@ -37,6 +37,7 @@ class InstagramService:
             save_metadata=False,
             compress_json=False,
             quiet=True,
+            max_connection_attempts=1,
         )
         if settings.INSTAGRAM_USERNAME:
             cls._ensure_session(
@@ -56,9 +57,16 @@ class InstagramService:
     ) -> None:
         try:
             loader.load_session_from_file(username, session_file)
+            # Verify the session is still valid with a lightweight check
+            loader.test_login()
+            return
         except FileNotFoundError:
-            loader.login(user=username, passwd=password)
-            loader.save_session_to_file(session_file)
+            pass
+        except instaloader.exceptions.LoginRequiredException:
+            logger.warning("Instagram session expired, re-authenticating")
+
+        loader.login(user=username, passwd=password)
+        loader.save_session_to_file(session_file)
 
     @staticmethod
     def normalize_account(account: str) -> str:

@@ -53,7 +53,12 @@ docker compose exec service-notification alembic history --verbose
 docker compose exec service-notification pytest --cov=app -m "not smoke" -v
 
 # Tests smoke (stack complète requise)
-docker compose exec service-notification pytest tests/smoke_test.py -m smoke -v
+# Les URLs sont configurables via env vars pour s'adapter au contexte d'exécution
+docker compose exec \
+  -e SERVICE_NOTIFICATION_URL=http://172.18.0.1:8006 \
+  -e SERVICE_USER_URL=http://172.18.0.1:8001 \
+  service-notification \
+  pytest tests/smoke_test.py -m smoke -v
 ```
 
 ---
