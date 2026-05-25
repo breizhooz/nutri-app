@@ -9,6 +9,7 @@ from app.i18n.middleware import LocaleMiddleware
 
 from nutri_shared.core.logger import configure_logging
 from nutri_shared.core.middleware import RequestLoggingMiddleware
+from nutri_shared.core.telemetry import setup_telemetry
 
 configure_logging("service-notification")
 
@@ -18,7 +19,7 @@ app.add_middleware(LocaleMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 
 register_error_handlers(app)
-
+setup_telemetry("service-notification", app)
 app.include_router(
     subscriptions.router, prefix="/api/v1/subscriptions", tags=["subscriptions"]
 )

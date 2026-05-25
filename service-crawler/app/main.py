@@ -10,12 +10,14 @@ from app.api.routes import settings as settings_routes
 
 from nutri_shared.core.logger import configure_logging
 from nutri_shared.core.middleware import RequestLoggingMiddleware
+from nutri_shared.core.telemetry import setup_telemetry
 
 configure_logging("service-crawler")
 
 app = FastAPI(title="service-crawler", version="0.1.0")
 
 app.add_middleware(RequestLoggingMiddleware)
+setup_telemetry("service-crawler", app)
 
 register_error_handlers(app)
 

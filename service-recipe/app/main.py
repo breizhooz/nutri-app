@@ -12,6 +12,7 @@ from app.api.routes import search as search_router
 
 from nutri_shared.core.logger import configure_logging
 from nutri_shared.core.middleware import RequestLoggingMiddleware
+from nutri_shared.core.telemetry import setup_telemetry
 
 
 @asynccontextmanager
@@ -27,6 +28,7 @@ app = FastAPI(title="service-recipe", version="0.1.0", lifespan=lifespan)
 app.add_middleware(RequestLoggingMiddleware)
 
 register_error_handlers(app)
+setup_telemetry("service-recipe", app)
 
 app.include_router(recipes_router.router, prefix="/api/v1/recipe", tags=["recipe"])
 app.include_router(

@@ -11,7 +11,7 @@ from app.api.routes import weekly_menu as weekly_menu_router
 
 from nutri_shared.core.logger import configure_logging
 from nutri_shared.core.middleware import RequestLoggingMiddleware
-
+from nutri_shared.core.telemetry import setup_telemetry
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,6 +25,7 @@ app.add_middleware(LocaleMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 
 register_error_handlers(app)
+setup_telemetry("service-menu", app)
 
 app.include_router(weekly_menu_router.router, prefix="/api/v1/menus", tags=["menus"])
 app.include_router(
