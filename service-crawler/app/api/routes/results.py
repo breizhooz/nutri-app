@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user_id
 from app.db.session import get_session
-from app.models.enums import CrawlStatus
+from app.models.enums import CrawlStatus, CrawlType
 from app.repositories.result_repository import ResultRepository
 from app.schemas.crawl_result import (
     CrawlResultListParams,
@@ -43,6 +43,7 @@ class GroqExtractorFactory:
 @router.get("", response_model=PaginatedCrawlResultResponse)
 async def list_results(
     status: CrawlStatus | None = Query(default=CrawlStatus.WAITING),
+    crawl_type: CrawlType | None = Query(default=None),
     source_id: uuid.UUID | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
@@ -52,6 +53,7 @@ async def list_results(
 ) -> PaginatedCrawlResultResponse:
     params = CrawlResultListParams(
         status=status,
+        crawl_type=crawl_type,
         source_id=source_id,
         page=page,
         page_size=page_size,
@@ -134,3 +136,12 @@ async def reject_result(
     current_user_id: uuid.UUID = Depends(get_current_user_id),
 ) -> CrawlResultResponse:
     return await service.reject_result(result_id=result_id, user_id=current_user_id)
+
+
+@router.patch("/{result_id}/reset", response_model=CrawlResultResponse)
+async def reset_result(
+    result_id: uuid.UUID,
+    service: ResultService = Depends(ResultServiceFactory.inject),
+    current_user_id: uuid.UUID = Depends(get_current_user_id),
+) -> CrawlResultResponse:
+    return await service.reset_result(result_id=result_id, user_id=current_user_id)

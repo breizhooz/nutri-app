@@ -1,5 +1,5 @@
 from typing import Any
-from sqlalchemy import String, Text, Integer, func, JSON, Enum as SQLEnum
+from sqlalchemy import String, Text, Integer, Float, func, JSON, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from datetime import datetime
 
@@ -77,6 +77,12 @@ class Recipe(AbstractModel):
     source_url: Mapped[str | None] = mapped_column(Text)
 
     image_url: Mapped[str | None] = mapped_column(Text)
+
+    # nutrition (per serving, calculated by service-nutrition)
+    calories_per_serving: Mapped[float | None] = mapped_column(Float, nullable=True)
+    proteins_per_serving: Mapped[float | None] = mapped_column(Float, nullable=True)
+    carbs_per_serving: Mapped[float | None] = mapped_column(Float, nullable=True)
+    fats_per_serving: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     # metadata
     created_by_user_id: Mapped[str | None] = mapped_column(String(36))

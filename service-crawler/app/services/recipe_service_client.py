@@ -27,6 +27,7 @@ class RecipeServiceClient:
             base_url=settings.SERVICE_RECIPE_URL,
             headers=headers,
             timeout=10.0,
+            follow_redirects=True,
         ) as client:
             yield client
 
@@ -64,5 +65,12 @@ class RecipeServiceClient:
         """POST /api/v1/recipe/ and return the created recipe as dict."""
         async with self._client() as client:
             resp = await client.post("/api/v1/recipe", json=payload)
+            resp.raise_for_status()
+        return resp.json()
+
+    async def update_recipe(self, recipe_id: int, payload: dict) -> dict:
+        """PUT /api/v1/recipe/id/{recipe_id} and return the updated recipe as dict."""
+        async with self._client() as client:
+            resp = await client.put(f"/api/v1/recipe/id/{recipe_id}", json=payload)
             resp.raise_for_status()
         return resp.json()

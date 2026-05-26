@@ -50,6 +50,8 @@ class RecipeSearchService:
             "cook_time_minutes": recipe.cook_time_minutes,
             "servings": recipe.servings,
             "ingredient_names": ingredient_names,
+            "image_url": recipe.image_url,
+            "free_tags": recipe.free_tags or [],
             "created_by_user_id": recipe.created_by_user_id,
             "created_at": recipe.created_at.isoformat() if recipe.created_at else None,
         }
@@ -94,7 +96,7 @@ class RecipeSearchService:
     ) -> dict:
         """Fulltext search scoped to the authenticated user."""
         must_queries = []
-        filter_queries = [{"term": {"created_by_user_id": user_id}}]
+        filter_queries = [{"term": {"created_by_user_id.keyword": user_id}}]
         must_not_queries = []
 
         if query:
@@ -172,6 +174,24 @@ class RecipeSearchService:
             "offset": offset,
             "results": results,
         }
+
+
+    async def reindex_all(self, session) -> int:
+        """Bulk reindex all recipes from the database."""
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
+        from app.models.recipe import Recipe
+        from app.models.recipe_ingredients import RecipeIngredient
+
+        result = await session.execute(
+            select(Recipe).options(
+                selectinload(Recipe.recipe_ingredients).selectinload(RecipeIngredient.ingredient)
+            )
+        )
+        recipes = result.scalars().all()
+        for recipe in recipes:
+            await self.index_recipe(recipe)
+        return len(recipes)
 
 
 search_service = RecipeSearchService()

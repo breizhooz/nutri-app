@@ -55,6 +55,7 @@ class CrawlResultResponse(BaseModel):
 
 class CrawlResultListParams(BaseModel):
     status: CrawlStatus | None = CrawlStatus.WAITING
+    crawl_type: CrawlType | None = None
     source_id: uuid.UUID | None = None
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=20, ge=1, le=100)

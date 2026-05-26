@@ -393,3 +393,33 @@ class TestRejectResult:
         r = CrawlResultFactory.make()
         response = await client.patch(f"/api/v1/crawler/results/{r.id}/reject")
         assert response.status_code == 409
+
+
+class TestResetResult:
+    async def test_reset_success_returns_200(self, results_client):
+        client, service = results_client
+        r = CrawlResultFactory.make(status=CrawlStatus.REJECTED)
+        reset = CrawlResultFactory.make(result_id=r.id, status=CrawlStatus.WAITING)
+        service.reset_result.return_value = reset
+        response = await client.patch(f"/api/v1/crawler/results/{r.id}/reset")
+        assert response.status_code == 200
+        assert response.json()["status"] == CrawlStatus.WAITING.value
+
+    async def test_not_found_returns_404(self, results_client):
+        client, service = results_client
+        service.reset_result.side_effect = HTTPException(
+            status_code=404, detail="Not found"
+        )
+        response = await client.patch(
+            "/api/v1/crawler/results/00000000-0000-0000-0000-000000000099/reset"
+        )
+        assert response.status_code == 404
+
+    async def test_conflict_returns_409(self, results_client):
+        client, service = results_client
+        service.reset_result.side_effect = HTTPException(
+            status_code=409, detail="Conflict"
+        )
+        r = CrawlResultFactory.make()
+        response = await client.patch(f"/api/v1/crawler/results/{r.id}/reset")
+        assert response.status_code == 409

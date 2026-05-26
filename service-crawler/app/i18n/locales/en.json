@@ -14,7 +14,8 @@
     "errors": {
       "not_editable": "This result cannot be edited (current status is not WAITING).",
       "already_rejected": "This result has already been rejected.",
-      "already_validated": "This result has already been validated."
+      "already_validated": "This result has already been validated.",
+      "already_waiting": "This result is already pending."
     }
   },
   "instagram": {

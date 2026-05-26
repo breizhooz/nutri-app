@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from app.models.crawl_result import CrawlResult
 from app.models.crawl_result_user import CrawlResultUser
-from app.models.enums import CrawlStatus
+from app.models.enums import CrawlStatus, CrawlType
 from app.schemas.crawl_result import CrawlResultUpdate
 
 
@@ -93,6 +93,7 @@ class ResultRepository:
         self,
         user_id: uuid.UUID,
         status: CrawlStatus | None = None,
+        crawl_type: CrawlType | None = None,
         source_id: uuid.UUID | None = None,
         page: int = 1,
         page_size: int = 20,
@@ -100,6 +101,7 @@ class ResultRepository:
     ) -> tuple[list[CrawlResultUser], int]:
         base = (
             select(CrawlResultUser)
+            .join(CrawlResult, CrawlResultUser.result_id == CrawlResult.id)
             .where(CrawlResultUser.user_id == user_id)
             .options(selectinload(CrawlResultUser.result))
         )
@@ -107,6 +109,8 @@ class ResultRepository:
             base = base.where(CrawlResultUser.status == status)
         if source_id is not None:
             base = base.where(CrawlResultUser.source_id == source_id)
+        if crawl_type is not None:
+            base = base.where(CrawlResult.type == crawl_type)
 
         count_row = await self.session.execute(
             select(func.count()).select_from(base.subquery())
@@ -120,10 +124,7 @@ class ResultRepository:
         )
         offset = (page - 1) * page_size
         data_rows = await self.session.execute(
-            base.join(CrawlResult, CrawlResultUser.result_id == CrawlResult.id)
-            .order_by(order_col)
-            .offset(offset)
-            .limit(page_size)
+            base.order_by(order_col).offset(offset).limit(page_size)
         )
         return list(data_rows.scalars().all()), total
 
@@ -139,6 +140,12 @@ class ResultRepository:
 
     async def reject_user_link(self, link: CrawlResultUser) -> CrawlResultUser:
         link.status = CrawlStatus.REJECTED
+        await self.session.commit()
+        await self.session.refresh(link)
+        return link
+
+    async def reset_to_waiting(self, link: CrawlResultUser) -> CrawlResultUser:
+        link.status = CrawlStatus.WAITING
         await self.session.commit()
         await self.session.refresh(link)
         return link
