@@ -3,6 +3,7 @@ import logging
 from uuid import UUID
 
 import instaloader
+import requests
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -58,26 +59,37 @@ async def _do_crawl(task, source_id: str, account: str) -> None:
                 "Instagram rate limit atteint pour %s, retry dans 60 min", account
             )
             raise task.retry(exc=exc, countdown=3600)
+        except requests.exceptions.HTTPError as exc:
+            logger.warning(
+                "Instagram HTTP %s pour %s, retry dans 60 min",
+                exc.response.status_code if exc.response is not None else "?",
+                account,
+            )
+            raise task.retry(exc=exc, countdown=3600)
         except Exception as exc:
             logger.error("Échec du crawl Instagram pour %s : %s", account, exc)
             raise task.retry(exc=exc, countdown=3600)
 
         for post in posts:
-            if await result_repo.url_exists(post.url):
-                logger.debug("Post déjà indexé, ignoré : %s", post.url)
+            if await result_repo.user_link_exists(post.url, user_id):
+                logger.debug("Post déjà indexé pour cet utilisateur, ignoré : %s", post.url)
                 continue
-            await result_repo.create(
+
+            result, _ = await result_repo.get_or_create_result(
                 {
-                    "source_id": UUID(source_id),
-                    "user_id": user_id,
                     "type": CrawlType.INSTAGRAM,
                     "url_origin": post.url,
                     "title": post.title,
                     "raw_content": post.caption,
                     "images": post.images,
                     "video_url": post.video_url,
-                    "status": CrawlStatus.WAITING,
+                    "published_at": post.timestamp,
                 }
+            )
+            await result_repo.create_user_link(
+                result_id=result.id,
+                user_id=user_id,
+                source_id=UUID(source_id),
             )
             new_count += 1
 

@@ -19,7 +19,7 @@ from app.services.result_service import ResultService
 router = APIRouter()
 
 # TODO Phase 6: replace with JWT-authenticated user id
-_STUB_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
+_STUB_USER_ID = uuid.UUID("2bb14ad7-4472-4ab6-bf9e-2d704a8d1dd6")
 
 
 class ResultServiceFactory:
@@ -40,6 +40,7 @@ async def list_results(
     source_id: uuid.UUID | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
+    sort: str = Query(default="desc", pattern="^(asc|desc)$"),
     service: ResultService = Depends(ResultServiceFactory.inject),
 ) -> PaginatedCrawlResultResponse:
     params = CrawlResultListParams(
@@ -47,8 +48,9 @@ async def list_results(
         source_id=source_id,
         page=page,
         page_size=page_size,
+        sort=sort,
     )
-    return await service.list_results(params)
+    return await service.list_results(user_id=_STUB_USER_ID, params=params)
 
 
 @router.get("/{result_id}", response_model=CrawlResultResponse)
@@ -56,7 +58,7 @@ async def get_result(
     result_id: uuid.UUID,
     service: ResultService = Depends(ResultServiceFactory.inject),
 ) -> CrawlResultResponse:
-    return await service.get_result(result_id)
+    return await service.get_result(result_id=result_id, user_id=_STUB_USER_ID)
 
 
 @router.patch("/{result_id}", response_model=CrawlResultResponse)
@@ -65,7 +67,9 @@ async def update_result(
     data: CrawlResultUpdate,
     service: ResultService = Depends(ResultServiceFactory.inject),
 ) -> CrawlResultResponse:
-    return await service.update_result(result_id, data)
+    return await service.update_result(
+        result_id=result_id, user_id=_STUB_USER_ID, data=data
+    )
 
 
 @router.patch("/{result_id}/validate", response_model=CrawlResultResponse)
@@ -75,7 +79,10 @@ async def validate_result(
     mapper: RecipeMapper = Depends(RecipeMapperFactory.inject),
 ) -> CrawlResultResponse:
     return await service.validate_result(
-        result_id, validated_by=_STUB_USER_ID, mapper=mapper
+        result_id=result_id,
+        user_id=_STUB_USER_ID,
+        validated_by=_STUB_USER_ID,
+        mapper=mapper,
     )
 
 
@@ -84,4 +91,4 @@ async def reject_result(
     result_id: uuid.UUID,
     service: ResultService = Depends(ResultServiceFactory.inject),
 ) -> CrawlResultResponse:
-    return await service.reject_result(result_id)
+    return await service.reject_result(result_id=result_id, user_id=_STUB_USER_ID)

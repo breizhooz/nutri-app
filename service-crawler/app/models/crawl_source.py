@@ -2,17 +2,13 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, time
-from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, Enum as SQLEnum, Integer, String, Time, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base_class import Base
 from app.models.enums import CrawlType
-
-if TYPE_CHECKING:
-    from app.models.crawl_result import CrawlResult
 
 
 class CrawlSource(Base):
@@ -39,6 +35,3 @@ class CrawlSource(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    results: Mapped[list["CrawlResult"]] = relationship(
-        back_populates="source", passive_deletes=True
-    )

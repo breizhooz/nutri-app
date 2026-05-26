@@ -21,9 +21,12 @@ class NotificationClient:
         if self._injected_client is not None:
             yield self._injected_client
             return
+        headers = {}
+        if settings.SERVICE_NOTIFICATION_TOKEN:
+            headers["Authorization"] = f"Bearer {settings.SERVICE_NOTIFICATION_TOKEN}"
         async with httpx.AsyncClient(
             base_url=settings.SERVICE_NOTIFICATION_URL,
-            headers={"Authorization": f"Bearer {settings.SERVICE_NOTIFICATION_TOKEN}"},
+            headers=headers,
             timeout=10.0,
         ) as client:
             yield client

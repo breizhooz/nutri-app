@@ -26,4 +26,10 @@ celery_app.conf.update(
     worker_prefetch_multiplier=1,
     beat_scheduler="tasks.scheduler:DatabaseBackedScheduler",
     beat_max_loop_interval=5,
+    task_default_queue="crawler",
+    task_routes={
+        "tasks.web.*": {"queue": "crawler"},
+        "tasks.instagram.*": {"queue": "crawler"},
+        "tasks.notifications.*": {"queue": "crawler"},
+    },
 )
