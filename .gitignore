@@ -42,6 +42,10 @@ bin/
 .DS_Store
 Thumbs.db
 
+# Celery Beat
+celerybeat-schedule
+celerybeat.pid
+
 #local ci
 ci-local*
 bandit*

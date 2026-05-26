@@ -40,6 +40,11 @@ scrape_configs:
         target_label: db
         replacement: '$1'
 
+  # cAdvisor — métriques containers Docker (CPU, mémoire, état)
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['cadvisor:8080']
+
   # Services FastAPI — décommenter après Phase 3
   - job_name: services
     static_configs:

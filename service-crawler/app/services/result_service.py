@@ -7,16 +7,17 @@ from fastapi import HTTPException, status
 
 from app.i18n.loader import t
 from app.models.crawl_result import CrawlResult
+from app.models.crawl_result_user import CrawlResultUser
 from app.models.enums import CrawlStatus
 from app.repositories.result_repository import ResultRepository
 from app.schemas.crawl_result import (
     CrawlResultListParams,
+    CrawlResultResponse,
     CrawlResultUpdate,
     PaginatedCrawlResultResponse,
 )
 
 logger = logging.getLogger(__name__)
-
 
 if TYPE_CHECKING:
     from app.services.recipe_mapper import RecipeMapper
@@ -27,79 +28,85 @@ class ResultService:
         self._repository = repository
 
     async def list_results(
-        self, params: CrawlResultListParams
+        self, user_id: uuid.UUID, params: CrawlResultListParams
     ) -> PaginatedCrawlResultResponse:
-        items, total = await self._repository.list_by_filters(
+        links, total = await self._repository.list_by_user(
+            user_id=user_id,
             status=params.status,
             source_id=params.source_id,
             page=params.page,
             page_size=params.page_size,
+            sort=params.sort,
         )
         return PaginatedCrawlResultResponse.build(
-            items=items,
+            items=[CrawlResultResponse.from_link(lnk) for lnk in links],
             total=total,
             page=params.page,
             page_size=params.page_size,
         )
 
-    async def get_result(self, result_id: uuid.UUID) -> CrawlResult:
-        result = await self._repository.get_by_id(result_id)
-        if result is None:
+    async def get_result(
+        self, result_id: uuid.UUID, user_id: uuid.UUID
+    ) -> CrawlResultResponse:
+        link = await self._repository.get_user_link(result_id, user_id)
+        if link is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=t.get("crawl_result.not_found"),
             )
-        return result
+        return CrawlResultResponse.from_link(link)
 
     async def update_result(
-        self, result_id: uuid.UUID, data: CrawlResultUpdate
-    ) -> CrawlResult:
-        result = await self._repository.get_by_id(result_id)
-        if result is None:
+        self, result_id: uuid.UUID, user_id: uuid.UUID, data: CrawlResultUpdate
+    ) -> CrawlResultResponse:
+        link = await self._repository.get_user_link(result_id, user_id)
+        if link is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=t.get("crawl_result.not_found"),
             )
-        ResultService._assert_editable(result)
-        return await self._repository.update(result, data)
+        ResultService._assert_editable(link)
+        await self._repository.update_result_content(link.result, data)
+        return CrawlResultResponse.from_link(link)
 
-    async def reject_result(self, result_id: uuid.UUID) -> CrawlResult:
-        result = await self._repository.get_by_id(result_id)
-        if result is None:
+    async def reject_result(
+        self, result_id: uuid.UUID, user_id: uuid.UUID
+    ) -> CrawlResultResponse:
+        link = await self._repository.get_user_link(result_id, user_id)
+        if link is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=t.get("crawl_result.not_found"),
             )
-        ResultService._assert_rejectable(result)
-        return await self._repository.reject(result)
+        ResultService._assert_rejectable(link)
+        link = await self._repository.reject_user_link(link)
+        return CrawlResultResponse.from_link(link)
 
     async def validate_result(
         self,
         result_id: uuid.UUID,
+        user_id: uuid.UUID,
         validated_by: uuid.UUID,
         mapper: "RecipeMapper | None" = None,
-    ) -> CrawlResult:
-        result = await self._repository.get_by_id(result_id)
-        if result is None:
+    ) -> CrawlResultResponse:
+        link = await self._repository.get_user_link(result_id, user_id)
+        if link is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=t.get("crawl_result.not_found"),
             )
-        ResultService._assert_validatable(result)
-        # Commit the state change first — validation is an editorial decision
-        # independent of downstream recipe creation.
-        validated = await self._repository.validate(result, validated_by=validated_by)
-        # Best-effort: propagate to service-recipe. Failure is logged but does not
-        # roll back the validation — the result remains VALID.
+        ResultService._assert_validatable(link)
+        link = await self._repository.validate_user_link(
+            link, validated_by=validated_by
+        )
         if mapper is not None:
-            await ResultService._call_mapper(validated, mapper)
-        return validated
+            await ResultService._call_mapper(link.result, mapper)
+        return CrawlResultResponse.from_link(link)
 
-    # ── static guards ─────────────────────────────────────────────────────────
+    # ── static guards ──────────────────────────────────────────────────────────
 
     @staticmethod
     async def _call_mapper(result: CrawlResult, mapper: "RecipeMapper") -> None:
-        """Forward to service-recipe. Logs on failure; does not abort validation."""
         try:
             await mapper.map_and_send(result)
         except httpx.RequestError as exc:
@@ -115,34 +122,34 @@ class ResultService:
             )
 
     @staticmethod
-    def _assert_editable(result: CrawlResult) -> None:
-        if result.status != CrawlStatus.WAITING:
+    def _assert_editable(link: CrawlResultUser) -> None:
+        if link.status != CrawlStatus.WAITING:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=t.get("crawl_result.errors.not_editable"),
             )
 
     @staticmethod
-    def _assert_rejectable(result: CrawlResult) -> None:
-        if result.status == CrawlStatus.REJECTED:
+    def _assert_rejectable(link: CrawlResultUser) -> None:
+        if link.status == CrawlStatus.REJECTED:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=t.get("crawl_result.errors.already_rejected"),
             )
-        if result.status == CrawlStatus.VALID:
+        if link.status == CrawlStatus.VALID:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=t.get("crawl_result.errors.already_validated"),
             )
 
     @staticmethod
-    def _assert_validatable(result: CrawlResult) -> None:
-        if result.status == CrawlStatus.VALID:
+    def _assert_validatable(link: CrawlResultUser) -> None:
+        if link.status == CrawlStatus.VALID:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=t.get("crawl_result.errors.already_validated"),
             )
-        if result.status == CrawlStatus.REJECTED:
+        if link.status == CrawlStatus.REJECTED:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=t.get("crawl_result.errors.already_rejected"),
