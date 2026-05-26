@@ -31,5 +31,13 @@ class Settings(BaseSettings):
     INSTAGRAM_PASSWORD: str = ""
     INSTAGRAM_SESSION_FILE: str = "/data/instagram_session"
 
+    GROQ_API_KEY: str = ""
+    GROQ_API_KEYS: str = ""  # comma-separated list; overrides GROQ_API_KEY when set
+    GROQ_MODEL: str = "llama-3.1-8b-instant"
+    GROQ_CONCURRENCY_PER_KEY: int = 2
+
+    REDIS_CACHE_URL: str = "redis://redis:6379/2"
+    GROQ_CACHE_TTL: int = 604800  # 7 days in seconds
+
 
 settings = Settings()

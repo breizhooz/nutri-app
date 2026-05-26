@@ -6,10 +6,11 @@ import pytest
 from fastapi import HTTPException
 from httpx import ASGITransport, AsyncClient
 
-from app.api.routes.results import RecipeMapperFactory, ResultServiceFactory
+from app.api.routes.results import GroqExtractorFactory, RecipeMapperFactory, ResultServiceFactory
 from app.main import app
 from app.models.enums import CrawlStatus, CrawlType
 from app.schemas.crawl_result import PaginatedCrawlResultResponse
+from app.schemas.hydration import HydratedIngredient, RecipeHydrated
 
 
 @pytest.fixture
@@ -18,9 +19,15 @@ def mock_mapper() -> AsyncMock:
 
 
 @pytest.fixture
-async def results_client(mock_service: AsyncMock, mock_mapper: AsyncMock):
+def mock_extractor() -> AsyncMock:
+    return AsyncMock()
+
+
+@pytest.fixture
+async def results_client(mock_service: AsyncMock, mock_mapper: AsyncMock, mock_extractor: AsyncMock):
     app.dependency_overrides[ResultServiceFactory.inject] = lambda: mock_service
     app.dependency_overrides[RecipeMapperFactory.inject] = lambda: mock_mapper
+    app.dependency_overrides[GroqExtractorFactory.inject] = lambda: mock_extractor
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as c:
@@ -37,7 +44,7 @@ class CrawlResultFactory:
         r = MagicMock()
         r.id = result_id or uuid.uuid4()
         r.source_id = None
-        r.user_id = None
+        r.user_id = uuid.UUID("00000000-0000-0000-0000-000000000001")
         r.type = CrawlType.WEB
         r.url_origin = "https://example.com"
         r.title = "Test"
@@ -99,7 +106,7 @@ class TestListResults:
             total=50, page=2, page_size=10
         )
         await client.get("/api/v1/crawler/results?page=2&page_size=10")
-        params = service.list_results.call_args[0][0]
+        params = service.list_results.call_args.kwargs["params"]
         assert params.page == 2
         assert params.page_size == 10
 
@@ -107,7 +114,7 @@ class TestListResults:
         client, service = results_client
         service.list_results.return_value = CrawlResultFactory.make_paginated()
         await client.get("/api/v1/crawler/results?status=valid")
-        params = service.list_results.call_args[0][0]
+        params = service.list_results.call_args.kwargs["params"]
         assert params.status == CrawlStatus.VALID
 
     async def test_page_size_above_max_returns_422(self, results_client):
@@ -124,7 +131,7 @@ class TestListResults:
         client, service = results_client
         service.list_results.return_value = CrawlResultFactory.make_paginated()
         await client.get("/api/v1/crawler/results")
-        params = service.list_results.call_args[0][0]
+        params = service.list_results.call_args.kwargs["params"]
         assert params.status == CrawlStatus.WAITING
 
 
@@ -224,7 +231,7 @@ class TestValidateResult:
         await client.patch(f"/api/v1/crawler/results/{r.id}/validate")
         _, kwargs = service.validate_result.call_args
         assert kwargs["validated_by"] == uuid.UUID(
-            "00000000-0000-0000-0000-000000000001"
+            "2bb14ad7-4472-4ab6-bf9e-2d704a8d1dd6"
         )
 
     async def test_mapper_kwarg_passed_to_service(self, results_client):
@@ -245,6 +252,117 @@ class TestValidateResult:
         r = CrawlResultFactory.make()
         response = await client.patch(f"/api/v1/crawler/results/{r.id}/validate")
         assert response.status_code == 503
+
+
+class TestHydrateResult:
+    def _make_hydrated(self, result_id: uuid.UUID | None = None) -> RecipeHydrated:
+        return RecipeHydrated(
+            title="Tarte aux pommes",
+            description="Super tarte",
+            instructions="Mélanger et cuire.",
+            servings=4,
+            prep_time_minutes=15,
+            cook_time_minutes=30,
+            ingredients=[HydratedIngredient(name="farine", quantity=200.0, unit="g")],
+            groq_tokens_used=150,
+        )
+
+    async def test_hydrate_success_returns_200(self, results_client):
+        client, service = results_client
+        r = CrawlResultFactory.make()
+        service.hydrate_result.return_value = self._make_hydrated(r.id)
+        response = await client.post(f"/api/v1/crawler/results/{r.id}/hydrate")
+        assert response.status_code == 200
+        body = response.json()
+        assert body["title"] == "Tarte aux pommes"
+        assert body["groq_tokens_used"] == 150
+        assert len(body["ingredients"]) == 1
+
+    async def test_not_found_returns_404(self, results_client):
+        client, service = results_client
+        service.hydrate_result.side_effect = HTTPException(status_code=404, detail="Not found")
+        response = await client.post(
+            "/api/v1/crawler/results/00000000-0000-0000-0000-000000000099/hydrate"
+        )
+        assert response.status_code == 404
+
+    async def test_already_validated_returns_409(self, results_client):
+        client, service = results_client
+        service.hydrate_result.side_effect = HTTPException(status_code=409, detail="Conflict")
+        r = CrawlResultFactory.make()
+        response = await client.post(f"/api/v1/crawler/results/{r.id}/hydrate")
+        assert response.status_code == 409
+
+    async def test_extractor_kwarg_passed_to_service(self, results_client):
+        client, service = results_client
+        r = CrawlResultFactory.make()
+        service.hydrate_result.return_value = self._make_hydrated(r.id)
+        await client.post(f"/api/v1/crawler/results/{r.id}/hydrate")
+        _, kwargs = service.hydrate_result.call_args
+        assert "extractor" in kwargs
+        assert kwargs["extractor"] is not None
+
+
+class TestCommitResult:
+    _COMMIT_BODY = {
+        "title": "Tarte aux pommes",
+        "instructions": "Mélanger et cuire.",
+        "ingredients": [{"name": "farine", "quantity": 200.0, "unit": "g"}],
+    }
+
+    async def test_commit_success_returns_200(self, results_client):
+        client, service = results_client
+        r = CrawlResultFactory.make()
+        validated = CrawlResultFactory.make(result_id=r.id, status=CrawlStatus.VALID)
+        service.commit_result.return_value = validated
+        response = await client.post(
+            f"/api/v1/crawler/results/{r.id}/commit", json=self._COMMIT_BODY
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == CrawlStatus.VALID.value
+
+    async def test_not_found_returns_404(self, results_client):
+        client, service = results_client
+        service.commit_result.side_effect = HTTPException(status_code=404, detail="Not found")
+        response = await client.post(
+            "/api/v1/crawler/results/00000000-0000-0000-0000-000000000099/commit",
+            json=self._COMMIT_BODY,
+        )
+        assert response.status_code == 404
+
+    async def test_already_validated_returns_409(self, results_client):
+        client, service = results_client
+        service.commit_result.side_effect = HTTPException(status_code=409, detail="Conflict")
+        r = CrawlResultFactory.make()
+        response = await client.post(
+            f"/api/v1/crawler/results/{r.id}/commit", json=self._COMMIT_BODY
+        )
+        assert response.status_code == 409
+
+    async def test_service_recipe_unavailable_returns_503(self, results_client):
+        client, service = results_client
+        service.commit_result.side_effect = HTTPException(status_code=503, detail="indisponible")
+        r = CrawlResultFactory.make()
+        response = await client.post(
+            f"/api/v1/crawler/results/{r.id}/commit", json=self._COMMIT_BODY
+        )
+        assert response.status_code == 503
+
+    async def test_missing_body_returns_422(self, results_client):
+        client, _ = results_client
+        r = CrawlResultFactory.make()
+        response = await client.post(f"/api/v1/crawler/results/{r.id}/commit")
+        assert response.status_code == 422
+
+    async def test_mapper_and_validated_by_passed_to_service(self, results_client):
+        client, service = results_client
+        r = CrawlResultFactory.make()
+        validated = CrawlResultFactory.make(result_id=r.id, status=CrawlStatus.VALID)
+        service.commit_result.return_value = validated
+        await client.post(f"/api/v1/crawler/results/{r.id}/commit", json=self._COMMIT_BODY)
+        _, kwargs = service.commit_result.call_args
+        assert "mapper" in kwargs
+        assert "validated_by" in kwargs
 
 
 class TestRejectResult:

@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from sqlalchemy.orm import selectinload
 from starlette.requests import Request
 from elasticsearch import NotFoundError
@@ -13,7 +13,7 @@ from app.core.http_client import (
 from app.db.session import get_session
 from app.models.recipe import Recipe
 from app.models.recipe_ingredients import RecipeIngredient
-from app.schemas.recipe import RecipeCreate, RecipeResponse, RecipeUpdate
+from app.schemas.recipe import RecipeCreate, RecipeResponse, RecipeUpdate, PaginatedRecipeResponse
 from app.core.utils import slugify
 from app.i18n import LocalizedHTTPException
 from app.i18n.loader import t
@@ -173,7 +173,7 @@ async def create_recipe(
         book_name=recipe_data.book_name,
         source_url=recipe_data.source_url,
         image_url=recipe_data.image_url,
-        created_by_user_id=current_user_id,
+        created_by_user_id=recipe_data.created_by_user_id or current_user_id,
     )
 
     session.add(recipe)
@@ -208,12 +208,48 @@ async def create_recipe(
     return recipe_to_return
 
 
+@router.get("", response_model=PaginatedRecipeResponse)
+async def list_recipes(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=50),
+    course_type: str | None = Query(None),
+    session: AsyncSession = Depends(get_session),
+):
+    """List recipes with optional course_type filter and pagination."""
+    base_query = select(Recipe)
+    count_query = select(func.count()).select_from(Recipe)
+
+    if course_type:
+        base_query = base_query.where(Recipe.course_type == course_type)
+        count_query = count_query.where(Recipe.course_type == course_type)
+
+    total_result = await session.execute(count_query)
+    total = total_result.scalar_one()
+
+    offset = (page - 1) * page_size
+    items_result = await session.execute(
+        base_query
+        .options(selectinload(Recipe.recipe_ingredients).selectinload(RecipeIngredient.ingredient))
+        .order_by(Recipe.created_at.desc())
+        .offset(offset)
+        .limit(page_size)
+    )
+    items = list(items_result.scalars().all())
+
+    pages = max(1, -(-total // page_size))  # ceiling division
+    return PaginatedRecipeResponse(items=items, total=total, page=page, page_size=page_size, pages=pages)
+
+
 @router.get("/{slug}", response_model=RecipeResponse)
 async def get_recipe_by_slug(
     slug: str, request: Request, session: AsyncSession = Depends(get_session)
 ):
     """get recipe by slug"""
-    result = await session.execute(select(Recipe).where(Recipe.slug == slug))
+    result = await session.execute(
+        select(Recipe)
+        .where(Recipe.slug == slug)
+        .options(selectinload(Recipe.recipe_ingredients).selectinload(RecipeIngredient.ingredient))
+    )
     recipe = result.scalar_one_or_none()
 
     if not recipe:

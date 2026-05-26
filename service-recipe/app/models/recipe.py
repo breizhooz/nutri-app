@@ -40,6 +40,7 @@ class Recipe(AbstractModel):
         return self._generic_enum_validator(key, val, DifficultyLevel)
 
     tags: Mapped[dict[str, Any]] = mapped_column(JSON, default={}, server_default="{}")
+    free_tags: Mapped[list[str]] = mapped_column(JSON, default=[], server_default="[]")
 
     cuisine_origin: Mapped[CuisineOrigin] = mapped_column(
         SQLEnum(CuisineOrigin, native_enum=False, length=50),
@@ -73,9 +74,9 @@ class Recipe(AbstractModel):
         return self._generic_enum_validator(key, val, CourseType)
 
     book_name: Mapped[str | None] = mapped_column(String(300))
-    source_url: Mapped[str | None] = mapped_column(String(500))
+    source_url: Mapped[str | None] = mapped_column(Text)
 
-    image_url: Mapped[str | None] = mapped_column(String(500))
+    image_url: Mapped[str | None] = mapped_column(Text)
 
     # metadata
     created_by_user_id: Mapped[str | None] = mapped_column(String(36))

@@ -20,9 +20,12 @@ class RecipeServiceClient:
         if self._injected_client is not None:
             yield self._injected_client
             return
+        headers = {}
+        if settings.SERVICE_RECIPE_TOKEN:
+            headers["Authorization"] = f"Bearer {settings.SERVICE_RECIPE_TOKEN}"
         async with httpx.AsyncClient(
             base_url=settings.SERVICE_RECIPE_URL,
-            headers={"Authorization": f"Bearer {settings.SERVICE_RECIPE_TOKEN}"},
+            headers=headers,
             timeout=10.0,
         ) as client:
             yield client
@@ -31,7 +34,7 @@ class RecipeServiceClient:
         """Return the id of the ingredient matching `name` (case-insensitive), or None."""
         async with self._client() as client:
             resp = await client.get(
-                "/api/v1/ingredient/", params={"skip": 0, "limit": 1000}
+                "/api/v1/ingredient", params={"skip": 0, "limit": 1000}
             )
             resp.raise_for_status()
         name_lower = name.strip().lower()
@@ -44,7 +47,7 @@ class RecipeServiceClient:
         """Create a minimal ingredient and return its id."""
         async with self._client() as client:
             resp = await client.post(
-                "/api/v1/ingredient/",
+                "/api/v1/ingredient",
                 json={"name": name, "tags": [], "free_tags": []},
             )
             resp.raise_for_status()
@@ -60,6 +63,6 @@ class RecipeServiceClient:
     async def create_recipe(self, payload: dict) -> dict:
         """POST /api/v1/recipe/ and return the created recipe as dict."""
         async with self._client() as client:
-            resp = await client.post("/api/v1/recipe/", json=payload)
+            resp = await client.post("/api/v1/recipe", json=payload)
             resp.raise_for_status()
         return resp.json()

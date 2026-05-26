@@ -10,6 +10,8 @@ from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 
 def setup_telemetry(service_name: str, app=None) -> None:
     """Configure OTel → Tempo et Prometheus /metrics pour un service FastAPI."""
+    if os.getenv("OTEL_SDK_DISABLED", "false").lower() == "true":
+        return
     resource = Resource.create({SERVICE_NAME: service_name})
     provider = TracerProvider(resource=resource)
     exporter = OTLPSpanExporter(

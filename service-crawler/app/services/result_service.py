@@ -16,10 +16,12 @@ from app.schemas.crawl_result import (
     CrawlResultUpdate,
     PaginatedCrawlResultResponse,
 )
+from app.schemas.hydration import HydratedIngredient, RecipeCommitRequest, RecipeHydrated
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
+    from app.services.groq_recipe_extractor import GroqRecipeExtractor
     from app.services.recipe_mapper import RecipeMapper
 
 
@@ -100,15 +102,67 @@ class ResultService:
             link, validated_by=validated_by
         )
         if mapper is not None:
-            await ResultService._call_mapper(link.result, mapper)
+            await ResultService._call_mapper(link.result, mapper, user_id=str(user_id))
+        return CrawlResultResponse.from_link(link)
+
+    async def hydrate_result(
+        self,
+        result_id: uuid.UUID,
+        user_id: uuid.UUID,
+        extractor: "GroqRecipeExtractor",
+    ) -> RecipeHydrated:
+        link = await self._repository.get_user_link(result_id, user_id)
+        if link is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=t.get("crawl_result.not_found"),
+            )
+        ResultService._assert_hydratable(link)
+        extracted = await extractor.extract(link.result.raw_content or "")
+        return RecipeHydrated(
+            title=extracted.title,
+            description=extracted.description,
+            instructions=extracted.instructions,
+            servings=extracted.servings,
+            prep_time_minutes=extracted.prep_time_minutes,
+            cook_time_minutes=extracted.cook_time_minutes,
+            ingredients=[
+                HydratedIngredient(
+                    name=i["name"], quantity=i["quantity"], unit=i["unit"]
+                )
+                for i in extracted.ingredients
+            ],
+            groq_tokens_used=extracted.tokens_used,
+            from_cache=extracted.from_cache,
+        )
+
+    async def commit_result(
+        self,
+        result_id: uuid.UUID,
+        user_id: uuid.UUID,
+        validated_by: uuid.UUID,
+        data: RecipeCommitRequest,
+        mapper: "RecipeMapper",
+    ) -> CrawlResultResponse:
+        link = await self._repository.get_user_link(result_id, user_id)
+        if link is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=t.get("crawl_result.not_found"),
+            )
+        ResultService._assert_validatable(link)
+        await ResultService._call_commit(link.result, data, mapper, user_id=str(user_id))
+        link = await self._repository.validate_user_link(
+            link, validated_by=validated_by
+        )
         return CrawlResultResponse.from_link(link)
 
     # ── static guards ──────────────────────────────────────────────────────────
 
     @staticmethod
-    async def _call_mapper(result: CrawlResult, mapper: "RecipeMapper") -> None:
+    async def _call_mapper(result: CrawlResult, mapper: "RecipeMapper", user_id: str | None = None) -> None:
         try:
-            await mapper.map_and_send(result)
+            await mapper.map_and_send(result, user_id=user_id)
         except httpx.RequestError as exc:
             logger.warning(
                 "service-recipe unreachable for result %s: %s", result.id, exc
@@ -120,6 +174,34 @@ class ResultService:
                 exc.response.status_code,
                 exc.response.text[:200],
             )
+
+    @staticmethod
+    async def _call_commit(
+        result: CrawlResult, data: RecipeCommitRequest, mapper: "RecipeMapper", user_id: str | None = None
+    ) -> None:
+        try:
+            await mapper.commit_from_hydrated(result, data, user_id=user_id)
+        except httpx.RequestError as exc:
+            logger.warning(
+                "service-recipe unreachable during commit for result %s: %s",
+                result.id,
+                exc,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="service-recipe indisponible",
+            ) from exc
+        except httpx.HTTPStatusError as exc:
+            logger.warning(
+                "service-recipe rejected commit for result %s (HTTP %s): %s",
+                result.id,
+                exc.response.status_code,
+                exc.response.text[:200],
+            )
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="service-recipe a refusé la recette",
+            ) from exc
 
     @staticmethod
     def _assert_editable(link: CrawlResultUser) -> None:
@@ -144,6 +226,19 @@ class ResultService:
 
     @staticmethod
     def _assert_validatable(link: CrawlResultUser) -> None:
+        if link.status == CrawlStatus.VALID:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=t.get("crawl_result.errors.already_validated"),
+            )
+        if link.status == CrawlStatus.REJECTED:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=t.get("crawl_result.errors.already_rejected"),
+            )
+
+    @staticmethod
+    def _assert_hydratable(link: CrawlResultUser) -> None:
         if link.status == CrawlStatus.VALID:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
