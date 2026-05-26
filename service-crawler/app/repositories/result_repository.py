@@ -114,7 +114,8 @@ class ResultRepository:
         total: int = count_row.scalar_one()
 
         order_col = nullslast(
-            CrawlResult.published_at.desc() if sort == "desc"
+            CrawlResult.published_at.desc()
+            if sort == "desc"
             else CrawlResult.published_at.asc()
         )
         offset = (page - 1) * page_size

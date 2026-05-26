@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.core.config import settings
-from app.models.enums import CrawlStatus, CrawlType
+from app.models.enums import CrawlType
 from app.repositories.result_repository import ResultRepository
 from app.repositories.source_repository import SourceRepository
 from app.services.instagram_service import InstagramService
@@ -72,7 +72,9 @@ async def _do_crawl(task, source_id: str, account: str) -> None:
 
         for post in posts:
             if await result_repo.user_link_exists(post.url, user_id):
-                logger.debug("Post déjà indexé pour cet utilisateur, ignoré : %s", post.url)
+                logger.debug(
+                    "Post déjà indexé pour cet utilisateur, ignoré : %s", post.url
+                )
                 continue
 
             result, _ = await result_repo.get_or_create_result(

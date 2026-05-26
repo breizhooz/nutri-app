@@ -5,6 +5,7 @@ Revises: 85db51d9cdec
 Create Date: 2026-05-25 23:00:00.000000
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -25,11 +26,15 @@ def upgrade() -> None:
     op.drop_column("crawl_results", "user_id")
 
     # 2. Retirer le FK source_id de crawl_results (source est maintenant sur crawl_result_users)
-    op.drop_constraint("crawl_results_source_id_fkey", "crawl_results", type_="foreignkey")
+    op.drop_constraint(
+        "crawl_results_source_id_fkey", "crawl_results", type_="foreignkey"
+    )
     op.drop_column("crawl_results", "source_id")
 
     # 3. Ajouter la contrainte UNIQUE sur url_origin
-    op.create_unique_constraint("uq_crawl_results_url_origin", "crawl_results", ["url_origin"])
+    op.create_unique_constraint(
+        "uq_crawl_results_url_origin", "crawl_results", ["url_origin"]
+    )
 
     # 4. Créer la table crawl_result_users
     op.create_table(
@@ -67,11 +72,33 @@ def downgrade() -> None:
 
     op.drop_constraint("uq_crawl_results_url_origin", "crawl_results", type_="unique")
 
-    op.add_column("crawl_results", sa.Column("source_id", postgresql.UUID(as_uuid=True), nullable=True))
-    op.create_foreign_key(
-        "crawl_results_source_id_fkey", "crawl_results", "crawl_sources", ["source_id"], ["id"], ondelete="SET NULL"
+    op.add_column(
+        "crawl_results",
+        sa.Column("source_id", postgresql.UUID(as_uuid=True), nullable=True),
     )
-    op.add_column("crawl_results", sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=True))
-    op.add_column("crawl_results", sa.Column("status", sa.String(length=20), nullable=False, server_default="waiting"))
-    op.add_column("crawl_results", sa.Column("validate_by", postgresql.UUID(as_uuid=True), nullable=True))
-    op.add_column("crawl_results", sa.Column("validate_date", sa.DateTime(timezone=True), nullable=True))
+    op.create_foreign_key(
+        "crawl_results_source_id_fkey",
+        "crawl_results",
+        "crawl_sources",
+        ["source_id"],
+        ["id"],
+        ondelete="SET NULL",
+    )
+    op.add_column(
+        "crawl_results",
+        sa.Column("user_id", postgresql.UUID(as_uuid=True), nullable=True),
+    )
+    op.add_column(
+        "crawl_results",
+        sa.Column(
+            "status", sa.String(length=20), nullable=False, server_default="waiting"
+        ),
+    )
+    op.add_column(
+        "crawl_results",
+        sa.Column("validate_by", postgresql.UUID(as_uuid=True), nullable=True),
+    )
+    op.add_column(
+        "crawl_results",
+        sa.Column("validate_date", sa.DateTime(timezone=True), nullable=True),
+    )

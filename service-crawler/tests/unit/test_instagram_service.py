@@ -3,8 +3,6 @@
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
-import httpx
-import instaloader.exceptions as il_exc
 import pytest
 
 from app.services.instagram_service import InstagramPost, InstagramService
@@ -310,9 +308,7 @@ def test_fetch_posts_paginates_when_next_max_id():
 
 def test_fetch_posts_propagates_resolve_error():
     service = InstagramService(loader=MagicMock())
-    with patch.object(
-        service, "_resolve_user_id", side_effect=ValueError("not found")
-    ):
+    with patch.object(service, "_resolve_user_id", side_effect=ValueError("not found")):
         with pytest.raises(ValueError):
             service.fetch_posts("notfound")
 

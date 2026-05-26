@@ -150,14 +150,18 @@ class TestGetUserLink:
         execute_result = MagicMock()
         execute_result.scalar_one_or_none.return_value = lnk
         session.execute.return_value = execute_result
-        result = await ResultRepository(session).get_user_link(lnk.result_id, lnk.user_id)
+        result = await ResultRepository(session).get_user_link(
+            lnk.result_id, lnk.user_id
+        )
         assert result is lnk
 
     async def test_not_found_returns_none(self, session):
         execute_result = MagicMock()
         execute_result.scalar_one_or_none.return_value = None
         session.execute.return_value = execute_result
-        result = await ResultRepository(session).get_user_link(uuid.uuid4(), uuid.uuid4())
+        result = await ResultRepository(session).get_user_link(
+            uuid.uuid4(), uuid.uuid4()
+        )
         assert result is None
 
 

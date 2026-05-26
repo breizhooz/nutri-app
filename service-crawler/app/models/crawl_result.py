@@ -17,7 +17,9 @@ if TYPE_CHECKING:
 
 class CrawlResult(Base):
     __tablename__ = "crawl_results"
-    __table_args__ = (UniqueConstraint("url_origin", name="uq_crawl_results_url_origin"),)
+    __table_args__ = (
+        UniqueConstraint("url_origin", name="uq_crawl_results_url_origin"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4

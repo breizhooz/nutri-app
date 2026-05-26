@@ -80,7 +80,9 @@ class TestResultServiceListResults:
 
     async def test_status_filter_forwarded(self, service, mock_repo):
         mock_repo.list_by_user.return_value = ([], 0)
-        await service.list_results(_USER_ID, CrawlResultListParams(status=CrawlStatus.VALID))
+        await service.list_results(
+            _USER_ID, CrawlResultListParams(status=CrawlStatus.VALID)
+        )
         mock_repo.list_by_user.assert_called_once_with(
             user_id=_USER_ID,
             status=CrawlStatus.VALID,
@@ -143,27 +145,35 @@ class TestResultServiceUpdateResult:
         lnk = make_link(status=CrawlStatus.WAITING)
         mock_repo.get_user_link.return_value = lnk
         mock_repo.update_result_content.return_value = lnk.result
-        result = await service.update_result(lnk.result_id, _USER_ID, CrawlResultUpdate(title="New"))
+        await service.update_result(
+            lnk.result_id, _USER_ID, CrawlResultUpdate(title="New")
+        )
         mock_repo.update_result_content.assert_called_once()
 
     async def test_not_found_raises_404(self, service, mock_repo):
         mock_repo.get_user_link.return_value = None
         with pytest.raises(HTTPException) as exc:
-            await service.update_result(uuid.uuid4(), _USER_ID, CrawlResultUpdate(title="X"))
+            await service.update_result(
+                uuid.uuid4(), _USER_ID, CrawlResultUpdate(title="X")
+            )
         assert exc.value.status_code == 404
 
     async def test_update_valid_raises_409(self, service, mock_repo):
         lnk = make_link(status=CrawlStatus.VALID)
         mock_repo.get_user_link.return_value = lnk
         with pytest.raises(HTTPException) as exc:
-            await service.update_result(lnk.result_id, _USER_ID, CrawlResultUpdate(title="X"))
+            await service.update_result(
+                lnk.result_id, _USER_ID, CrawlResultUpdate(title="X")
+            )
         assert exc.value.status_code == 409
 
     async def test_update_rejected_raises_409(self, service, mock_repo):
         lnk = make_link(status=CrawlStatus.REJECTED)
         mock_repo.get_user_link.return_value = lnk
         with pytest.raises(HTTPException) as exc:
-            await service.update_result(lnk.result_id, _USER_ID, CrawlResultUpdate(title="X"))
+            await service.update_result(
+                lnk.result_id, _USER_ID, CrawlResultUpdate(title="X")
+            )
         assert exc.value.status_code == 409
 
 
@@ -257,7 +267,9 @@ class TestResultServiceValidateResult:
         mock_repo.validate_user_link.return_value = validated
         mock_mapper = AsyncMock()
         mock_mapper.map_and_send.return_value = {}
-        await service.validate_result(lnk.result_id, _USER_ID, _USER_ID, mapper=mock_mapper)
+        await service.validate_result(
+            lnk.result_id, _USER_ID, _USER_ID, mapper=mock_mapper
+        )
         mock_mapper.map_and_send.assert_called_once_with(validated.result)
 
     async def test_request_error_logged_validation_succeeds(self, service, mock_repo):
@@ -269,7 +281,9 @@ class TestResultServiceValidateResult:
         mock_mapper.map_and_send.side_effect = httpx.RequestError(
             "connection refused", request=MagicMock()
         )
-        result = await service.validate_result(lnk.result_id, _USER_ID, _USER_ID, mapper=mock_mapper)
+        result = await service.validate_result(
+            lnk.result_id, _USER_ID, _USER_ID, mapper=mock_mapper
+        )
         assert result.status == CrawlStatus.VALID
 
     async def test_no_mapper_skips_recipe_service(self, service, mock_repo):
@@ -277,7 +291,9 @@ class TestResultServiceValidateResult:
         validated = make_link(result_id=lnk.result_id, status=CrawlStatus.VALID)
         mock_repo.get_user_link.return_value = lnk
         mock_repo.validate_user_link.return_value = validated
-        result = await service.validate_result(lnk.result_id, _USER_ID, _USER_ID, mapper=None)
+        result = await service.validate_result(
+            lnk.result_id, _USER_ID, _USER_ID, mapper=None
+        )
         assert result.status == CrawlStatus.VALID
 
 

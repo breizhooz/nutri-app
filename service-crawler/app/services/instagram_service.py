@@ -111,7 +111,9 @@ class InstagramService:
     def normalize_account(account: str) -> str:
         return account.lstrip("@")
 
-    def fetch_posts(self, account: str, max_posts: int | None = None) -> list[InstagramPost]:
+    def fetch_posts(
+        self, account: str, max_posts: int | None = None
+    ) -> list[InstagramPost]:
         """Récupère tous les posts du compte. Si max_posts est None, utilise le media_count réel."""
         username = self.normalize_account(account)
         user_id = self._resolve_user_id(username)
@@ -191,4 +193,3 @@ class InstagramService:
             video_url=video_url,
             timestamp=datetime.fromtimestamp(taken_at, tz=timezone.utc),
         )
-

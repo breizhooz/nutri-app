@@ -96,7 +96,9 @@ class ResultService:
                 detail=t.get("crawl_result.not_found"),
             )
         ResultService._assert_validatable(link)
-        link = await self._repository.validate_user_link(link, validated_by=validated_by)
+        link = await self._repository.validate_user_link(
+            link, validated_by=validated_by
+        )
         if mapper is not None:
             await ResultService._call_mapper(link.result, mapper)
         return CrawlResultResponse.from_link(link)

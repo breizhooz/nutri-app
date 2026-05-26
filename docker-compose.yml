@@ -29,6 +29,9 @@ services:
     volumes:
       - ./portal/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./portal/index.html:/usr/share/nginx/html/index.html:ro
+    depends_on: 
+      service-user:
+        condition: service_healthy
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.portal.loadbalancer.server.port=80"
@@ -48,7 +51,7 @@ services:
     profiles: [monitoring]
     user: root
     volumes:
-      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./monitoring/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:

@@ -18,7 +18,9 @@ if TYPE_CHECKING:
 
 class CrawlResultUser(Base):
     __tablename__ = "crawl_result_users"
-    __table_args__ = (UniqueConstraint("result_id", "user_id", name="uq_crawl_result_user"),)
+    __table_args__ = (
+        UniqueConstraint("result_id", "user_id", name="uq_crawl_result_user"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
