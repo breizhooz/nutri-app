@@ -7,6 +7,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.compiler import compiles
 
+os.environ.setdefault("OTEL_SDK_DISABLED", "true")
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 os.environ.setdefault("CELERY_BROKER_URL", "memory://")
 os.environ.setdefault("CELERY_RESULT_BACKEND", "cache+memory://")
@@ -24,6 +25,8 @@ os.environ.setdefault("JWT_SECRET", "test-jwt-secret-for-unit-tests")
 os.environ.setdefault("INSTAGRAM_USERNAME", "")
 os.environ.setdefault("INSTAGRAM_PASSWORD", "")
 os.environ.setdefault("INSTAGRAM_SESSION_FILE", "/tmp/test_instagram_session")
+os.environ.setdefault("GROQ_API_KEY", "test-groq-key")
+os.environ.setdefault("GROQ_MODEL", "llama-3.1-8b-instant")
 
 from app.core.deps import get_current_user_id
 from app.db.base import Base

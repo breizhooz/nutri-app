@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 import logging
 import re
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import httpx
 
 from app.models.crawl_result import CrawlResult
 from app.services.recipe_service_client import RecipeServiceClient
+
+if TYPE_CHECKING:
+    from app.schemas.hydration import RecipeCommitRequest
 
 logger = logging.getLogger(__name__)
 
@@ -197,11 +203,13 @@ class RecipeMapper:
         self._recipe_client = recipe_client
         self._parser = parser or IngredientParser()  # MULTILINGUAL_CONFIG by default
 
-    async def map_and_send(self, crawl_result: CrawlResult) -> dict:
+    async def map_and_send(self, crawl_result: CrawlResult, user_id: str | None = None) -> dict:
         """Extract ingredients, resolve them in service-recipe, build and POST the recipe."""
         parsed = self._parser.parse(crawl_result.raw_content or "")
         recipe_ingredients = await self._resolve_ingredients(parsed)
         payload = self._build_payload(crawl_result, recipe_ingredients)
+        if user_id:
+            payload["created_by_user_id"] = user_id
         return await self._recipe_client.create_recipe(payload)
 
     async def _resolve_ingredients(self, parsed: list[ParsedIngredient]) -> list[dict]:
@@ -239,3 +247,49 @@ class RecipeMapper:
             "recipe_ingredients": recipe_ingredients,
             "tags": {},
         }
+
+    async def commit_from_hydrated(
+        self, crawl_result: CrawlResult, data: "RecipeCommitRequest", user_id: str | None = None
+    ) -> dict:
+        """Resolve ingredients from a hydrated recipe and POST it to service-recipe."""
+        recipe_ingredients = await self._resolve_hydrated_ingredients(data.ingredients)
+        payload = {
+            "title": data.title,
+            "description": data.description,
+            "instructions": data.instructions,
+            "servings": data.servings,
+            "prep_time_minutes": data.prep_time_minutes,
+            "cook_time_minutes": data.cook_time_minutes,
+            "source_url": crawl_result.url_origin,
+            "image_url": crawl_result.images[0] if crawl_result.images else None,
+            "recipe_ingredients": recipe_ingredients,
+            "tags": {},
+        }
+        if data.course_type:
+            payload["course_type"] = data.course_type
+        if data.free_tags:
+            payload["free_tags"] = data.free_tags
+        if user_id:
+            payload["created_by_user_id"] = user_id
+        return await self._recipe_client.create_recipe(payload)
+
+    async def _resolve_hydrated_ingredients(self, ingredients: list) -> list[dict]:
+        resolved: list[dict] = []
+        for item in ingredients:
+            try:
+                ingredient_id = await self._recipe_client.get_or_create_ingredient(
+                    item.name
+                )
+                resolved.append(
+                    {
+                        "ingredient_id": ingredient_id,
+                        "quantity": item.quantity,
+                        "unit": item.unit,
+                    }
+                )
+            except (httpx.HTTPStatusError, httpx.RequestError):
+                logger.warning(
+                    "Skipping ingredient %r — service-recipe returned an error",
+                    item.name,
+                )
+        return resolved

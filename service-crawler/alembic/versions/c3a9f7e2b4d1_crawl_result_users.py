@@ -31,7 +31,15 @@ def upgrade() -> None:
     )
     op.drop_column("crawl_results", "source_id")
 
-    # 3. Ajouter la contrainte UNIQUE sur url_origin
+    # 3. Dédoublonner url_origin avant d'ajouter la contrainte UNIQUE
+    op.execute("""
+        DELETE FROM crawl_results
+        WHERE id NOT IN (
+            SELECT DISTINCT ON (url_origin) id
+            FROM crawl_results
+            ORDER BY url_origin, created_at DESC
+        )
+    """)
     op.create_unique_constraint(
         "uq_crawl_results_url_origin", "crawl_results", ["url_origin"]
     )

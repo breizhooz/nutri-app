@@ -18,9 +18,11 @@ class RecipeBase(BaseModel):
     origin_recipe: RecipeOrigin = RecipeOrigin.PERSONAL
     course_type: CourseType = CourseType.MAIN_COURSE
     tags: dict[str, Any] = {}
+    free_tags: list[str] = []
     book_name: Optional[str] = None
     source_url: Optional[str] = None
     image_url: Optional[str] = None
+    created_by_user_id: Optional[str] = None
 
 
 class RecipeCreate(RecipeBase):
@@ -48,6 +50,7 @@ class RecipeUpdate(BaseModel):
     origin_recipe: Optional[RecipeOrigin] = None
     course_type: Optional[CourseType] = None
     tags: Optional[dict[str, Any]] = None
+    free_tags: Optional[list[str]] = None
     book_name: Optional[str] = None
     source_url: Optional[str] = None
     image_url: Optional[str] = None
@@ -64,3 +67,11 @@ class RecipeResponse(RecipeBase):
     recipe_ingredients: List[RecipeIngredientResponse]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PaginatedRecipeResponse(BaseModel):
+    items: List[RecipeResponse]
+    total: int
+    page: int
+    page_size: int
+    pages: int

@@ -8,6 +8,8 @@ from fastapi import HTTPException
 
 from app.models.enums import CrawlStatus, CrawlType
 from app.schemas.crawl_result import CrawlResultListParams, CrawlResultUpdate
+from app.schemas.hydration import HydratedIngredient, RecipeCommitRequest
+from app.services.groq_recipe_extractor import ExtractedRecipe
 from app.services.result_service import ResultService
 
 
@@ -89,6 +91,7 @@ class TestResultServiceListResults:
             source_id=None,
             page=1,
             page_size=20,
+            sort="desc",
         )
 
     async def test_source_id_filter_forwarded(self, service, mock_repo):
@@ -101,6 +104,7 @@ class TestResultServiceListResults:
             source_id=sid,
             page=1,
             page_size=20,
+            sort="desc",
         )
 
 
@@ -295,6 +299,171 @@ class TestResultServiceValidateResult:
             lnk.result_id, _USER_ID, _USER_ID, mapper=None
         )
         assert result.status == CrawlStatus.VALID
+
+
+# ─── hydrate_result ───────────────────────────────────────────────────────────
+
+
+def _make_extracted_recipe(**kwargs) -> ExtractedRecipe:
+    defaults = dict(
+        title="Tarte aux pommes",
+        description="Une bonne tarte",
+        instructions="Mélanger, cuire.",
+        servings=4,
+        prep_time_minutes=15,
+        cook_time_minutes=30,
+        ingredients=[{"name": "farine", "quantity": 200.0, "unit": "g"}],
+        tokens_used=150,
+    )
+    defaults.update(kwargs)
+    return ExtractedRecipe(**defaults)
+
+
+class TestResultServiceHydrateResult:
+    @pytest.fixture
+    def mock_repo(self):
+        return AsyncMock()
+
+    @pytest.fixture
+    def service(self, mock_repo):
+        return ResultService(mock_repo)
+
+    async def test_returns_recipe_hydrated(self, service, mock_repo):
+        lnk = make_link(status=CrawlStatus.WAITING)
+        mock_repo.get_user_link.return_value = lnk
+        mock_extractor = AsyncMock()
+        mock_extractor.extract.return_value = _make_extracted_recipe()
+        result = await service.hydrate_result(lnk.result_id, _USER_ID, mock_extractor)
+        assert result.title == "Tarte aux pommes"
+        assert result.groq_tokens_used == 150
+        assert len(result.ingredients) == 1
+
+    async def test_not_found_raises_404(self, service, mock_repo):
+        mock_repo.get_user_link.return_value = None
+        with pytest.raises(HTTPException) as exc:
+            await service.hydrate_result(uuid.uuid4(), _USER_ID, AsyncMock())
+        assert exc.value.status_code == 404
+
+    async def test_already_validated_raises_409(self, service, mock_repo):
+        lnk = make_link(status=CrawlStatus.VALID)
+        mock_repo.get_user_link.return_value = lnk
+        with pytest.raises(HTTPException) as exc:
+            await service.hydrate_result(lnk.result_id, _USER_ID, AsyncMock())
+        assert exc.value.status_code == 409
+
+    async def test_already_rejected_raises_409(self, service, mock_repo):
+        lnk = make_link(status=CrawlStatus.REJECTED)
+        mock_repo.get_user_link.return_value = lnk
+        with pytest.raises(HTTPException) as exc:
+            await service.hydrate_result(lnk.result_id, _USER_ID, AsyncMock())
+        assert exc.value.status_code == 409
+
+    async def test_extractor_called_with_raw_content(self, service, mock_repo):
+        lnk = make_link(status=CrawlStatus.WAITING)
+        lnk.result.raw_content = "200g farine\n3 oeufs"
+        mock_repo.get_user_link.return_value = lnk
+        mock_extractor = AsyncMock()
+        mock_extractor.extract.return_value = _make_extracted_recipe()
+        await service.hydrate_result(lnk.result_id, _USER_ID, mock_extractor)
+        mock_extractor.extract.assert_called_once_with("200g farine\n3 oeufs")
+
+    async def test_none_raw_content_passes_empty_string(self, service, mock_repo):
+        lnk = make_link(status=CrawlStatus.WAITING)
+        lnk.result.raw_content = None
+        mock_repo.get_user_link.return_value = lnk
+        mock_extractor = AsyncMock()
+        mock_extractor.extract.return_value = _make_extracted_recipe()
+        await service.hydrate_result(lnk.result_id, _USER_ID, mock_extractor)
+        mock_extractor.extract.assert_called_once_with("")
+
+
+# ─── commit_result ────────────────────────────────────────────────────────────
+
+
+def _make_commit_request(**kwargs) -> RecipeCommitRequest:
+    defaults = dict(
+        title="Tarte aux pommes",
+        instructions="Mélanger, cuire.",
+        ingredients=[HydratedIngredient(name="farine", quantity=200.0, unit="g")],
+    )
+    defaults.update(kwargs)
+    return RecipeCommitRequest(**defaults)
+
+
+class TestResultServiceCommitResult:
+    @pytest.fixture
+    def mock_repo(self):
+        return AsyncMock()
+
+    @pytest.fixture
+    def service(self, mock_repo):
+        return ResultService(mock_repo)
+
+    async def test_commit_waiting_marks_valid(self, service, mock_repo):
+        lnk = make_link(status=CrawlStatus.WAITING)
+        validated = make_link(result_id=lnk.result_id, status=CrawlStatus.VALID)
+        mock_repo.get_user_link.return_value = lnk
+        mock_repo.validate_user_link.return_value = validated
+        mock_mapper = AsyncMock()
+        mock_mapper.commit_from_hydrated.return_value = {"id": 1}
+        result = await service.commit_result(
+            lnk.result_id, _USER_ID, _USER_ID, _make_commit_request(), mock_mapper
+        )
+        assert result.status == CrawlStatus.VALID
+
+    async def test_not_found_raises_404(self, service, mock_repo):
+        mock_repo.get_user_link.return_value = None
+        with pytest.raises(HTTPException) as exc:
+            await service.commit_result(
+                uuid.uuid4(), _USER_ID, _USER_ID, _make_commit_request(), AsyncMock()
+            )
+        assert exc.value.status_code == 404
+
+    async def test_already_validated_raises_409(self, service, mock_repo):
+        lnk = make_link(status=CrawlStatus.VALID)
+        mock_repo.get_user_link.return_value = lnk
+        with pytest.raises(HTTPException) as exc:
+            await service.commit_result(
+                lnk.result_id, _USER_ID, _USER_ID, _make_commit_request(), AsyncMock()
+            )
+        assert exc.value.status_code == 409
+
+    async def test_service_recipe_unavailable_raises_503(self, service, mock_repo):
+        lnk = make_link(status=CrawlStatus.WAITING)
+        mock_repo.get_user_link.return_value = lnk
+        mock_mapper = AsyncMock()
+        mock_mapper.commit_from_hydrated.side_effect = httpx.RequestError(
+            "timeout", request=MagicMock()
+        )
+        with pytest.raises(HTTPException) as exc:
+            await service.commit_result(
+                lnk.result_id, _USER_ID, _USER_ID, _make_commit_request(), mock_mapper
+            )
+        assert exc.value.status_code == 503
+
+    async def test_service_recipe_bad_response_raises_502(self, service, mock_repo):
+        lnk = make_link(status=CrawlStatus.WAITING)
+        mock_repo.get_user_link.return_value = lnk
+        mock_mapper = AsyncMock()
+        mock_mapper.commit_from_hydrated.side_effect = httpx.HTTPStatusError(
+            "422", request=MagicMock(), response=MagicMock(status_code=422, text="err")
+        )
+        with pytest.raises(HTTPException) as exc:
+            await service.commit_result(
+                lnk.result_id, _USER_ID, _USER_ID, _make_commit_request(), mock_mapper
+            )
+        assert exc.value.status_code == 502
+
+    async def test_mapper_called_with_data_and_result(self, service, mock_repo):
+        lnk = make_link(status=CrawlStatus.WAITING)
+        validated = make_link(result_id=lnk.result_id, status=CrawlStatus.VALID)
+        mock_repo.get_user_link.return_value = lnk
+        mock_repo.validate_user_link.return_value = validated
+        mock_mapper = AsyncMock()
+        mock_mapper.commit_from_hydrated.return_value = {}
+        data = _make_commit_request()
+        await service.commit_result(lnk.result_id, _USER_ID, _USER_ID, data, mock_mapper)
+        mock_mapper.commit_from_hydrated.assert_called_once_with(lnk.result, data)
 
 
 # ─── static guards ────────────────────────────────────────────────────────────

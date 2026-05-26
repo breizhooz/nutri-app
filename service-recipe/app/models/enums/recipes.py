@@ -24,6 +24,13 @@ class CourseType(str, PyEnum):
     STARTER = "enums.course_type.starter"
     MAIN_COURSE = "enums.course_type.main"
     DESSERT = "enums.course_type.dessert"
+    SAUCE = "enums.course_type.sauce"
+    DRINK = "enums.course_type.drink"
+    SNACK = "enums.course_type.snack"
+    SIDE_DISH = "enums.course_type.side_dish"
+    BREAKFAST = "enums.course_type.breakfast"
+    SOUP = "enums.course_type.soup"
+    SALAD = "enums.course_type.salad"
 
 
 class CuisineOrigin(str, PyEnum):
