@@ -4,12 +4,21 @@ from unittest.mock import AsyncMock, MagicMock
 import httpx
 import pytest
 
+import app.services.groq_recipe_extractor as _groq_mod
 from app.services.groq_recipe_extractor import GroqRecipeExtractor
 
 
 def _groq_response(content: dict | str, tokens: int = 100) -> MagicMock:
     body = {
-        "choices": [{"message": {"content": json.dumps(content) if isinstance(content, dict) else content}}],
+        "choices": [
+            {
+                "message": {
+                    "content": json.dumps(content)
+                    if isinstance(content, dict)
+                    else content
+                }
+            }
+        ],
         "usage": {"prompt_tokens": tokens // 2, "completion_tokens": tokens // 2},
     }
     mock = MagicMock()
@@ -34,6 +43,14 @@ _VALID_PAYLOAD = {
 
 
 class TestGroqRecipeExtractor:
+    @pytest.fixture(autouse=True)
+    def _patch_groq_infra(self, monkeypatch):
+        mock_redis = AsyncMock()
+        mock_redis.get.return_value = None
+        mock_redis.setex.return_value = True
+        monkeypatch.setattr(_groq_mod, "_get_redis", lambda: mock_redis)
+        monkeypatch.setattr(_groq_mod, "_pool", None)
+
     @pytest.fixture
     def mock_client(self):
         client = AsyncMock()
@@ -58,7 +75,11 @@ class TestGroqRecipeExtractor:
         mock_client.post.return_value = _groq_response(_VALID_PAYLOAD, tokens=100)
         result = await extractor.extract("Post de recette")
         assert len(result.ingredients) == 3
-        assert result.ingredients[0] == {"name": "farine", "quantity": 250.0, "unit": "g"}
+        assert result.ingredients[0] == {
+            "name": "farine",
+            "quantity": 250.0,
+            "unit": "g",
+        }
 
     async def test_tokens_used_summed(self, extractor, mock_client):
         mock_client.post.return_value = _groq_response(_VALID_PAYLOAD, tokens=200)
@@ -66,7 +87,9 @@ class TestGroqRecipeExtractor:
         assert result.tokens_used == 200
 
     async def test_invalid_json_raises_value_error(self, extractor, mock_client):
-        mock_client.post.return_value = _groq_response("pas du json valide {{{", tokens=50)
+        mock_client.post.return_value = _groq_response(
+            "pas du json valide {{{", tokens=50
+        )
         with pytest.raises(ValueError, match="JSON invalide"):
             await extractor.extract("Post de recette")
 

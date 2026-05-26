@@ -68,8 +68,10 @@ async def test_search_with_q_uses_multi_match(mock_es, http_client):
         await client.get(SEARCH_BASE, params={"q": "tarte"})
     call_kwargs = mock_es.search.call_args.kwargs
     must = call_kwargs["query"]["bool"]["must"]
-    assert any("multi_match" in c for c in must)
-    mm = next(c["multi_match"] for c in must if "multi_match" in c)
+    # query is wrapped in bool/should for prefix + fuzzy support
+    assert len(must) == 1 and "bool" in must[0]
+    should = must[0]["bool"]["should"]
+    mm = next(c["multi_match"] for c in should if "multi_match" in c)
     assert mm["query"] == "tarte"
     assert "title^3" in mm["fields"]
 
@@ -142,7 +144,7 @@ async def test_search_always_filters_by_user_id(mock_es, http_client):
     async with http_client as client:
         await client.get(SEARCH_BASE)
     filters = mock_es.search.call_args.kwargs["query"]["bool"]["filter"]
-    assert {"term": {"created_by_user_id": TEST_USER_ID}} in filters
+    assert {"term": {"created_by_user_id.keyword": TEST_USER_ID}} in filters
 
 
 @pytest.mark.asyncio

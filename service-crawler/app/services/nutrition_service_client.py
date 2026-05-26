@@ -53,8 +53,7 @@ class NutritionServiceClient:
             return None
 
         raw_texts = [
-            f"{ing['quantity']} {ing['unit']} {ing['name']}"
-            for ing in ingredients
+            f"{ing['quantity']} {ing['unit']} {ing['name']}" for ing in ingredients
         ]
         payload = {
             "recipe_slug": recipe_slug,

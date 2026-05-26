@@ -16,7 +16,11 @@ from app.schemas.crawl_result import (
     CrawlResultUpdate,
     PaginatedCrawlResultResponse,
 )
-from app.schemas.hydration import HydratedIngredient, RecipeCommitRequest, RecipeHydrated
+from app.schemas.hydration import (
+    HydratedIngredient,
+    RecipeCommitRequest,
+    RecipeHydrated,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +156,9 @@ class ResultService:
                 detail=t.get("crawl_result.not_found"),
             )
         ResultService._assert_validatable(link)
-        await ResultService._call_commit(link.result, data, mapper, user_id=str(user_id))
+        await ResultService._call_commit(
+            link.result, data, mapper, user_id=str(user_id)
+        )
         link = await self._repository.validate_user_link(
             link, validated_by=validated_by
         )
@@ -174,7 +180,9 @@ class ResultService:
     # ── static guards ──────────────────────────────────────────────────────────
 
     @staticmethod
-    async def _call_mapper(result: CrawlResult, mapper: "RecipeMapper", user_id: str | None = None) -> None:
+    async def _call_mapper(
+        result: CrawlResult, mapper: "RecipeMapper", user_id: str | None = None
+    ) -> None:
         try:
             await mapper.map_and_send(result, user_id=user_id)
         except httpx.RequestError as exc:
@@ -191,7 +199,10 @@ class ResultService:
 
     @staticmethod
     async def _call_commit(
-        result: CrawlResult, data: RecipeCommitRequest, mapper: "RecipeMapper", user_id: str | None = None
+        result: CrawlResult,
+        data: RecipeCommitRequest,
+        mapper: "RecipeMapper",
+        user_id: str | None = None,
     ) -> None:
         try:
             await mapper.commit_from_hydrated(result, data, user_id=user_id)
