@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import AnyHttpUrl, BaseModel, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import get_current_user_id
@@ -16,7 +17,30 @@ from app.schemas.crawl_source import (
 from tasks.instagram import crawl_instagram
 from tasks.web import crawl_url
 
+
+class OneshotCrawlRequest(BaseModel):
+    url: str
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, v: str) -> str:
+        try:
+            AnyHttpUrl(v)
+        except Exception:
+            raise ValueError("URL HTTP/HTTPS invalide")
+        return v
+
 router = APIRouter()
+
+
+@router.post("/oneshot", status_code=status.HTTP_202_ACCEPTED)
+async def oneshot_crawl(
+    data: OneshotCrawlRequest,
+    current_user_id: uuid.UUID = Depends(get_current_user_id),
+):
+    """Crawl one-shot d'une URL web sans créer de source persistante."""
+    crawl_url.delay(source_id=None, url=data.url, user_id=str(current_user_id))
+    return {"detail": "Crawl lancé", "url": data.url}
 
 
 @router.post(

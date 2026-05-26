@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     SERVICE_NOTIFICATION_URL: str
     SERVICE_NOTIFICATION_TOKEN: str = ""
 
+    SERVICE_NUTRITION_URL: str = ""
+    SERVICE_NUTRITION_TOKEN: str = ""
+
     JS_DETECTION_THRESHOLD: int = 200
 
     JWT_SECRET: str

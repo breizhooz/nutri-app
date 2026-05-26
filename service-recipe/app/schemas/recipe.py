@@ -23,6 +23,10 @@ class RecipeBase(BaseModel):
     source_url: Optional[str] = None
     image_url: Optional[str] = None
     created_by_user_id: Optional[str] = None
+    calories_per_serving: Optional[float] = None
+    proteins_per_serving: Optional[float] = None
+    carbs_per_serving: Optional[float] = None
+    fats_per_serving: Optional[float] = None
 
 
 class RecipeCreate(RecipeBase):
@@ -55,6 +59,10 @@ class RecipeUpdate(BaseModel):
     source_url: Optional[str] = None
     image_url: Optional[str] = None
     recipe_ingredients: Optional[List[RecipeIngredientBase]] = None
+    calories_per_serving: Optional[float] = None
+    proteins_per_serving: Optional[float] = None
+    carbs_per_serving: Optional[float] = None
+    fats_per_serving: Optional[float] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -75,3 +83,21 @@ class PaginatedRecipeResponse(BaseModel):
     page: int
     page_size: int
     pages: int
+
+
+class ManualIngredient(BaseModel):
+    name: str
+    quantity: float = 1.0
+    unit: str = "g"
+
+
+class RecipeManualCreate(BaseModel):
+    title: str = Field(..., max_length=300)
+    description: Optional[str] = None
+    instructions: str = ""
+    servings: int = 4
+    prep_time_minutes: Optional[int] = None
+    cook_time_minutes: Optional[int] = None
+    course_type: Optional[CourseType] = None
+    free_tags: list[str] = []
+    ingredients: list[ManualIngredient] = []

@@ -88,6 +88,7 @@ class TestResultServiceListResults:
         mock_repo.list_by_user.assert_called_once_with(
             user_id=_USER_ID,
             status=CrawlStatus.VALID,
+            crawl_type=None,
             source_id=None,
             page=1,
             page_size=20,
@@ -101,6 +102,7 @@ class TestResultServiceListResults:
         mock_repo.list_by_user.assert_called_once_with(
             user_id=_USER_ID,
             status=CrawlStatus.WAITING,
+            crawl_type=None,
             source_id=sid,
             page=1,
             page_size=20,
@@ -525,4 +527,84 @@ class TestResultServiceStaticGuards:
         lnk.status = CrawlStatus.REJECTED
         with pytest.raises(HTTPException) as exc:
             ResultService._assert_validatable(lnk)
+        assert exc.value.status_code == 409
+
+    def test_assert_hydratable_waiting_passes(self):
+        lnk = MagicMock()
+        lnk.status = CrawlStatus.WAITING
+        ResultService._assert_hydratable(lnk)
+
+    def test_assert_hydratable_valid_raises_409(self):
+        lnk = MagicMock()
+        lnk.status = CrawlStatus.VALID
+        with pytest.raises(HTTPException) as exc:
+            ResultService._assert_hydratable(lnk)
+        assert exc.value.status_code == 409
+
+    def test_assert_hydratable_rejected_raises_409(self):
+        lnk = MagicMock()
+        lnk.status = CrawlStatus.REJECTED
+        with pytest.raises(HTTPException) as exc:
+            ResultService._assert_hydratable(lnk)
+        assert exc.value.status_code == 409
+
+    def test_assert_resettable_rejected_passes(self):
+        lnk = MagicMock()
+        lnk.status = CrawlStatus.REJECTED
+        ResultService._assert_resettable(lnk)
+
+    def test_assert_resettable_valid_raises_409(self):
+        lnk = MagicMock()
+        lnk.status = CrawlStatus.VALID
+        with pytest.raises(HTTPException) as exc:
+            ResultService._assert_resettable(lnk)
+        assert exc.value.status_code == 409
+
+    def test_assert_resettable_waiting_raises_409(self):
+        lnk = MagicMock()
+        lnk.status = CrawlStatus.WAITING
+        with pytest.raises(HTTPException) as exc:
+            ResultService._assert_resettable(lnk)
+        assert exc.value.status_code == 409
+
+
+# ─── reset_result ─────────────────────────────────────────────────────────────
+
+
+class TestResultServiceResetResult:
+    @pytest.fixture
+    def mock_repo(self):
+        return AsyncMock()
+
+    @pytest.fixture
+    def service(self, mock_repo):
+        return ResultService(mock_repo)
+
+    async def test_reset_rejected_returns_waiting(self, service, mock_repo):
+        lnk = make_link(status=CrawlStatus.REJECTED)
+        reset = make_link(result_id=lnk.result_id, status=CrawlStatus.WAITING)
+        mock_repo.get_user_link.return_value = lnk
+        mock_repo.reset_to_waiting.return_value = reset
+        result = await service.reset_result(lnk.result_id, _USER_ID)
+        assert result.status == CrawlStatus.WAITING
+        mock_repo.reset_to_waiting.assert_called_once_with(lnk)
+
+    async def test_not_found_raises_404(self, service, mock_repo):
+        mock_repo.get_user_link.return_value = None
+        with pytest.raises(HTTPException) as exc:
+            await service.reset_result(uuid.uuid4(), _USER_ID)
+        assert exc.value.status_code == 404
+
+    async def test_reset_valid_raises_409(self, service, mock_repo):
+        lnk = make_link(status=CrawlStatus.VALID)
+        mock_repo.get_user_link.return_value = lnk
+        with pytest.raises(HTTPException) as exc:
+            await service.reset_result(lnk.result_id, _USER_ID)
+        assert exc.value.status_code == 409
+
+    async def test_reset_already_waiting_raises_409(self, service, mock_repo):
+        lnk = make_link(status=CrawlStatus.WAITING)
+        mock_repo.get_user_link.return_value = lnk
+        with pytest.raises(HTTPException) as exc:
+            await service.reset_result(lnk.result_id, _USER_ID)
         assert exc.value.status_code == 409

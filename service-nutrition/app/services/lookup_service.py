@@ -100,3 +100,33 @@ class LookupService:
             )
         except Exception as exc:
             logger.error("ES index error (slug=%s): %s", item.slug, exc)
+
+    async def bulk_index(self, items: list) -> int:
+        """Index a list of NutritionItems using the bulk API."""
+        from elasticsearch.helpers import async_bulk
+
+        client = self._get_client()
+
+        async def _actions():
+            for item in items:
+                yield {
+                    "_index": settings.ELASTICSEARCH_INDEX,
+                    "_id": str(item.id),
+                    "_source": {
+                        "slug": item.slug,
+                        "nom_fr": item.nom_fr,
+                        "nom_en": item.nom_en,
+                        "calories": item.calories or 0.0,
+                        "proteines": item.proteines or 0.0,
+                        "glucides": item.glucides or 0.0,
+                        "lipides": item.lipides or 0.0,
+                        "fibres": item.fibres,
+                    },
+                }
+
+        try:
+            success, _ = await async_bulk(client, _actions(), raise_on_error=False)
+            return success
+        except Exception as exc:
+            logger.error("ES bulk_index error: %s", exc)
+            return 0

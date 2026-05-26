@@ -13,15 +13,23 @@ from app.core.http_client import (
 from app.db.session import get_session
 from app.models.recipe import Recipe
 from app.models.recipe_ingredients import RecipeIngredient
-from app.schemas.recipe import RecipeCreate, RecipeResponse, RecipeUpdate, PaginatedRecipeResponse
+from app.repositories.recipe_repository import RecipeRepository
+from app.schemas.recipe import RecipeCreate, RecipeResponse, RecipeUpdate, PaginatedRecipeResponse, RecipeManualCreate
 from app.core.utils import slugify
 from app.i18n import LocalizedHTTPException
 from app.i18n.loader import t
 from app.services.search_service import search_service
+from app.services.recipe_service import RecipeService
 from app.core.deps import get_current_user_id
 
 
 router = APIRouter()
+
+
+class RecipeServiceFactory:
+    @staticmethod
+    def inject(session: AsyncSession = Depends(get_session)) -> RecipeService:
+        return RecipeService(RecipeRepository(session), search_service)
 
 
 async def _load_with_relations(session: AsyncSession, recipe_id: int):
@@ -295,3 +303,22 @@ async def delete_recipe(
         await search_service.delete_recipe(recipe_id)
     except NotFoundError:
         pass
+
+
+@router.post("/manual", response_model=RecipeResponse, status_code=status.HTTP_201_CREATED)
+async def create_recipe_manual(
+    recipe_data: RecipeManualCreate,
+    service: RecipeService = Depends(RecipeServiceFactory.inject),
+    current_user_id: str = Depends(get_current_user_id),
+) -> RecipeResponse:
+    return await service.create_manual(recipe_data, current_user_id)
+
+
+@router.post("/reindex", status_code=status.HTTP_200_OK)
+async def reindex_recipes(
+    session: AsyncSession = Depends(get_session),
+    _: str = Depends(get_current_user_id),
+):
+    """Reindex all recipes into Elasticsearch."""
+    count = await search_service.reindex_all(session)
+    return {"indexed": count}

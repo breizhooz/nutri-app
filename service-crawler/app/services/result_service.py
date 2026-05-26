@@ -35,6 +35,7 @@ class ResultService:
         links, total = await self._repository.list_by_user(
             user_id=user_id,
             status=params.status,
+            crawl_type=params.crawl_type,
             source_id=params.source_id,
             page=params.page,
             page_size=params.page_size,
@@ -157,6 +158,19 @@ class ResultService:
         )
         return CrawlResultResponse.from_link(link)
 
+    async def reset_result(
+        self, result_id: uuid.UUID, user_id: uuid.UUID
+    ) -> CrawlResultResponse:
+        link = await self._repository.get_user_link(result_id, user_id)
+        if link is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=t.get("crawl_result.not_found"),
+            )
+        ResultService._assert_resettable(link)
+        link = await self._repository.reset_to_waiting(link)
+        return CrawlResultResponse.from_link(link)
+
     # ── static guards ──────────────────────────────────────────────────────────
 
     @staticmethod
@@ -248,4 +262,17 @@ class ResultService:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=t.get("crawl_result.errors.already_rejected"),
+            )
+
+    @staticmethod
+    def _assert_resettable(link: CrawlResultUser) -> None:
+        if link.status == CrawlStatus.VALID:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=t.get("crawl_result.errors.already_validated"),
+            )
+        if link.status == CrawlStatus.WAITING:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=t.get("crawl_result.errors.already_waiting"),
             )

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import httpx
 
 from app.models.crawl_result import CrawlResult
+from app.services.nutrition_service_client import NutritionServiceClient
 from app.services.recipe_service_client import RecipeServiceClient
 
 if TYPE_CHECKING:
@@ -199,9 +200,11 @@ class RecipeMapper:
         self,
         recipe_client: RecipeServiceClient,
         parser: IngredientParser | None = None,
+        nutrition_client: NutritionServiceClient | None = None,
     ) -> None:
         self._recipe_client = recipe_client
         self._parser = parser or IngredientParser()  # MULTILINGUAL_CONFIG by default
+        self._nutrition_client = nutrition_client or NutritionServiceClient()
 
     async def map_and_send(self, crawl_result: CrawlResult, user_id: str | None = None) -> dict:
         """Extract ingredients, resolve them in service-recipe, build and POST the recipe."""
@@ -271,7 +274,32 @@ class RecipeMapper:
             payload["free_tags"] = data.free_tags
         if user_id:
             payload["created_by_user_id"] = user_id
-        return await self._recipe_client.create_recipe(payload)
+        recipe = await self._recipe_client.create_recipe(payload)
+
+        nutrition = await self._nutrition_client.calculate(
+            recipe_slug=recipe.get("slug", ""),
+            servings=data.servings or 4,
+            user_id=user_id or "",
+            ingredients=[
+                {"quantity": ing.quantity, "unit": ing.unit, "name": ing.name}
+                for ing in data.ingredients
+            ],
+        )
+        if nutrition:
+            try:
+                recipe = await self._recipe_client.update_recipe(
+                    recipe["id"],
+                    {
+                        "calories_per_serving": nutrition.calories_per_serving,
+                        "proteins_per_serving": nutrition.proteins_per_serving,
+                        "carbs_per_serving": nutrition.carbs_per_serving,
+                        "fats_per_serving": nutrition.fats_per_serving,
+                    },
+                )
+            except (httpx.HTTPStatusError, httpx.RequestError) as exc:
+                logger.warning("Failed to update recipe with nutrition data: %s", exc)
+
+        return recipe
 
     async def _resolve_hydrated_ingredients(self, ingredients: list) -> list[dict]:
         resolved: list[dict] = []

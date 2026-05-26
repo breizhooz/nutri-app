@@ -14,7 +14,8 @@
     "errors": {
       "not_editable": "Ce résultat ne peut pas être modifié (statut actuel différent de EN_ATTENTE).",
       "already_rejected": "Ce résultat a déjà été rejeté.",
-      "already_validated": "Ce résultat a déjà été validé."
+      "already_validated": "Ce résultat a déjà été validé.",
+      "already_waiting": "Ce résultat est déjà en attente."
     }
   },
   "instagram": {
