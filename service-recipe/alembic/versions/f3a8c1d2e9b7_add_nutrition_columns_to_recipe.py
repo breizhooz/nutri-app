@@ -20,8 +20,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column("recipes", sa.Column("calories_per_serving", sa.Float(), nullable=True))
-    op.add_column("recipes", sa.Column("proteins_per_serving", sa.Float(), nullable=True))
+    op.add_column(
+        "recipes", sa.Column("calories_per_serving", sa.Float(), nullable=True)
+    )
+    op.add_column(
+        "recipes", sa.Column("proteins_per_serving", sa.Float(), nullable=True)
+    )
     op.add_column("recipes", sa.Column("carbs_per_serving", sa.Float(), nullable=True))
     op.add_column("recipes", sa.Column("fats_per_serving", sa.Float(), nullable=True))
 

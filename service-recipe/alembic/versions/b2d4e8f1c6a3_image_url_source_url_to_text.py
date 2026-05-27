@@ -24,5 +24,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.alter_column("recipes", "image_url", type_=sa.String(500), existing_nullable=True)
-    op.alter_column("recipes", "source_url", type_=sa.String(500), existing_nullable=True)
+    op.alter_column(
+        "recipes", "image_url", type_=sa.String(500), existing_nullable=True
+    )
+    op.alter_column(
+        "recipes", "source_url", type_=sa.String(500), existing_nullable=True
+    )

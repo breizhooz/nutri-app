@@ -14,7 +14,13 @@ from app.db.session import get_session
 from app.models.recipe import Recipe
 from app.models.recipe_ingredients import RecipeIngredient
 from app.repositories.recipe_repository import RecipeRepository
-from app.schemas.recipe import RecipeCreate, RecipeResponse, RecipeUpdate, PaginatedRecipeResponse, RecipeManualCreate
+from app.schemas.recipe import (
+    RecipeCreate,
+    RecipeResponse,
+    RecipeUpdate,
+    PaginatedRecipeResponse,
+    RecipeManualCreate,
+)
 from app.core.utils import slugify
 from app.i18n import LocalizedHTTPException
 from app.i18n.loader import t
@@ -236,8 +242,11 @@ async def list_recipes(
 
     offset = (page - 1) * page_size
     items_result = await session.execute(
-        base_query
-        .options(selectinload(Recipe.recipe_ingredients).selectinload(RecipeIngredient.ingredient))
+        base_query.options(
+            selectinload(Recipe.recipe_ingredients).selectinload(
+                RecipeIngredient.ingredient
+            )
+        )
         .order_by(Recipe.created_at.desc())
         .offset(offset)
         .limit(page_size)
@@ -245,7 +254,9 @@ async def list_recipes(
     items = list(items_result.scalars().all())
 
     pages = max(1, -(-total // page_size))  # ceiling division
-    return PaginatedRecipeResponse(items=items, total=total, page=page, page_size=page_size, pages=pages)
+    return PaginatedRecipeResponse(
+        items=items, total=total, page=page, page_size=page_size, pages=pages
+    )
 
 
 @router.get("/{slug}", response_model=RecipeResponse)
@@ -256,7 +267,11 @@ async def get_recipe_by_slug(
     result = await session.execute(
         select(Recipe)
         .where(Recipe.slug == slug)
-        .options(selectinload(Recipe.recipe_ingredients).selectinload(RecipeIngredient.ingredient))
+        .options(
+            selectinload(Recipe.recipe_ingredients).selectinload(
+                RecipeIngredient.ingredient
+            )
+        )
     )
     recipe = result.scalar_one_or_none()
 
@@ -305,7 +320,9 @@ async def delete_recipe(
         pass
 
 
-@router.post("/manual", response_model=RecipeResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/manual", response_model=RecipeResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_recipe_manual(
     recipe_data: RecipeManualCreate,
     service: RecipeService = Depends(RecipeServiceFactory.inject),

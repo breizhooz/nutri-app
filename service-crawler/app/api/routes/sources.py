@@ -30,6 +30,7 @@ class OneshotCrawlRequest(BaseModel):
             raise ValueError("URL HTTP/HTTPS invalide")
         return v
 
+
 router = APIRouter()
 
 
