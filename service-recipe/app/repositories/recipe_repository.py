@@ -41,6 +41,15 @@ class RecipeRepository:
             await self.session.flush()
         return ingredient
 
+    async def update_image_url(self, recipe_id: int, image_url: str) -> Recipe:
+        recipe = await self.session.get(Recipe, recipe_id)
+        assert recipe is not None
+        recipe.image_url = image_url
+        await self.session.commit()
+        loaded = await self.get_by_id_with_relations(recipe_id)
+        assert loaded is not None
+        return loaded
+
     async def create(
         self, recipe: Recipe, recipe_ingredients: list[RecipeIngredient]
     ) -> Recipe:

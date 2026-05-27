@@ -62,6 +62,27 @@ class RecipeService:
 
         return recipe
 
+    async def update_image_url(
+        self, recipe_id: int, user_id: str, image_url: str
+    ) -> Recipe:
+        recipe = await self._repository.get_by_id_with_relations(recipe_id)
+        if recipe is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Recette introuvable.",
+            )
+        if recipe.created_by_user_id is None or str(recipe.created_by_user_id) != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Vous n'êtes pas l'auteur de cette recette.",
+            )
+        recipe = await self._repository.update_image_url(recipe_id, image_url)
+        try:
+            await self._search.index_recipe(recipe)
+        except Exception as exc:
+            logger.warning("ES reindex failed for recipe %s: %s", recipe_id, exc)
+        return recipe
+
     async def _generate_unique_slug(
         self, base_slug: str, exclude_id: int | None = None
     ) -> str:

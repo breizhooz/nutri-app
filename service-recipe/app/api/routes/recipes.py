@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, func
 from sqlalchemy.orm import selectinload
@@ -26,6 +26,8 @@ from app.i18n import LocalizedHTTPException
 from app.i18n.loader import t
 from app.services.search_service import search_service
 from app.services.recipe_service import RecipeService
+from app.services.storage_service import StorageService
+from app.core.config import settings
 from app.core.deps import get_current_user_id
 
 
@@ -36,6 +38,18 @@ class RecipeServiceFactory:
     @staticmethod
     def inject(session: AsyncSession = Depends(get_session)) -> RecipeService:
         return RecipeService(RecipeRepository(session), search_service)
+
+
+class StorageServiceFactory:
+    @staticmethod
+    def inject() -> StorageService:
+        return StorageService(
+            endpoint=settings.MINIO_ENDPOINT,
+            access_key=settings.MINIO_ACCESS_KEY,
+            secret_key=settings.MINIO_SECRET_KEY,
+            bucket=settings.MINIO_BUCKET,
+            public_url=settings.MINIO_PUBLIC_URL,
+        )
 
 
 async def _load_with_relations(session: AsyncSession, recipe_id: int):
@@ -329,6 +343,23 @@ async def create_recipe_manual(
     current_user_id: str = Depends(get_current_user_id),
 ) -> RecipeResponse:
     return await service.create_manual(recipe_data, current_user_id)
+
+
+@router.post("/id/{recipe_id}/image", response_model=RecipeResponse)
+async def upload_recipe_image(
+    recipe_id: int,
+    file: UploadFile = File(...),
+    service: RecipeService = Depends(RecipeServiceFactory.inject),
+    storage: StorageService = Depends(StorageServiceFactory.inject),
+    current_user_id: str = Depends(get_current_user_id),
+) -> RecipeResponse:
+    data = await file.read()
+    content_type = file.content_type or "application/octet-stream"
+    try:
+        image_url = await storage.upload_image(data, content_type)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    return await service.update_image_url(recipe_id, user_id=current_user_id, image_url=image_url)
 
 
 @router.post("/reindex", status_code=status.HTTP_200_OK)
