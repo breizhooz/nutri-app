@@ -19,6 +19,8 @@ class RecipeHydrated(BaseModel):
     ingredients: list[HydratedIngredient]
     groq_tokens_used: int
     from_cache: bool = False
+    is_recipe: bool = True
+    recipe_confidence: float = 1.0
 
 
 class RecipeCommitRequest(BaseModel):

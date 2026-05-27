@@ -150,3 +150,73 @@ class TestGroqRecipeExtractor:
         assert result.description is None
         assert result.prep_time_minutes is None
         assert result.cook_time_minutes is None
+
+    async def test_is_recipe_true_by_default_when_field_absent(
+        self, extractor, mock_client
+    ):
+        mock_client.post.return_value = _groq_response(_VALID_PAYLOAD)
+        result = await extractor.extract("Post de recette")
+        assert result.is_recipe is True
+        assert result.recipe_confidence == 1.0
+
+    async def test_non_recipe_returns_flag_and_low_confidence(
+        self, extractor, mock_client
+    ):
+        payload = {
+            "is_recipe": False,
+            "recipe_confidence": 0.95,
+            "title": "",
+            "description": None,
+            "instructions": "",
+            "servings": 4,
+            "prep_time_minutes": None,
+            "cook_time_minutes": None,
+            "ingredients": [],
+        }
+        mock_client.post.return_value = _groq_response(payload)
+        result = await extractor.extract("Post hors-sujet")
+        assert result.is_recipe is False
+        assert result.recipe_confidence == 0.95
+
+    async def test_confidence_clamped_to_zero_one(self, extractor, mock_client):
+        payload = {**_VALID_PAYLOAD, "is_recipe": True, "recipe_confidence": 1.5}
+        mock_client.post.return_value = _groq_response(payload)
+        result = await extractor.extract("Post")
+        assert result.recipe_confidence == 1.0
+
+    async def test_cache_hit_defaults_confidence_fields(self, monkeypatch, mock_client):
+        import json as _json
+
+        import app.services.groq_recipe_extractor as _groq_mod
+        from app.services.groq_recipe_extractor import GroqRecipeExtractor
+
+        old_cache = {
+            "title": "Vieille recette",
+            "instructions": "Cuire",
+            "ingredients": [],
+            "tokens_used": 50,
+            "description": None,
+            "servings": 2,
+            "prep_time_minutes": None,
+            "cook_time_minutes": None,
+        }
+        mock_redis = type(
+            "R",
+            (),
+            {
+                "get": lambda self, k: type(
+                    "Aw", (), {"__await__": lambda self: iter([_json.dumps(old_cache)])}
+                )(),
+                "setex": lambda *a, **kw: None,
+            },
+        )()
+
+        async def _fake_get(self, key):
+            return _json.dumps(old_cache)
+
+        mock_redis_async = type("R2", (), {"get": _fake_get})()
+        monkeypatch.setattr(_groq_mod, "_get_redis", lambda: mock_redis_async)
+        extractor = GroqRecipeExtractor(http_client=mock_client)
+        result = await extractor.extract("Vieux post")
+        assert result.is_recipe is True
+        assert result.recipe_confidence == 1.0
