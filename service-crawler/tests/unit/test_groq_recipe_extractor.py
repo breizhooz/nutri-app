@@ -200,17 +200,6 @@ class TestGroqRecipeExtractor:
             "prep_time_minutes": None,
             "cook_time_minutes": None,
         }
-        mock_redis = type(
-            "R",
-            (),
-            {
-                "get": lambda self, k: type(
-                    "Aw", (), {"__await__": lambda self: iter([_json.dumps(old_cache)])}
-                )(),
-                "setex": lambda *a, **kw: None,
-            },
-        )()
-
         async def _fake_get(self, key):
             return _json.dumps(old_cache)
 
