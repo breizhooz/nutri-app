@@ -139,6 +139,8 @@ class ResultService:
             ],
             groq_tokens_used=extracted.tokens_used,
             from_cache=extracted.from_cache,
+            is_recipe=extracted.is_recipe,
+            recipe_confidence=extracted.recipe_confidence,
         )
 
     async def commit_result(

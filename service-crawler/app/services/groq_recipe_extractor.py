@@ -38,6 +38,8 @@ class ExtractedRecipe:
     servings: int = 4
     prep_time_minutes: int | None = None
     cook_time_minutes: int | None = None
+    is_recipe: bool = True
+    recipe_confidence: float = 1.0
 
 
 class _TokenPool:
@@ -79,12 +81,17 @@ def _get_pool() -> _TokenPool:
 
 
 _SYSTEM_PROMPT = (
-    "Tu analyses le texte d'un post de réseau social pour en extraire une recette de cuisine. "
+    "Tu analyses le texte d'un post de réseau social. "
+    "Ta première mission est de déterminer si ce contenu est bien une recette de cuisine. "
     "Retourne UNIQUEMENT un objet JSON valide avec exactement ces champs : "
-    '{"title": string, "description": string ou null, "instructions": string, '
+    '{"is_recipe": boolean, "recipe_confidence": float entre 0.0 et 1.0, '
+    '"title": string, "description": string ou null, "instructions": string, '
     '"servings": integer, "prep_time_minutes": integer ou null, '
     '"cook_time_minutes": integer ou null, '
     '"ingredients": [{"name": string, "quantity": float, "unit": string}]}. '
+    "is_recipe doit être true uniquement si le contenu décrit clairement une recette de cuisine. "
+    "recipe_confidence exprime ta certitude que c'est une recette (1.0 = totalement certain). "
+    "Si ce n'est pas une recette, laisse title, instructions et ingredients vides. "
     "Ne retourne rien d'autre que le JSON."
 )
 
@@ -114,6 +121,8 @@ class GroqRecipeExtractor:
             logger.debug("Groq cache hit for key %s", cache_key[-8:])
             data = json.loads(cached)
             data["from_cache"] = True
+            data.setdefault("is_recipe", True)
+            data.setdefault("recipe_confidence", 1.0)
             return ExtractedRecipe(**data)
 
         async with _get_pool().acquire() as api_key:
@@ -171,6 +180,13 @@ class GroqRecipeExtractor:
             except (KeyError, ValueError, TypeError):
                 continue
 
+        is_recipe = bool(raw.get("is_recipe", True))
+        try:
+            recipe_confidence = float(raw.get("recipe_confidence", 1.0))
+            recipe_confidence = max(0.0, min(1.0, recipe_confidence))
+        except (TypeError, ValueError):
+            recipe_confidence = 1.0
+
         return ExtractedRecipe(
             title=str(raw.get("title", "")).strip() or "Recette importée",
             description=raw.get("description"),
@@ -180,4 +196,6 @@ class GroqRecipeExtractor:
             cook_time_minutes=raw.get("cook_time_minutes"),
             ingredients=ingredients,
             tokens_used=tokens_used,
+            is_recipe=is_recipe,
+            recipe_confidence=recipe_confidence,
         )
