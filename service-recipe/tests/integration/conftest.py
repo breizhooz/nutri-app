@@ -81,6 +81,7 @@ def make_mock_recipe(
     recipe.cook_time_minutes = 60
     recipe.servings = 4
     recipe.tags = {}
+    recipe.free_tags = []
     recipe.book_name = None
     recipe.source_url = None
     recipe.image_url = None

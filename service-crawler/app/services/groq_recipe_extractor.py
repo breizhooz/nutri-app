@@ -5,7 +5,7 @@ import hashlib
 import json
 import logging
 from contextlib import asynccontextmanager
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 
 import httpx
 import redis.asyncio as aioredis
@@ -120,7 +120,9 @@ class GroqRecipeExtractor:
             extracted = await self._call_groq(text, api_key)
 
         cacheable = {k: v for k, v in asdict(extracted).items() if k != "from_cache"}
-        await _get_redis().setex(cache_key, settings.GROQ_CACHE_TTL, json.dumps(cacheable))
+        await _get_redis().setex(
+            cache_key, settings.GROQ_CACHE_TTL, json.dumps(cacheable)
+        )
         logger.debug("Groq result cached under key %s", cache_key[-8:])
 
         return extracted

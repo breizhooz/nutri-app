@@ -2,7 +2,7 @@ import uuid
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.models.enums import CrawlType, CrawlStatus
+from app.models.enums import CrawlType
 
 _FAKE_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 _FAKE_SOURCE_ID = str(uuid.UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
@@ -35,9 +35,13 @@ async def test_do_crawl_nominal():
         "video_url": None,
     }
 
+    fake_result = MagicMock()
+    fake_result.id = uuid.uuid4()
+
     result_repo = AsyncMock()
-    result_repo.url_exists = AsyncMock(return_value=False)
-    result_repo.create = AsyncMock()
+    result_repo.user_link_exists = AsyncMock(return_value=False)
+    result_repo.get_or_create_result = AsyncMock(return_value=(fake_result, True))
+    result_repo.create_user_link = AsyncMock()
 
     source_repo = AsyncMock()
     source_repo.get_by_id = AsyncMock(return_value=fake_source)
@@ -61,18 +65,21 @@ async def test_do_crawl_nominal():
 
         from tasks.web import _do_crawl
 
-        await _do_crawl(task, _FAKE_SOURCE_ID, _FAKE_URL)
+        await _do_crawl(task, _FAKE_SOURCE_ID, _FAKE_URL, None)
 
-    result_repo.url_exists.assert_called_once_with(_FAKE_URL)
-    result_repo.create.assert_called_once()
+    result_repo.user_link_exists.assert_called_once_with(_FAKE_URL, _FAKE_USER_ID)
+    result_repo.get_or_create_result.assert_called_once()
 
-    payload = result_repo.create.call_args[0][0]
+    payload = result_repo.get_or_create_result.call_args[0][0]
     assert payload["title"] == "Tarte aux pommes"
-    assert payload["status"] == CrawlStatus.WAITING
     assert payload["type"] == CrawlType.WEB
-    assert payload["user_id"] == _FAKE_USER_ID
-    assert payload["source_id"] == uuid.UUID(_FAKE_SOURCE_ID)
+    assert payload["url_origin"] == _FAKE_URL
 
+    result_repo.create_user_link.assert_called_once_with(
+        result_id=fake_result.id,
+        user_id=_FAKE_USER_ID,
+        source_id=uuid.UUID(_FAKE_SOURCE_ID),
+    )
     source_repo.mark_crawled.assert_called_once_with(fake_source)
     mock_notif_client.notify_crawl_done.assert_called_once_with(
         str(_FAKE_USER_ID), CrawlType.WEB.value, 1, _FAKE_URL
@@ -81,9 +88,14 @@ async def test_do_crawl_nominal():
 
 @pytest.mark.asyncio
 async def test_do_crawl_skips_duplicate_url():
+    fake_source = _make_fake_source()
+
     result_repo = AsyncMock()
-    result_repo.url_exists = AsyncMock(return_value=True)
+    result_repo.user_link_exists = AsyncMock(return_value=True)
+
     source_repo = AsyncMock()
+    source_repo.get_by_id = AsyncMock(return_value=fake_source)
+
     mock_notif_client = AsyncMock()
     task = MagicMock()
     mock_session = _make_session_ctx()
@@ -98,20 +110,22 @@ async def test_do_crawl_skips_duplicate_url():
 
         from tasks.web import _do_crawl
 
-        await _do_crawl(task, _FAKE_SOURCE_ID, _FAKE_URL)
+        await _do_crawl(task, _FAKE_SOURCE_ID, _FAKE_URL, None)
 
-    result_repo.create.assert_not_called()
+    result_repo.get_or_create_result.assert_not_called()
     source_repo.mark_crawled.assert_not_called()
     mock_notif_client.notify_crawl_done.assert_not_called()
 
 
 @pytest.mark.asyncio
 async def test_do_crawl_retries_on_fetch_error():
+    fake_source = _make_fake_source()
+
     result_repo = AsyncMock()
-    result_repo.url_exists = AsyncMock(return_value=False)
+    result_repo.user_link_exists = AsyncMock(return_value=False)
 
     source_repo = AsyncMock()
-    source_repo.get_by_id = AsyncMock(return_value=_make_fake_source())
+    source_repo.get_by_id = AsyncMock(return_value=fake_source)
 
     mock_notif_client = AsyncMock()
     task = MagicMock()
@@ -133,10 +147,10 @@ async def test_do_crawl_retries_on_fetch_error():
         from tasks.web import _do_crawl
 
         with pytest.raises(RuntimeError, match="retry called"):
-            await _do_crawl(task, _FAKE_SOURCE_ID, _FAKE_URL)
+            await _do_crawl(task, _FAKE_SOURCE_ID, _FAKE_URL, None)
 
     task.retry.assert_called_once()
-    result_repo.create.assert_not_called()
+    result_repo.get_or_create_result.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -148,9 +162,12 @@ async def test_do_crawl_no_source_id():
         "video_url": None,
     }
 
+    fake_result = MagicMock()
+    fake_result.id = uuid.uuid4()
+
     result_repo = AsyncMock()
-    result_repo.url_exists = AsyncMock(return_value=False)
-    result_repo.create = AsyncMock()
+    result_repo.get_or_create_result = AsyncMock(return_value=(fake_result, True))
+    result_repo.create_user_link = AsyncMock()
 
     source_repo = AsyncMock()
     mock_notif_client = AsyncMock()
@@ -171,12 +188,13 @@ async def test_do_crawl_no_source_id():
 
         from tasks.web import _do_crawl
 
-        await _do_crawl(task, None, _FAKE_URL)
+        await _do_crawl(task, None, _FAKE_URL, None)
 
-    payload = result_repo.create.call_args[0][0]
-    assert payload["source_id"] is None
-    assert payload["user_id"] is None
-
+    result_repo.create_user_link.assert_called_once_with(
+        result_id=fake_result.id,
+        user_id=None,
+        source_id=None,
+    )
     source_repo.get_by_id.assert_not_called()
     source_repo.mark_crawled.assert_not_called()
     mock_notif_client.notify_crawl_done.assert_not_called()

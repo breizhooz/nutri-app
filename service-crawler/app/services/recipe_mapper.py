@@ -206,7 +206,9 @@ class RecipeMapper:
         self._parser = parser or IngredientParser()  # MULTILINGUAL_CONFIG by default
         self._nutrition_client = nutrition_client or NutritionServiceClient()
 
-    async def map_and_send(self, crawl_result: CrawlResult, user_id: str | None = None) -> dict:
+    async def map_and_send(
+        self, crawl_result: CrawlResult, user_id: str | None = None
+    ) -> dict:
         """Extract ingredients, resolve them in service-recipe, build and POST the recipe."""
         parsed = self._parser.parse(crawl_result.raw_content or "")
         recipe_ingredients = await self._resolve_ingredients(parsed)
@@ -252,7 +254,10 @@ class RecipeMapper:
         }
 
     async def commit_from_hydrated(
-        self, crawl_result: CrawlResult, data: "RecipeCommitRequest", user_id: str | None = None
+        self,
+        crawl_result: CrawlResult,
+        data: "RecipeCommitRequest",
+        user_id: str | None = None,
     ) -> dict:
         """Resolve ingredients from a hydrated recipe and POST it to service-recipe."""
         recipe_ingredients = await self._resolve_hydrated_ingredients(data.ingredients)

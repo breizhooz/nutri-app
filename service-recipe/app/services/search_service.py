@@ -102,16 +102,30 @@ class RecipeSearchService:
         if query:
             must_queries.append(
                 {
-                    "multi_match": {
-                        "query": query,
-                        "fields": [
-                            "title^3",
-                            "description^2",
-                            "instructions",
-                            "ingredient_names",
+                    "bool": {
+                        "should": [
+                            {
+                                "multi_match": {
+                                    "query": query,
+                                    "fields": [
+                                        "title^3",
+                                        "description^2",
+                                        "instructions",
+                                        "ingredient_names",
+                                    ],
+                                    "type": "best_fields",
+                                    "fuzziness": "AUTO",
+                                }
+                            },
+                            {
+                                "multi_match": {
+                                    "query": query,
+                                    "fields": ["title^3", "ingredient_names^2"],
+                                    "type": "phrase_prefix",
+                                }
+                            },
                         ],
-                        "type": "best_fields",
-                        "fuzziness": "AUTO",
+                        "minimum_should_match": 1,
                     }
                 }
             )

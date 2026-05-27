@@ -9,7 +9,7 @@ from app.core.http_client import get_user_client
 from app.core.deps import get_current_user_id
 from app.main import app
 from app.db.session import get_session
-from app.models.enums import CuisineOrigin, CourseType
+from app.models.enums import CuisineOrigin, CourseType, DifficultyLevel, RecipeOrigin
 
 
 @pytest.fixture
@@ -72,6 +72,7 @@ async def test_create_recipe_with_valid_user_returns_201(
         obj.created_at = datetime(2026, 1, 1, 12, 0, 0)
         obj.updated_at = datetime(2026, 1, 1, 12, 0, 0)
         obj.recipe_ingredients = []
+        obj.free_tags = []
         if obj.cuisine_origin is None:
             obj.cuisine_origin = CuisineOrigin.FRENCH
         if obj.course_type is None:
@@ -118,10 +119,10 @@ def _make_recipe_response() -> MagicMock:
     r.servings = 4
     r.prep_time_minutes = None
     r.cook_time_minutes = None
-    r.difficulty = MagicMock(value="easy")
-    r.cuisine_origin = MagicMock(value="french")
-    r.origin_recipe = MagicMock(value="personal")
-    r.course_type = MagicMock(value="enums.course_type.main")
+    r.difficulty = DifficultyLevel.EASY
+    r.cuisine_origin = CuisineOrigin.FRENCH
+    r.origin_recipe = RecipeOrigin.PERSONAL
+    r.course_type = CourseType.MAIN_COURSE
     r.tags = {}
     r.free_tags = []
     r.book_name = None

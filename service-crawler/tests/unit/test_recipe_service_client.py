@@ -129,7 +129,7 @@ class TestCreateRecipe:
             {"title": "X", "instructions": "Y", "recipe_ingredients": []}
         )
         args, _ = mock_http.post.call_args
-        assert args[0] == "/api/v1/recipe/"
+        assert args[0] == "/api/v1/recipe"
 
     async def test_raises_on_http_error(self, mock_http):
         mock_http.post.return_value = _make_response({}, status_code=500)

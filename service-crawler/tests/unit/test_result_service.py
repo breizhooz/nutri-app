@@ -276,7 +276,9 @@ class TestResultServiceValidateResult:
         await service.validate_result(
             lnk.result_id, _USER_ID, _USER_ID, mapper=mock_mapper
         )
-        mock_mapper.map_and_send.assert_called_once_with(validated.result)
+        mock_mapper.map_and_send.assert_called_once_with(
+            validated.result, user_id=str(_USER_ID)
+        )
 
     async def test_request_error_logged_validation_succeeds(self, service, mock_repo):
         lnk = make_link(status=CrawlStatus.WAITING)
@@ -464,8 +466,12 @@ class TestResultServiceCommitResult:
         mock_mapper = AsyncMock()
         mock_mapper.commit_from_hydrated.return_value = {}
         data = _make_commit_request()
-        await service.commit_result(lnk.result_id, _USER_ID, _USER_ID, data, mock_mapper)
-        mock_mapper.commit_from_hydrated.assert_called_once_with(lnk.result, data)
+        await service.commit_result(
+            lnk.result_id, _USER_ID, _USER_ID, data, mock_mapper
+        )
+        mock_mapper.commit_from_hydrated.assert_called_once_with(
+            lnk.result, data, user_id=str(_USER_ID)
+        )
 
 
 # ─── static guards ────────────────────────────────────────────────────────────

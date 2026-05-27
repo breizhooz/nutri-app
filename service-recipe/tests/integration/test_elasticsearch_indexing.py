@@ -21,6 +21,7 @@ async def test_create_recipe_triggers_es_indexation(
         obj.cuisine_origin = mock_recipe.cuisine_origin
         obj.course_type = mock_recipe.course_type
         obj.tags = {}
+        obj.free_tags = []
 
     override_db.refresh.side_effect = mock_refresh
 
@@ -63,6 +64,7 @@ async def test_create_recipe_es_failure_does_not_break_crud(
         obj.cuisine_origin = CuisineOrigin.FRENCH
         obj.course_type = CourseType.MAIN_COURSE
         obj.tags = {}
+        obj.free_tags = []
 
     override_db.refresh.side_effect = mock_refresh
 

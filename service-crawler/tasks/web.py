@@ -26,7 +26,9 @@ def crawl_url(self, source_id: str | None, url: str, user_id: str | None = None)
     asyncio.run(_do_crawl(self, source_id, url, user_id))
 
 
-async def _do_crawl(task, source_id: str | None, url: str, user_id_str: str | None) -> None:
+async def _do_crawl(
+    task, source_id: str | None, url: str, user_id_str: str | None
+) -> None:
     factory = _make_session_factory()
     async with factory() as session:
         result_repo = ResultRepository(session)
