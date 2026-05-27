@@ -140,6 +140,21 @@ _RECIPE_USER = {"email": "smoke_recipe@test.internal", "password": "SmokeTest!99
 def create_user():
     with httpx.Client() as client:
         resp = client.post(f"{SERVICE_USER_URL}/api/v1/users", json=_RECIPE_USER)
+        if resp.status_code == 409:
+            login = client.post(
+                f"{SERVICE_USER_URL}/api/v1/auth/login", json=_RECIPE_USER
+            )
+            assert login.status_code == 200, f"Login user existant échoué: {login.text}"
+            token = login.json()["access_token"]
+            me = client.get(
+                f"{SERVICE_USER_URL}/api/v1/users/me",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            assert me.status_code == 200
+            user = me.json()
+            user["password"] = _RECIPE_USER["password"]
+            yield user
+            return
         assert resp.status_code == 201, f"Création user échouée: {resp.text}"
         user = resp.json()
         user["password"] = _RECIPE_USER["password"]
@@ -174,6 +189,17 @@ def ingredient_setup(request, auth_token):
             json=ingredient_data,
             headers=headers,
         )
+        if response.status_code == 409:
+            all_ingredients = client.get(
+                f"{SERVICE_RECIPE_URL}/api/v1/ingredient/", headers=headers
+            ).json()
+            existing = next(
+                (i for i in all_ingredients if i["name"] == ingredient_data["name"]),
+                None,
+            )
+            assert existing is not None, "Ingrédient 409 mais introuvable dans la liste"
+            yield {"id": existing["id"], "data": ingredient_data}
+            return
         assert response.status_code == 201, f"Erreur creation: {response.text}"
         ingredient_id = response.json()["id"]
         yield {"id": ingredient_id, "data": ingredient_data}
@@ -186,18 +212,29 @@ def ingredient_setup(request, auth_token):
 def all_ingredients_setup(auth_token):
     headers = {"Authorization": f"Bearer {auth_token}"}
     created_ids = []
+    owned_ids = []
     with httpx.Client() as client:
+        all_ingredients = client.get(
+            f"{SERVICE_RECIPE_URL}/api/v1/ingredient/", headers=headers
+        ).json()
+        existing_by_name = {ing["name"]: ing["id"] for ing in all_ingredients}
+
         for ing_data in INGREDIENTS_TO_TEST:
-            response = client.post(
-                f"{SERVICE_RECIPE_URL}/api/v1/ingredient/",
-                json=ing_data,
-                headers=headers,
-            )
-            assert response.status_code == 201
-            created_ids.append(response.json()["id"])
+            if ing_data["name"] in existing_by_name:
+                created_ids.append(existing_by_name[ing_data["name"]])
+            else:
+                response = client.post(
+                    f"{SERVICE_RECIPE_URL}/api/v1/ingredient/",
+                    json=ing_data,
+                    headers=headers,
+                )
+                assert response.status_code == 201
+                ing_id = response.json()["id"]
+                created_ids.append(ing_id)
+                owned_ids.append(ing_id)
     yield created_ids
     with httpx.Client() as client:
-        for ing_id in created_ids:
+        for ing_id in owned_ids:
             client.delete(
                 f"{SERVICE_RECIPE_URL}/api/v1/ingredient/{ing_id}", headers=headers
             )
@@ -235,20 +272,31 @@ def recipe_setup(auth_token, all_ingredients_setup):
 def nine_ingredients_setup(auth_token):
     headers = {"Authorization": f"Bearer {auth_token}"}
     created_ids = []
+    owned_ids = []
     with httpx.Client() as client:
+        all_ingredients = client.get(
+            f"{SERVICE_RECIPE_URL}/api/v1/ingredient/", headers=headers
+        ).json()
+        existing_by_name = {ing["name"]: ing["id"] for ing in all_ingredients}
+
         for ing_data in INGREDIENTS_9:
-            response = client.post(
-                f"{SERVICE_RECIPE_URL}/api/v1/ingredient/",
-                json=ing_data,
-                headers=headers,
-            )
-            assert response.status_code == 201, (
-                f"Erreur creation ingrédient: {response.text}"
-            )
-            created_ids.append(response.json()["id"])
+            if ing_data["name"] in existing_by_name:
+                created_ids.append(existing_by_name[ing_data["name"]])
+            else:
+                response = client.post(
+                    f"{SERVICE_RECIPE_URL}/api/v1/ingredient/",
+                    json=ing_data,
+                    headers=headers,
+                )
+                assert response.status_code == 201, (
+                    f"Erreur creation ingrédient: {response.text}"
+                )
+                ing_id = response.json()["id"]
+                created_ids.append(ing_id)
+                owned_ids.append(ing_id)
     yield created_ids
     with httpx.Client() as client:
-        for ing_id in created_ids:
+        for ing_id in owned_ids:
             client.delete(
                 f"{SERVICE_RECIPE_URL}/api/v1/ingredient/{ing_id}", headers=headers
             )

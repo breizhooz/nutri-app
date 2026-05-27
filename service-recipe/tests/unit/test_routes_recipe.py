@@ -64,7 +64,7 @@ async def test_create_recipe_with_valid_user_returns_201(
     override_db, override_user_client_exists
 ):
     from datetime import datetime
-    from unittest.mock import patch, AsyncMock
+    from unittest.mock import AsyncMock
     from app.core.deps import get_current_user_id
 
     async def mock_refresh(obj):
@@ -163,7 +163,10 @@ async def test_create_recipe_manual_success():
     assert response.status_code == 201
     mock_service.create_manual.assert_called_once()
     _, kwargs = mock_service.create_manual.call_args
-    assert kwargs.get("user_id") == "user-1" or mock_service.create_manual.call_args[0][1] == "user-1"
+    assert (
+        kwargs.get("user_id") == "user-1"
+        or mock_service.create_manual.call_args[0][1] == "user-1"
+    )
 
 
 @pytest.mark.asyncio

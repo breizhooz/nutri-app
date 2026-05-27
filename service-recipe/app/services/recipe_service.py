@@ -17,7 +17,9 @@ _SLUG_MAX_ATTEMPTS = 100
 
 
 class RecipeService:
-    def __init__(self, repository: RecipeRepository, search: RecipeSearchService) -> None:
+    def __init__(
+        self, repository: RecipeRepository, search: RecipeSearchService
+    ) -> None:
         self._repository = repository
         self._search = search
 

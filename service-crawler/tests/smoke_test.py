@@ -17,6 +17,21 @@ _CRAWLER_USER = {"email": "smoke_crawler@test.internal", "password": "SmokeTest!
 def create_user():
     with httpx.Client() as client:
         resp = client.post(f"{SERVICE_USER_URL}/api/v1/users", json=_CRAWLER_USER)
+        if resp.status_code == 409:
+            login = client.post(
+                f"{SERVICE_USER_URL}/api/v1/auth/login", json=_CRAWLER_USER
+            )
+            assert login.status_code == 200, f"Login user existant échoué: {login.text}"
+            token = login.json()["access_token"]
+            me = client.get(
+                f"{SERVICE_USER_URL}/api/v1/users/me",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            assert me.status_code == 200
+            user = me.json()
+            user["password"] = _CRAWLER_USER["password"]
+            yield user
+            return
         assert resp.status_code == 201, f"Création user échouée: {resp.text}"
         user = resp.json()
         user["password"] = _CRAWLER_USER["password"]
@@ -43,26 +58,41 @@ def auth_token(create_user):
 
 class ResultsSmokeHelper:
     @staticmethod
-    def get_paginated(client: httpx.Client, **params) -> httpx.Response:
-        return client.get(_RESULTS_URL, params=params)
+    def get_paginated(
+        client: httpx.Client, headers: dict | None = None, **params
+    ) -> httpx.Response:
+        return client.get(_RESULTS_URL, params=params, headers=headers or {})
 
     @staticmethod
-    def get_one(client: httpx.Client, result_id: str) -> httpx.Response:
-        return client.get(f"{_RESULTS_URL}/{result_id}")
+    def get_one(
+        client: httpx.Client, result_id: str, headers: dict | None = None
+    ) -> httpx.Response:
+        return client.get(f"{_RESULTS_URL}/{result_id}", headers=headers or {})
 
     @staticmethod
     def patch_result(
-        client: httpx.Client, result_id: str, payload: dict
+        client: httpx.Client,
+        result_id: str,
+        payload: dict,
+        headers: dict | None = None,
     ) -> httpx.Response:
-        return client.patch(f"{_RESULTS_URL}/{result_id}", json=payload)
+        return client.patch(
+            f"{_RESULTS_URL}/{result_id}", json=payload, headers=headers or {}
+        )
 
     @staticmethod
-    def validate(client: httpx.Client, result_id: str) -> httpx.Response:
-        return client.patch(f"{_RESULTS_URL}/{result_id}/validate")
+    def validate(
+        client: httpx.Client, result_id: str, headers: dict | None = None
+    ) -> httpx.Response:
+        return client.patch(
+            f"{_RESULTS_URL}/{result_id}/validate", headers=headers or {}
+        )
 
     @staticmethod
-    def reject(client: httpx.Client, result_id: str) -> httpx.Response:
-        return client.patch(f"{_RESULTS_URL}/{result_id}/reject")
+    def reject(
+        client: httpx.Client, result_id: str, headers: dict | None = None
+    ) -> httpx.Response:
+        return client.patch(f"{_RESULTS_URL}/{result_id}/reject", headers=headers or {})
 
     @staticmethod
     def poll_for_result(
@@ -119,18 +149,16 @@ def crawled_result_setup(auth_token):
     headers = {"Authorization": f"Bearer {auth_token}"}
     unique_url = f"https://www.marmiton.org/recettes/recette_tarte-aux-pommes_12372.aspx?smoke={_uuid.uuid4().hex}"
 
-    with httpx.Client(timeout=60.0) as client:
+    with httpx.Client(timeout=60.0, headers=headers) as client:
         create = client.post(
             f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources",
             json={"type": "web", "url": unique_url},
-            headers=headers,
         )
         assert create.status_code == 201, f"Création source échouée: {create.text}"
         source_id = create.json()["id"]
 
         trigger = client.post(
             f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}/crawl",
-            headers=headers,
         )
         assert trigger.status_code == 202, f"Trigger crawl échoué: {trigger.text}"
 
@@ -147,7 +175,6 @@ def crawled_result_setup(auth_token):
 
         client.delete(
             f"{SERVICE_CRAWLER_URL}/api/v1/crawler/sources/{source_id}",
-            headers=headers,
         )
 
 
@@ -290,9 +317,10 @@ def test_get_source_not_found(auth_token):
 
 
 @pytest.mark.smoke
-def test_list_results_returns_paginated_envelope():
+def test_list_results_returns_paginated_envelope(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        response = ResultsSmokeHelper.get_paginated(client)
+        response = ResultsSmokeHelper.get_paginated(client, headers=headers)
     assert response.status_code == 200
     body = response.json()
     assert "items" in body
@@ -306,37 +334,47 @@ def test_list_results_returns_paginated_envelope():
 
 
 @pytest.mark.smoke
-def test_list_results_default_status_is_waiting():
+def test_list_results_default_status_is_waiting(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        r1 = ResultsSmokeHelper.get_paginated(client)
-        r2 = ResultsSmokeHelper.get_paginated(client, status="waiting")
+        r1 = ResultsSmokeHelper.get_paginated(client, headers=headers)
+        r2 = ResultsSmokeHelper.get_paginated(client, headers=headers, status="waiting")
     assert r1.status_code == 200
     assert r2.status_code == 200
     assert r1.json()["total"] == r2.json()["total"]
 
 
 @pytest.mark.smoke
-def test_list_results_filter_by_valid_status():
+def test_list_results_filter_by_valid_status(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        response = ResultsSmokeHelper.get_paginated(client, status="valid")
+        response = ResultsSmokeHelper.get_paginated(
+            client, headers=headers, status="valid"
+        )
     assert response.status_code == 200
     for item in response.json()["items"]:
         assert item["status"] == "valid"
 
 
 @pytest.mark.smoke
-def test_list_results_filter_by_rejected_status():
+def test_list_results_filter_by_rejected_status(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        response = ResultsSmokeHelper.get_paginated(client, status="rejected")
+        response = ResultsSmokeHelper.get_paginated(
+            client, headers=headers, status="rejected"
+        )
     assert response.status_code == 200
     for item in response.json()["items"]:
         assert item["status"] == "rejected"
 
 
 @pytest.mark.smoke
-def test_list_results_pagination_params():
+def test_list_results_pagination_params(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        response = ResultsSmokeHelper.get_paginated(client, page=1, page_size=5)
+        response = ResultsSmokeHelper.get_paginated(
+            client, headers=headers, page=1, page_size=5
+        )
     assert response.status_code == 200
     body = response.json()
     assert body["page"] == 1
@@ -345,24 +383,29 @@ def test_list_results_pagination_params():
 
 
 @pytest.mark.smoke
-def test_list_results_page_size_above_max_rejected():
-    with httpx.Client() as client:
-        response = ResultsSmokeHelper.get_paginated(client, page_size=200)
-    assert response.status_code == 422
-
-
-@pytest.mark.smoke
-def test_list_results_page_zero_rejected():
-    with httpx.Client() as client:
-        response = ResultsSmokeHelper.get_paginated(client, page=0)
-    assert response.status_code == 422
-
-
-@pytest.mark.smoke
-def test_list_results_filter_by_source_id_empty():
+def test_list_results_page_size_above_max_rejected(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
         response = ResultsSmokeHelper.get_paginated(
-            client, source_id=_NULL_UUID, status="waiting"
+            client, headers=headers, page_size=200
+        )
+    assert response.status_code == 422
+
+
+@pytest.mark.smoke
+def test_list_results_page_zero_rejected(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
+    with httpx.Client() as client:
+        response = ResultsSmokeHelper.get_paginated(client, headers=headers, page=0)
+    assert response.status_code == 422
+
+
+@pytest.mark.smoke
+def test_list_results_filter_by_source_id_empty(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
+    with httpx.Client() as client:
+        response = ResultsSmokeHelper.get_paginated(
+            client, headers=headers, source_id=_NULL_UUID, status="waiting"
         )
     assert response.status_code == 200
     assert response.json()["total"] == 0
@@ -372,16 +415,18 @@ def test_list_results_filter_by_source_id_empty():
 
 
 @pytest.mark.smoke
-def test_get_result_not_found():
+def test_get_result_not_found(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        response = ResultsSmokeHelper.get_one(client, _NULL_UUID)
+        response = ResultsSmokeHelper.get_one(client, _NULL_UUID, headers=headers)
     assert response.status_code == 404
 
 
 @pytest.mark.smoke
-def test_get_result_invalid_uuid():
+def test_get_result_invalid_uuid(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        response = client.get(f"{_RESULTS_URL}/not-a-uuid")
+        response = client.get(f"{_RESULTS_URL}/not-a-uuid", headers=headers)
     assert response.status_code == 422
 
 
@@ -389,23 +434,28 @@ def test_get_result_invalid_uuid():
 
 
 @pytest.mark.smoke
-def test_validate_result_not_found():
+def test_validate_result_not_found(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        response = ResultsSmokeHelper.validate(client, _NULL_UUID)
+        response = ResultsSmokeHelper.validate(client, _NULL_UUID, headers=headers)
     assert response.status_code == 404
 
 
 @pytest.mark.smoke
-def test_reject_result_not_found():
+def test_reject_result_not_found(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        response = ResultsSmokeHelper.reject(client, _NULL_UUID)
+        response = ResultsSmokeHelper.reject(client, _NULL_UUID, headers=headers)
     assert response.status_code == 404
 
 
 @pytest.mark.smoke
-def test_patch_result_not_found():
+def test_patch_result_not_found(auth_token):
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        response = ResultsSmokeHelper.patch_result(client, _NULL_UUID, {"title": "X"})
+        response = ResultsSmokeHelper.patch_result(
+            client, _NULL_UUID, {"title": "X"}, headers=headers
+        )
     assert response.status_code == 404
 
 
@@ -414,10 +464,11 @@ def test_patch_result_not_found():
 
 @pytest.mark.smoke
 @pytest.mark.integration
-def test_get_crawled_result_detail(crawled_result_setup):
+def test_get_crawled_result_detail(auth_token, crawled_result_setup):
     result = crawled_result_setup
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        response = ResultsSmokeHelper.get_one(client, result["id"])
+        response = ResultsSmokeHelper.get_one(client, result["id"], headers=headers)
     assert response.status_code == 200
     body = response.json()
     assert body["id"] == result["id"]
@@ -427,11 +478,12 @@ def test_get_crawled_result_detail(crawled_result_setup):
 
 @pytest.mark.smoke
 @pytest.mark.integration
-def test_edit_waiting_result(crawled_result_setup):
+def test_edit_waiting_result(auth_token, crawled_result_setup):
     result = crawled_result_setup
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
         response = ResultsSmokeHelper.patch_result(
-            client, result["id"], {"title": "Titre corrigé smoke test"}
+            client, result["id"], {"title": "Titre corrigé smoke test"}, headers=headers
         )
     assert response.status_code == 200
     assert response.json()["title"] == "Titre corrigé smoke test"
@@ -439,40 +491,46 @@ def test_edit_waiting_result(crawled_result_setup):
 
 @pytest.mark.smoke
 @pytest.mark.integration
-def test_reject_waiting_result(crawled_result_setup):
+def test_reject_waiting_result(auth_token, crawled_result_setup):
     result = crawled_result_setup
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        response = ResultsSmokeHelper.reject(client, result["id"])
+        response = ResultsSmokeHelper.reject(client, result["id"], headers=headers)
     assert response.status_code == 200
     assert response.json()["status"] == "rejected"
 
 
 @pytest.mark.smoke
 @pytest.mark.integration
-def test_cannot_edit_after_rejection(crawled_result_setup):
+def test_cannot_edit_after_rejection(auth_token, crawled_result_setup):
     result = crawled_result_setup
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        ResultsSmokeHelper.reject(client, result["id"])
-        response = ResultsSmokeHelper.patch_result(client, result["id"], {"title": "X"})
+        ResultsSmokeHelper.reject(client, result["id"], headers=headers)
+        response = ResultsSmokeHelper.patch_result(
+            client, result["id"], {"title": "X"}, headers=headers
+        )
     assert response.status_code == 409
 
 
 @pytest.mark.smoke
 @pytest.mark.integration
-def test_cannot_reject_twice(crawled_result_setup):
+def test_cannot_reject_twice(auth_token, crawled_result_setup):
     result = crawled_result_setup
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        ResultsSmokeHelper.reject(client, result["id"])
-        response = ResultsSmokeHelper.reject(client, result["id"])
+        ResultsSmokeHelper.reject(client, result["id"], headers=headers)
+        response = ResultsSmokeHelper.reject(client, result["id"], headers=headers)
     assert response.status_code == 409
 
 
 @pytest.mark.smoke
 @pytest.mark.integration
-def test_validate_waiting_result(crawled_result_setup):
+def test_validate_waiting_result(auth_token, crawled_result_setup):
     result = crawled_result_setup
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        response = ResultsSmokeHelper.validate(client, result["id"])
+        response = ResultsSmokeHelper.validate(client, result["id"], headers=headers)
     assert response.status_code == 200
     body = response.json()
     assert body["status"] == "valid"
@@ -481,31 +539,38 @@ def test_validate_waiting_result(crawled_result_setup):
 
 @pytest.mark.smoke
 @pytest.mark.integration
-def test_cannot_edit_after_validation(crawled_result_setup):
+def test_cannot_edit_after_validation(auth_token, crawled_result_setup):
     result = crawled_result_setup
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        ResultsSmokeHelper.validate(client, result["id"])
-        response = ResultsSmokeHelper.patch_result(client, result["id"], {"title": "X"})
+        ResultsSmokeHelper.validate(client, result["id"], headers=headers)
+        response = ResultsSmokeHelper.patch_result(
+            client, result["id"], {"title": "X"}, headers=headers
+        )
     assert response.status_code == 409
 
 
 @pytest.mark.smoke
 @pytest.mark.integration
-def test_cannot_validate_twice(crawled_result_setup):
+def test_cannot_validate_twice(auth_token, crawled_result_setup):
     result = crawled_result_setup
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        ResultsSmokeHelper.validate(client, result["id"])
-        response = ResultsSmokeHelper.validate(client, result["id"])
+        ResultsSmokeHelper.validate(client, result["id"], headers=headers)
+        response = ResultsSmokeHelper.validate(client, result["id"], headers=headers)
     assert response.status_code == 409
 
 
 @pytest.mark.smoke
 @pytest.mark.integration
-def test_validated_result_appears_in_valid_filter(crawled_result_setup):
+def test_validated_result_appears_in_valid_filter(auth_token, crawled_result_setup):
     result = crawled_result_setup
+    headers = {"Authorization": f"Bearer {auth_token}"}
     with httpx.Client() as client:
-        ResultsSmokeHelper.validate(client, result["id"])
-        response = ResultsSmokeHelper.get_paginated(client, status="valid")
+        ResultsSmokeHelper.validate(client, result["id"], headers=headers)
+        response = ResultsSmokeHelper.get_paginated(
+            client, headers=headers, status="valid"
+        )
     ids = [item["id"] for item in response.json()["items"]]
     assert result["id"] in ids
 

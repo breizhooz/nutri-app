@@ -189,7 +189,6 @@ class RecipeSearchService:
             "results": results,
         }
 
-
     async def reindex_all(self, session) -> int:
         """Bulk reindex all recipes from the database."""
         from sqlalchemy import select
@@ -199,7 +198,9 @@ class RecipeSearchService:
 
         result = await session.execute(
             select(Recipe).options(
-                selectinload(Recipe.recipe_ingredients).selectinload(RecipeIngredient.ingredient)
+                selectinload(Recipe.recipe_ingredients).selectinload(
+                    RecipeIngredient.ingredient
+                )
             )
         )
         recipes = result.scalars().all()
