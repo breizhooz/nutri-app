@@ -3,11 +3,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.deps import get_current_user
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 from app.db.session import get_session
 from app.models.user import User
+from app.schemas.password import PasswordChangeSchema, PasswordResetMessage
 from app.schemas.user import UserCreate, UserOut
+from app.services.password_reset_service import PasswordResetService
 
 router = APIRouter()
 
@@ -35,6 +38,31 @@ async def get_me(
     current_user: User = Depends(get_current_user),  # ← injecte l'user connecté
 ):
     return current_user
+
+
+@router.post("/me/password", response_model=PasswordResetMessage, status_code=status.HTTP_200_OK)
+async def change_password(
+    data: PasswordChangeSchema,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> PasswordResetMessage:
+    if not current_user.hashed_password or not verify_password(
+        data.current_password, current_user.hashed_password
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Mot de passe actuel incorrect.",
+        )
+    service = PasswordResetService(session)
+    if await service.is_password_reused(
+        current_user, data.new_password, settings.PASSWORD_HISTORY_COUNT
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Le nouveau mot de passe doit être différent des 5 derniers mots de passe utilisés.",
+        )
+    await service.update_password(current_user, data.new_password)
+    return PasswordResetMessage(message="Mot de passe mis à jour avec succès.")
 
 
 @router.get("/{user_id}", response_model=UserOut)
