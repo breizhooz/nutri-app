@@ -26,6 +26,7 @@ def make_recipe(
     qty: float = 100,
     servings: int = 1,
     slug: str | None = None,
+    course_type: str | None = None,
 ) -> dict:
     tags = allergens or []
     ingredient: dict = {"id": id * 10, "name": f"ingredient_{id}", "tags": tags}
@@ -36,6 +37,7 @@ def make_recipe(
         "slug": slug or f"recipe-{id}",
         "title": f"Recipe {id}",
         "servings": servings,
+        "course_type": course_type,
         "recipe_ingredients": [
             {
                 "ingredient_id": id * 10,

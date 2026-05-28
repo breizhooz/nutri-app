@@ -4,6 +4,11 @@ import io
 import json
 import uuid
 
+try:
+    from minio import Minio
+except ImportError:
+    Minio = None  # type: ignore[assignment,misc]
+
 
 class StorageService:
     ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
@@ -23,13 +28,11 @@ class StorageService:
         bucket: str,
         public_url: str,
     ) -> None:
-        try:
-            from minio import Minio
-        except ImportError as exc:
+        if Minio is None:
             raise RuntimeError(
                 "Le package 'minio' est requis pour l'upload d'images. "
                 "Reconstruisez le container : docker-compose up --build service-recipe"
-            ) from exc
+            )
         self._client = Minio(
             endpoint, access_key=access_key, secret_key=secret_key, secure=False
         )

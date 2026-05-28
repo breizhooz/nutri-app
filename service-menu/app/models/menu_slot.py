@@ -35,4 +35,6 @@ class MenuSlot(AbstractModel):
 
     recipe_id: Mapped[int] = mapped_column(Integer)
 
+    nb_persons: Mapped[int] = mapped_column(Integer, default=1)
+
     menu: Mapped["WeeklyMenu"] = relationship(back_populates="slots")

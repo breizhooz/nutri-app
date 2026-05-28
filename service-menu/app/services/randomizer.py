@@ -146,6 +146,7 @@ async def generate_slots(
                     day_of_week=day,
                     meal_type=meal_type,
                     recipe_id=pool[i]["id"],
+                    nb_persons=nb_persons,
                 )
             )
 

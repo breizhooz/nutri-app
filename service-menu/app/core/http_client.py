@@ -87,7 +87,7 @@ class ServicesRecipeClient:
 
     async def get_recipe_by_id(self, recipe_id: int) -> dict | None:
         try:
-            response = await self._client.get(f"/api/v1/recipes/id/{recipe_id}")
+            response = await self._client.get(f"/api/v1/recipe/id/{recipe_id}")
             if response.status_code == 404:
                 return None
             response.raise_for_status()
@@ -101,7 +101,7 @@ class ServicesRecipeClient:
 
     async def get_recipe_by_slug(self, slug: str) -> dict | None:
         try:
-            response = await self._client.get(f"/api/v1/recipes/{slug}")
+            response = await self._client.get(f"/api/v1/recipe/{slug}")
             if response.status_code == 404:
                 return None
             response.raise_for_status()
