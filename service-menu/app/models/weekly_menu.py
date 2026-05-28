@@ -1,5 +1,13 @@
 from typing import Any
-from sqlalchemy import String, Text, Integer, Date, JSON, CheckConstraint
+from sqlalchemy import (
+    String,
+    Text,
+    Integer,
+    Date,
+    JSON,
+    CheckConstraint,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from datetime import date
 
@@ -10,6 +18,11 @@ from .menu_slot import MenuSlot
 
 class WeeklyMenu(AbstractModel):
     __tablename__ = "weekly_menus"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "start_date", name="uq_weekly_menus_user_start_date"
+        ),
+    )
 
     slug: Mapped[str | None] = mapped_column(String(350), unique=True, index=True)
     user_id: Mapped[str | None] = mapped_column(String(36))

@@ -87,35 +87,37 @@ class TestGenerateSlots:
     def _client(self, recipes):
         return MockRecipeClient(recipes)
 
-    async def test_default_produces_14_slots(self):
+    async def test_default_produces_35_slots(self):
         slots = await generate_slots(
-            self._client([make_recipe(i) for i in range(1, 25)]),
+            self._client([make_recipe(i) for i in range(1, 50)]),
             nb_persons=2,
             start_date=date(2026, 1, 6),
             exclusions=[],
         )
-        assert len(slots) == 14
+        assert len(slots) == 35
 
     async def test_all_seven_days_covered(self):
         slots = await generate_slots(
-            self._client([make_recipe(i) for i in range(1, 25)]),
+            self._client([make_recipe(i) for i in range(1, 50)]),
             nb_persons=1,
             start_date=date(2026, 1, 6),
             exclusions=[],
         )
         assert {s.day_of_week for s in slots} == set(DayOfWeek)
 
-    async def test_default_meal_types_are_lunch_and_dinner(self):
+    async def test_default_meal_types_are_all_five(self):
         slots = await generate_slots(
-            self._client([make_recipe(i) for i in range(1, 25)]),
+            self._client([make_recipe(i) for i in range(1, 50)]),
             nb_persons=1,
             start_date=date(2026, 1, 6),
             exclusions=[],
         )
         types = {s.meal_type for s in slots}
+        assert MealType.BREAKFAST in types
+        assert MealType.MORNING_SNACK in types
         assert MealType.LUNCH in types
+        assert MealType.AFTERNOON_SNACK in types
         assert MealType.DINNER in types
-        assert MealType.BREAKFAST not in types
 
     async def test_custom_single_meal_type(self):
         slots = await generate_slots(
@@ -171,7 +173,7 @@ class TestGenerateSlots:
             start_date=date(2026, 1, 6),
             exclusions=[],
         )
-        assert len(slots) == 14
+        assert len(slots) == 35
 
     async def test_caloric_soft_filter_applied_when_pool_large_enough(self):
         high = [
@@ -217,7 +219,7 @@ class TestGenerateSlots:
             exclusions=[],
             duration_days=3,
         )
-        assert len(slots) == 6
+        assert len(slots) == 15
 
     async def test_slot_recipe_ids_are_valid(self):
         recipes = [make_recipe(i) for i in range(1, 25)]

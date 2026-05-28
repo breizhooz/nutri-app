@@ -1,0 +1,49 @@
+{
+  "created_by_user_id": "00000000-0000-0000-0000-000000000000",
+  "ingredients": [
+    {
+      "name": "riz arborio",
+      "tags": [],
+      "free_tags": [],
+      "calories_per_100g": 350.0,
+      "proteins_per_100g": 7.0,
+      "carbs_per_100g": 78.0,
+      "fats_per_100g": 0.6
+    },
+    {
+      "name": "champignons de paris",
+      "calories_per_100g": 22.0,
+      "proteins_per_100g": 3.1,
+      "carbs_per_100g": 3.3,
+      "fats_per_100g": 0.3
+    },
+    {
+      "name": "parmesan",
+      "calories_per_100g": 431.0,
+      "proteins_per_100g": 38.0,
+      "carbs_per_100g": 4.1,
+      "fats_per_100g": 29.0
+    }
+  ],
+  "recipes": [
+    {
+      "title": "Risotto aux champignons",
+      "description": "Un risotto crémeux aux champignons de Paris et parmesan.",
+      "instructions": "1. Faire revenir l'oignon.\n2. Nacrer le riz.\n3. Incorporer le bouillon louche par louche.\n4. Ajouter champignons et parmesan.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 25,
+      "servings": 4,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.italian",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "free_tags": ["végétarien", "réconfortant"],
+      "image_url": null,
+      "ingredients": [
+        { "name": "riz arborio", "quantity": 300.0, "unit": "g" },
+        { "name": "champignons de paris", "quantity": 250.0, "unit": "g" },
+        { "name": "parmesan", "quantity": 60.0, "unit": "g" }
+      ]
+    }
+  ]
+}

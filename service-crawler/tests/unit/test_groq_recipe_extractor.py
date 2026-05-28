@@ -13,9 +13,9 @@ def _groq_response(content: dict | str, tokens: int = 100) -> MagicMock:
         "choices": [
             {
                 "message": {
-                    "content": json.dumps(content)
-                    if isinstance(content, dict)
-                    else content
+                    "content": (
+                        json.dumps(content) if isinstance(content, dict) else content
+                    )
                 }
             }
         ],
@@ -200,6 +200,7 @@ class TestGroqRecipeExtractor:
             "prep_time_minutes": None,
             "cook_time_minutes": None,
         }
+
         async def _fake_get(self, key):
             return _json.dumps(old_cache)
 

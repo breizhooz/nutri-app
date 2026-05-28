@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.repositories.recipe_repository import RecipeRepository
+from app.schemas.recipe_import import IngredientImport
 
 
 def _make_session() -> AsyncMock:
@@ -85,6 +86,54 @@ class TestGetOrCreateIngredient:
 
         ingredient = await repo.get_or_create_ingredient("huile d'olive")
         assert ingredient.name == "huile d'olive"
+
+
+# ─── upsert_ingredients ───────────────────────────────────────────────────────
+
+
+class TestUpsertIngredients:
+    @pytest.fixture
+    def session(self):
+        session = _make_session()
+        session.commit = AsyncMock()
+        return session
+
+    @pytest.fixture
+    def repo(self, session):
+        return RecipeRepository(session)
+
+    async def test_creates_when_absent(self, repo, session):
+        session.execute.return_value = _make_scalar_result(None)
+        count = await repo.upsert_ingredients(
+            [IngredientImport(name="quinoa", calories_per_100g=120.0)]
+        )
+        session.add.assert_called_once()
+        session.commit.assert_called_once()
+        assert count == 1
+
+    async def test_updates_macros_when_present(self, repo, session):
+        existing = MagicMock()
+        existing.name = "riz"
+        session.execute.return_value = _make_scalar_result(existing)
+        await repo.upsert_ingredients(
+            [
+                IngredientImport(
+                    name="riz", calories_per_100g=356.0, proteins_per_100g=6.7
+                )
+            ]
+        )
+        assert existing.calories_per_100g == 356.0
+        assert existing.proteins_per_100g == 6.7
+        session.add.assert_not_called()
+        session.commit.assert_called_once()
+
+    async def test_returns_total_count(self, repo, session):
+        session.execute.return_value = _make_scalar_result(None)
+        count = await repo.upsert_ingredients(
+            [IngredientImport(name="a"), IngredientImport(name="b")]
+        )
+        assert count == 2
+        assert session.add.call_count == 2
 
 
 # ─── create ───────────────────────────────────────────────────────────────────

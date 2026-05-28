@@ -239,7 +239,7 @@ async def create_recipe(
 @router.get("", response_model=PaginatedRecipeResponse)
 async def list_recipes(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=50),
+    page_size: int = Query(20, ge=1, le=200),
     course_type: str | None = Query(None),
     session: AsyncSession = Depends(get_session),
 ):
@@ -359,7 +359,9 @@ async def upload_recipe_image(
         image_url = await storage.upload_image(data, content_type)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
-    return await service.update_image_url(recipe_id, user_id=current_user_id, image_url=image_url)
+    return await service.update_image_url(
+        recipe_id, user_id=current_user_id, image_url=image_url
+    )
 
 
 @router.post("/reindex", status_code=status.HTTP_200_OK)

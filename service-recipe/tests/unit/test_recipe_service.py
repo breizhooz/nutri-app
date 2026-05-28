@@ -3,12 +3,20 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from fastapi import HTTPException
 
+from app.core.http_client import NutritionResult
 from app.models.enums import CourseType, CuisineOrigin, DifficultyLevel, RecipeOrigin
 from app.schemas.recipe import ManualIngredient, RecipeManualCreate
+from app.schemas.recipe_import import RecipeImportItem, RecipeIngredientImport
 from app.services.recipe_service import RecipeService
 
 
 # ─── Factories ────────────────────────────────────────────────────────────────
+
+
+def _make_nutrition_client(result: NutritionResult | None = None) -> AsyncMock:
+    client = AsyncMock()
+    client.calculate.return_value = result
+    return client
 
 
 def _make_repo(slug_exists: bool = False) -> AsyncMock:
@@ -17,6 +25,7 @@ def _make_repo(slug_exists: bool = False) -> AsyncMock:
     repo.get_or_create_ingredient.side_effect = lambda name: _make_ingredient(name)
     recipe = _make_recipe()
     repo.create.return_value = recipe
+    repo.get_by_id_with_relations.return_value = recipe
     return repo
 
 
@@ -57,6 +66,17 @@ def _make_data(**kwargs) -> RecipeManualCreate:
     return RecipeManualCreate(**defaults)
 
 
+def _make_import_item(**kwargs) -> RecipeImportItem:
+    defaults = dict(
+        title="Risotto aux champignons",
+        instructions="Cuire le riz.",
+        servings=4,
+        ingredients=[],
+    )
+    defaults.update(kwargs)
+    return RecipeImportItem(**defaults)
+
+
 # ─── create_manual ────────────────────────────────────────────────────────────
 
 
@@ -70,8 +90,12 @@ class TestRecipeServiceCreateManual:
         return _make_search()
 
     @pytest.fixture
-    def service(self, repo, search):
-        return RecipeService(repo, search)
+    def nutrition(self):
+        return _make_nutrition_client()
+
+    @pytest.fixture
+    def service(self, repo, search, nutrition):
+        return RecipeService(repo, search, nutrition_client=nutrition)
 
     async def test_returns_created_recipe(self, service, repo):
         result = await service.create_manual(_make_data(), user_id="user-1")
@@ -139,6 +163,164 @@ class TestRecipeServiceCreateManual:
         result = await service.create_manual(_make_data(), user_id="u")
         assert result is not None
 
+    async def test_nutrition_called_when_ingredients_present(
+        self, repo, search, nutrition
+    ):
+        service = RecipeService(repo, search, nutrition_client=nutrition)
+        data = _make_data(
+            ingredients=[ManualIngredient(name="farine", quantity=200.0, unit="g")]
+        )
+        await service.create_manual(data, user_id="u")
+        nutrition.calculate.assert_called_once()
+
+    async def test_macros_saved_when_nutrition_returns_result(self, repo, search):
+        result = NutritionResult(
+            calories_per_serving=350.0,
+            proteins_per_serving=10.0,
+            carbs_per_serving=50.0,
+            fats_per_serving=8.0,
+        )
+        nutrition = _make_nutrition_client(result=result)
+        service = RecipeService(repo, search, nutrition_client=nutrition)
+        data = _make_data(
+            ingredients=[ManualIngredient(name="farine", quantity=200.0, unit="g")]
+        )
+        await service.create_manual(data, user_id="u")
+        repo.update_macros.assert_called_once_with(
+            repo.create.return_value.id,
+            calories=350.0,
+            proteins=10.0,
+            carbs=50.0,
+            fats=8.0,
+        )
+
+    async def test_macros_not_saved_when_nutrition_returns_none(self, repo, search):
+        nutrition = _make_nutrition_client(result=None)
+        service = RecipeService(repo, search, nutrition_client=nutrition)
+        data = _make_data(
+            ingredients=[ManualIngredient(name="farine", quantity=200.0, unit="g")]
+        )
+        await service.create_manual(data, user_id="u")
+        repo.update_macros.assert_not_called()
+
+    async def test_nutrition_not_called_when_no_ingredients(self, service, nutrition):
+        await service.create_manual(_make_data(ingredients=[]), user_id="u")
+        nutrition.calculate.assert_not_called()
+
+    async def test_nutrition_failure_does_not_raise(self, repo, search):
+        nutrition = _make_nutrition_client()
+        nutrition.calculate.side_effect = Exception("timeout")
+        service = RecipeService(repo, search, nutrition_client=nutrition)
+        data = _make_data(
+            ingredients=[ManualIngredient(name="farine", quantity=200.0, unit="g")]
+        )
+        with pytest.raises(Exception):
+            await service.create_manual(data, user_id="u")
+
+
+# ─── create_full ──────────────────────────────────────────────────────────────
+
+
+class TestRecipeServiceCreateFull:
+    @pytest.fixture
+    def repo(self):
+        return _make_repo()
+
+    @pytest.fixture
+    def search(self):
+        return _make_search()
+
+    @pytest.fixture
+    def nutrition(self):
+        return _make_nutrition_client()
+
+    @pytest.fixture
+    def service(self, repo, search, nutrition):
+        return RecipeService(repo, search, nutrition_client=nutrition)
+
+    async def test_honors_all_enum_fields(self, service, repo):
+        await service.create_full(
+            _make_import_item(
+                difficulty=DifficultyLevel.HARD,
+                cuisine_origin=CuisineOrigin.ITALIAN,
+                origin_recipe=RecipeOrigin.BOOK,
+                course_type=CourseType.DESSERT,
+                book_name="Larousse",
+            ),
+            user_id="u",
+        )
+        recipe_arg = repo.create.call_args[0][0]
+        assert recipe_arg.difficulty == DifficultyLevel.HARD
+        assert recipe_arg.cuisine_origin == CuisineOrigin.ITALIAN
+        assert recipe_arg.origin_recipe == RecipeOrigin.BOOK
+        assert recipe_arg.course_type == CourseType.DESSERT
+        assert recipe_arg.book_name == "Larousse"
+
+    async def test_sets_image_url_and_tags(self, service, repo):
+        await service.create_full(
+            _make_import_item(image_url="http://img", free_tags=["bio"]),
+            user_id="u",
+        )
+        recipe_arg = repo.create.call_args[0][0]
+        assert recipe_arg.image_url == "http://img"
+        assert recipe_arg.free_tags == ["bio"]
+
+    async def test_sets_user_id(self, service, repo):
+        await service.create_full(_make_import_item(), user_id="user-42")
+        recipe_arg = repo.create.call_args[0][0]
+        assert recipe_arg.created_by_user_id == "user-42"
+
+    async def test_resolves_ingredients(self, service, repo):
+        item = _make_import_item(
+            ingredients=[
+                RecipeIngredientImport(name="riz", quantity=300.0, unit="g"),
+                RecipeIngredientImport(name="parmesan", quantity=60.0, unit="g"),
+            ]
+        )
+        await service.create_full(item, user_id="u")
+        assert repo.get_or_create_ingredient.call_count == 2
+
+    async def test_indexes_recipe_in_search(self, service, repo, search):
+        recipe = _make_recipe()
+        repo.create.return_value = recipe
+        await service.create_full(_make_import_item(), user_id="u")
+        search.index_recipe.assert_called_once_with(recipe)
+
+    async def test_nutrition_called_when_ingredients_present(
+        self, repo, search, nutrition
+    ):
+        service = RecipeService(repo, search, nutrition_client=nutrition)
+        item = _make_import_item(
+            ingredients=[RecipeIngredientImport(name="riz", quantity=300.0, unit="g")]
+        )
+        await service.create_full(item, user_id="u")
+        nutrition.calculate.assert_called_once()
+
+    async def test_macros_saved_when_nutrition_returns_result(self, repo, search):
+        result = NutritionResult(
+            calories_per_serving=480.0,
+            proteins_per_serving=12.0,
+            carbs_per_serving=65.0,
+            fats_per_serving=14.0,
+        )
+        nutrition = _make_nutrition_client(result=result)
+        service = RecipeService(repo, search, nutrition_client=nutrition)
+        item = _make_import_item(
+            ingredients=[RecipeIngredientImport(name="riz", quantity=300.0, unit="g")]
+        )
+        await service.create_full(item, user_id="u")
+        repo.update_macros.assert_called_once_with(
+            repo.create.return_value.id,
+            calories=480.0,
+            proteins=12.0,
+            carbs=65.0,
+            fats=14.0,
+        )
+
+    async def test_nutrition_not_called_when_no_ingredients(self, service, nutrition):
+        await service.create_full(_make_import_item(ingredients=[]), user_id="u")
+        nutrition.calculate.assert_not_called()
+
 
 # ─── _generate_unique_slug ────────────────────────────────────────────────────
 
@@ -154,7 +336,7 @@ class TestGenerateUniqueSlug:
 
     @pytest.fixture
     def service(self, repo, search):
-        return RecipeService(repo, search)
+        return RecipeService(repo, search, nutrition_client=_make_nutrition_client())
 
     async def test_returns_base_slug_when_free(self, service, repo):
         repo.slug_exists.return_value = False

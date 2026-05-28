@@ -20,5 +20,8 @@ class Settings(BaseSettings):
     MINIO_BUCKET: str = "recipes"
     MINIO_PUBLIC_URL: str = "http://localhost:9000"
 
+    SERVICE_NUTRITION_URL: str = ""
+    SERVICE_NUTRITION_TOKEN: str = ""
+
 
 settings = Settings()

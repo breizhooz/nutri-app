@@ -71,6 +71,19 @@ async def get_menu(session: AsyncSession, menu_id: int) -> WeeklyMenu | None:
     return await _load_with_slots(session, menu_id)
 
 
+async def get_menu_by_user_and_date(
+    session: AsyncSession, user_id: str, start_date: date
+) -> WeeklyMenu | None:
+    result = await session.execute(
+        select(WeeklyMenu)
+        .where(WeeklyMenu.user_id == user_id, WeeklyMenu.start_date == start_date)
+        .options(selectinload(WeeklyMenu.slots))
+        .order_by(WeeklyMenu.created_at.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
+
+
 async def get_menu_by_user(
     session: AsyncSession, user_id: str, skip: int = 0, limit: int = 20
 ) -> list[WeeklyMenu]:
