@@ -1,7 +1,7 @@
 import uuid
 from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
 
 from app.models.weekly_menu import WeeklyMenu
@@ -37,6 +37,18 @@ async def _unique_slug(session: AsyncSession, start_date: date) -> str:
 async def create_menu(
     session: AsyncSession, menu_data: WeeklyMenuCreate, user_id: str
 ) -> WeeklyMenu:
+    existing = await session.execute(
+        select(WeeklyMenu.id).where(
+            WeeklyMenu.user_id == user_id,
+            WeeklyMenu.start_date == menu_data.start_date,
+        )
+    )
+    old_ids = list(existing.scalars().all())
+    if old_ids:
+        await session.execute(delete(MenuSlot).where(MenuSlot.menu_id.in_(old_ids)))
+        await session.execute(delete(WeeklyMenu).where(WeeklyMenu.id.in_(old_ids)))
+        await session.flush()
+
     slug = menu_data.slug or await _unique_slug(session, menu_data.start_date)
 
     menu = WeeklyMenu(
@@ -60,6 +72,7 @@ async def create_menu(
                 day_of_week=slot_data.day_of_week,
                 meal_type=slot_data.meal_type,
                 recipe_id=slot_data.recipe_id,
+                nb_persons=slot_data.nb_persons or menu_data.nb_persons,
             )
         )
 
@@ -69,6 +82,19 @@ async def create_menu(
 
 async def get_menu(session: AsyncSession, menu_id: int) -> WeeklyMenu | None:
     return await _load_with_slots(session, menu_id)
+
+
+async def get_menu_by_user_and_date(
+    session: AsyncSession, user_id: str, start_date: date
+) -> WeeklyMenu | None:
+    result = await session.execute(
+        select(WeeklyMenu)
+        .where(WeeklyMenu.user_id == user_id, WeeklyMenu.start_date == start_date)
+        .options(selectinload(WeeklyMenu.slots))
+        .order_by(WeeklyMenu.created_at.desc())
+        .limit(1)
+    )
+    return result.scalar_one_or_none()
 
 
 async def get_menu_by_user(
@@ -107,6 +133,7 @@ async def update_menu(
                     day_of_week=slot_data.day_of_week,
                     meal_type=slot_data.meal_type,
                     recipe_id=slot_data.recipe_id,
+                    nb_persons=slot_data.nb_persons or menu.nb_persons,
                 )
             )
 

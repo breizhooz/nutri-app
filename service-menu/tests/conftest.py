@@ -26,6 +26,7 @@ def make_recipe(
     qty: float = 100,
     servings: int = 1,
     slug: str | None = None,
+    course_type: str | None = None,
 ) -> dict:
     tags = allergens or []
     ingredient: dict = {"id": id * 10, "name": f"ingredient_{id}", "tags": tags}
@@ -36,6 +37,7 @@ def make_recipe(
         "slug": slug or f"recipe-{id}",
         "title": f"Recipe {id}",
         "servings": servings,
+        "course_type": course_type,
         "recipe_ingredients": [
             {
                 "ingredient_id": id * 10,
@@ -92,8 +94,8 @@ class MockRecipeClient:
     def __init__(self, recipes: list[dict] | None = None):
         self._recipes = recipes if recipes is not None else SAMPLE_RECIPES
 
-    async def get_recipes(self, skip: int = 0, limit: int = 200) -> list[dict]:
-        return self._recipes[skip : skip + limit]
+    async def get_recipes(self, max_recipes: int = 200) -> list[dict]:
+        return self._recipes[:max_recipes]
 
     async def get_recipe_by_id(self, recipe_id: int) -> dict | None:
         return next((r for r in self._recipes if r["id"] == recipe_id), None)

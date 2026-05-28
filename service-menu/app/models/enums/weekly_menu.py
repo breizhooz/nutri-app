@@ -13,5 +13,7 @@ class DayOfWeek(str, PyEnum):
 
 class MealType(str, PyEnum):
     BREAKFAST = "enums.meal_type.breakfast"
+    MORNING_SNACK = "enums.meal_type.morning_snack"
     LUNCH = "enums.meal_type.lunch"
+    AFTERNOON_SNACK = "enums.meal_type.afternoon_snack"
     DINNER = "enums.meal_type.dinner"

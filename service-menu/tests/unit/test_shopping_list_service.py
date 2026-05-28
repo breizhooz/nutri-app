@@ -5,9 +5,10 @@ from unittest.mock import MagicMock
 from app.services.shopping_list_service import build_shopping_list
 
 
-def _make_slot(recipe_id: int):
+def _make_slot(recipe_id: int, nb_persons: int | None = None):
     slot = MagicMock()
     slot.recipe_id = recipe_id
+    slot.nb_persons = nb_persons
     return slot
 
 
@@ -17,6 +18,10 @@ def _make_menu(slots, nb_persons=2, menu_id=1, slug="test-menu", start_date=None
     menu.slug = slug
     menu.nb_persons = nb_persons
     menu.start_date = start_date or date(2026, 1, 6)
+    # Par défaut, chaque slot hérite du nb_persons du menu (comme en base après backfill).
+    for s in slots:
+        if s.nb_persons is None:
+            s.nb_persons = nb_persons
     menu.slots = slots
     return menu
 
@@ -76,6 +81,39 @@ class TestBuildShoppingList:
         )
         pasta = next(i for i in sl.items if i.ingredient_id == 10)
         assert pasta.total_quantity == pytest.approx(600.0)
+
+    async def test_quantities_scaled_by_recipe_servings(self):
+        # Recette pour 4 personnes : 800g de pâtes -> pour 2 pers = 800 * 2/4 = 400
+        recipe = {
+            "id": 5,
+            "servings": 4,
+            "recipe_ingredients": [
+                {
+                    "ingredient_id": 10,
+                    "ingredient": {"id": 10, "name": "Pasta", "tags": []},
+                    "quantity": 800,
+                    "unit": "g",
+                }
+            ],
+        }
+        sl = await build_shopping_list(
+            _make_menu([_make_slot(5, nb_persons=2)], nb_persons=2),
+            _make_client({5: recipe}),
+        )
+        pasta = next(i for i in sl.items if i.ingredient_id == 10)
+        assert pasta.total_quantity == pytest.approx(400.0)
+
+    async def test_per_slot_nb_persons_scales_independently(self):
+        # Pasta : slot1 (200g x2) + slot2 (100g x4) = 400 + 400 = 800
+        sl = await build_shopping_list(
+            _make_menu(
+                [_make_slot(1, nb_persons=2), _make_slot(2, nb_persons=4)],
+                nb_persons=2,
+            ),
+            _make_client({1: RECIPE_PASTA_EGG, 2: RECIPE_PASTA_ONLY}),
+        )
+        pasta = next(i for i in sl.items if i.ingredient_id == 10)
+        assert pasta.total_quantity == pytest.approx(800.0)
 
     async def test_no_duplicate_ingredient_ids(self):
         sl = await build_shopping_list(

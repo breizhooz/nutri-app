@@ -107,6 +107,9 @@ class TestCreateMenu:
         created_menu.slug = "my-custom-slug"
 
         session = AsyncMock()
+        scalar_result = MagicMock()
+        scalar_result.scalars.return_value.all.return_value = []
+        session.execute = AsyncMock(return_value=scalar_result)
         session.add = MagicMock()
         session.flush = AsyncMock()
         session.commit = AsyncMock()
@@ -118,6 +121,36 @@ class TestCreateMenu:
             result = await create_menu(session, menu_data, user_id="user-abc")
 
         assert result.slug == "my-custom-slug"
+
+    @pytest.mark.unit
+    async def test_create_menu_overwrites_existing_week(self):
+        """create_menu supprime le menu existant de la même (user, semaine) avant d'en créer un nouveau."""
+        from app.repositories.menu_service import create_menu
+
+        menu_data = WeeklyMenuCreate(
+            start_date=date(2026, 6, 2),
+            nb_persons=1,
+            slots=[],
+            slug="new-slug",
+        )
+        created_menu = MagicMock()
+
+        session = AsyncMock()
+        scalar_result = MagicMock()
+        scalar_result.scalars.return_value.all.return_value = [42]
+        session.execute = AsyncMock(return_value=scalar_result)
+        session.add = MagicMock()
+        session.flush = AsyncMock()
+        session.commit = AsyncMock()
+
+        with patch(
+            "app.repositories.menu_service._load_with_slots",
+            new=AsyncMock(return_value=created_menu),
+        ):
+            await create_menu(session, menu_data, user_id="user-abc")
+
+        # 1 SELECT des ids existants + 2 DELETE (slots puis menus)
+        assert session.execute.await_count == 3
 
 
 class TestDeleteMenu:

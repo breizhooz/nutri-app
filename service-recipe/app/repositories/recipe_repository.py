@@ -5,6 +5,7 @@ from sqlalchemy.orm import selectinload
 from app.models.ingredient import Ingredient
 from app.models.recipe import Recipe
 from app.models.recipe_ingredients import RecipeIngredient
+from app.schemas.recipe_import import IngredientImport
 
 
 class RecipeRepository:
@@ -41,6 +42,37 @@ class RecipeRepository:
             await self.session.flush()
         return ingredient
 
+    async def upsert_ingredients(self, ingredients: list[IngredientImport]) -> int:
+        """Create missing ingredients, refresh nutrition/tags of existing ones."""
+        for data in ingredients:
+            result = await self.session.execute(
+                select(Ingredient).where(Ingredient.name == data.name)
+            )
+            existing = result.scalar_one_or_none()
+            if existing is None:
+                self.session.add(
+                    Ingredient(
+                        name=data.name,
+                        tags=data.tags,
+                        free_tags=data.free_tags,
+                        calories_per_100g=data.calories_per_100g,
+                        proteins_per_100g=data.proteins_per_100g,
+                        carbs_per_100g=data.carbs_per_100g,
+                        fats_per_100g=data.fats_per_100g,
+                    )
+                )
+            else:
+                existing.calories_per_100g = data.calories_per_100g
+                existing.proteins_per_100g = data.proteins_per_100g
+                existing.carbs_per_100g = data.carbs_per_100g
+                existing.fats_per_100g = data.fats_per_100g
+                if data.tags:
+                    existing.tags = data.tags
+                if data.free_tags:
+                    existing.free_tags = data.free_tags
+        await self.session.commit()
+        return len(ingredients)
+
     async def update_image_url(self, recipe_id: int, image_url: str) -> Recipe:
         recipe = await self.session.get(Recipe, recipe_id)
         assert recipe is not None
@@ -49,6 +81,23 @@ class RecipeRepository:
         loaded = await self.get_by_id_with_relations(recipe_id)
         assert loaded is not None
         return loaded
+
+    async def update_macros(
+        self,
+        recipe_id: int,
+        calories: float,
+        proteins: float,
+        carbs: float,
+        fats: float,
+    ) -> None:
+        recipe = await self.session.get(Recipe, recipe_id)
+        if recipe is None:
+            return
+        recipe.calories_per_serving = calories
+        recipe.proteins_per_serving = proteins
+        recipe.carbs_per_serving = carbs
+        recipe.fats_per_serving = fats
+        await self.session.commit()
 
     async def create(
         self, recipe: Recipe, recipe_ingredients: list[RecipeIngredient]

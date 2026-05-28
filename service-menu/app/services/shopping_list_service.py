@@ -16,13 +16,17 @@ async def build_shopping_list(
         recipe = await recipe_client.get_recipe_by_id(slot.recipe_id)
         if not recipe:
             continue
+        # Les quantités de la recette sont pour `servings` personnes ;
+        # on les met à l'échelle du nombre de personnes du créneau.
+        servings = recipe.get("servings") or 1
+        scale = slot.nb_persons / servings
         for ri in recipe.get("recipe_ingredients", []):
             ingredient = ri.get("ingredient") or {}
             ing_id = ri.get("ingredient_id") or ingredient.get("id")
             if not ing_id:
                 continue
             agg = aggregated[ing_id]
-            agg["total_quantity"] += (ri.get("quantity") or 0) * menu.nb_persons
+            agg["total_quantity"] += (ri.get("quantity") or 0) * scale
             agg["name"] = ingredient.get("name", f"ingredient_{ing_id}")
             agg["unit"] = ri.get("unit", "")
             if not agg["category"]:

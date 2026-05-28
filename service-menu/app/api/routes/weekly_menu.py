@@ -55,6 +55,20 @@ async def generate_menu(
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
+    existing = await menu_service.get_menu_by_user_and_date(
+        session, current_user_id, menu_data.start_date
+    )
+    if existing:
+        return await menu_service.update_menu(
+            session,
+            existing.id,
+            WeeklyMenuUpdate(
+                slots=menu_data.slots,
+                caloric_target=menu_data.caloric_target,
+                nb_persons=menu_data.nb_persons,
+            ),
+        )
+
     return await menu_service.create_menu(session, menu_data, current_user_id)
 
 

@@ -4,6 +4,11 @@ import io
 import json
 import uuid
 
+try:
+    from minio import Minio
+except ImportError:
+    Minio = None  # type: ignore[assignment,misc]
+
 
 class StorageService:
     ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
@@ -23,14 +28,14 @@ class StorageService:
         bucket: str,
         public_url: str,
     ) -> None:
-        try:
-            from minio import Minio
-        except ImportError as exc:
+        if Minio is None:
             raise RuntimeError(
                 "Le package 'minio' est requis pour l'upload d'images. "
                 "Reconstruisez le container : docker-compose up --build service-recipe"
-            ) from exc
-        self._client = Minio(endpoint, access_key=access_key, secret_key=secret_key, secure=False)
+            )
+        self._client = Minio(
+            endpoint, access_key=access_key, secret_key=secret_key, secure=False
+        )
         self._bucket = bucket
         self._public_url = public_url.rstrip("/")
 
@@ -44,14 +49,18 @@ class StorageService:
             await self._run(self._client.make_bucket, self._bucket)
             policy = {
                 "Version": "2012-10-17",
-                "Statement": [{
-                    "Effect": "Allow",
-                    "Principal": {"AWS": ["*"]},
-                    "Action": ["s3:GetObject"],
-                    "Resource": [f"arn:aws:s3:::{self._bucket}/*"],
-                }],
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {"AWS": ["*"]},
+                        "Action": ["s3:GetObject"],
+                        "Resource": [f"arn:aws:s3:::{self._bucket}/*"],
+                    }
+                ],
             }
-            await self._run(self._client.set_bucket_policy, self._bucket, json.dumps(policy))
+            await self._run(
+                self._client.set_bucket_policy, self._bucket, json.dumps(policy)
+            )
 
     async def upload_image(self, data: bytes, content_type: str) -> str:
         if content_type not in self.ALLOWED_TYPES:

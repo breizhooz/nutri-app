@@ -40,7 +40,9 @@ async def get_me(
     return current_user
 
 
-@router.post("/me/password", response_model=PasswordResetMessage, status_code=status.HTTP_200_OK)
+@router.post(
+    "/me/password", response_model=PasswordResetMessage, status_code=status.HTTP_200_OK
+)
 async def change_password(
     data: PasswordChangeSchema,
     current_user: User = Depends(get_current_user),

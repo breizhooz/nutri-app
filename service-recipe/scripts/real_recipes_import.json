@@ -1,0 +1,6077 @@
+{
+  "created_by_user_id": "a3f1c2d4-5678-90ab-cdef-1234567890ab",
+  "ingredients": [
+    {
+      "name": "Œuf entier",
+      "tags": [
+        "enums.type_of_ingredient.egg"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 155.0,
+      "proteins_per_100g": 13.0,
+      "carbs_per_100g": 1.1,
+      "fats_per_100g": 11.0
+    },
+    {
+      "name": "Beurre",
+      "tags": [
+        "enums.type_of_ingredient.dairy"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 717.0,
+      "proteins_per_100g": 0.8,
+      "carbs_per_100g": 0.1,
+      "fats_per_100g": 81.0
+    },
+    {
+      "name": "Flocons d'avoine",
+      "tags": [
+        "enums.type_of_ingredient.grain"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 389.0,
+      "proteins_per_100g": 16.9,
+      "carbs_per_100g": 66.3,
+      "fats_per_100g": 6.9
+    },
+    {
+      "name": "Lait demi-écrémé",
+      "tags": [
+        "enums.type_of_ingredient.dairy"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 50.0,
+      "proteins_per_100g": 3.3,
+      "carbs_per_100g": 4.8,
+      "fats_per_100g": 1.6
+    },
+    {
+      "name": "Banane",
+      "tags": [
+        "enums.type_of_ingredient.fruit"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 89.0,
+      "proteins_per_100g": 1.1,
+      "carbs_per_100g": 23.0,
+      "fats_per_100g": 0.3
+    },
+    {
+      "name": "Pain complet",
+      "tags": [
+        "enums.type_of_ingredient.grain"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 247.0,
+      "proteins_per_100g": 9.0,
+      "carbs_per_100g": 41.0,
+      "fats_per_100g": 3.4
+    },
+    {
+      "name": "Miel",
+      "tags": [
+        "enums.type_of_ingredient.sugar"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 304.0,
+      "proteins_per_100g": 0.3,
+      "carbs_per_100g": 82.0,
+      "fats_per_100g": 0.0
+    },
+    {
+      "name": "Huile d'olive",
+      "tags": [
+        "enums.type_of_ingredient.fat"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 884.0,
+      "proteins_per_100g": 0.0,
+      "carbs_per_100g": 0.0,
+      "fats_per_100g": 100.0
+    },
+    {
+      "name": "Tomate",
+      "tags": [
+        "enums.type_of_ingredient.vegetable"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 18.0,
+      "proteins_per_100g": 0.9,
+      "carbs_per_100g": 3.9,
+      "fats_per_100g": 0.2
+    },
+    {
+      "name": "Carotte",
+      "tags": [
+        "enums.type_of_ingredient.vegetable"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 41.0,
+      "proteins_per_100g": 0.9,
+      "carbs_per_100g": 10.0,
+      "fats_per_100g": 0.2
+    },
+    {
+      "name": "Concombre",
+      "tags": [
+        "enums.type_of_ingredient.vegetable"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 15.0,
+      "proteins_per_100g": 0.7,
+      "carbs_per_100g": 3.6,
+      "fats_per_100g": 0.1
+    },
+    {
+      "name": "Crème fraîche 30%",
+      "tags": [
+        "enums.type_of_ingredient.dairy"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 292.0,
+      "proteins_per_100g": 2.4,
+      "carbs_per_100g": 3.0,
+      "fats_per_100g": 30.0
+    },
+    {
+      "name": "Avocat",
+      "tags": [
+        "enums.type_of_ingredient.fruit"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 160.0,
+      "proteins_per_100g": 2.0,
+      "carbs_per_100g": 9.5,
+      "fats_per_100g": 15.0
+    },
+    {
+      "name": "Thon au naturel (boite)",
+      "tags": [
+        "enums.type_of_ingredient.fish"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 116.0,
+      "proteins_per_100g": 26.0,
+      "carbs_per_100g": 0.0,
+      "fats_per_100g": 1.0
+    },
+    {
+      "name": "Lentilles vertes",
+      "tags": [
+        "enums.type_of_ingredient.legume"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 352.0,
+      "proteins_per_100g": 24.0,
+      "carbs_per_100g": 63.0,
+      "fats_per_100g": 1.1
+    },
+    {
+      "name": "Blanc de poulet",
+      "tags": [
+        "enums.type_of_ingredient.meat"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 165.0,
+      "proteins_per_100g": 31.0,
+      "carbs_per_100g": 0.0,
+      "fats_per_100g": 3.6
+    },
+    {
+      "name": "Brocoli",
+      "tags": [
+        "enums.type_of_ingredient.vegetable"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 34.0,
+      "proteins_per_100g": 2.8,
+      "carbs_per_100g": 7.0,
+      "fats_per_100g": 0.4
+    },
+    {
+      "name": "Pavé de saumon",
+      "tags": [
+        "enums.type_of_ingredient.fish"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 208.0,
+      "proteins_per_100g": 20.0,
+      "carbs_per_100g": 0.0,
+      "fats_per_100g": 13.0
+    },
+    {
+      "name": "Riz arborio",
+      "tags": [
+        "enums.type_of_ingredient.grain"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 350.0,
+      "proteins_per_100g": 7.0,
+      "carbs_per_100g": 78.0,
+      "fats_per_100g": 0.6
+    },
+    {
+      "name": "Pâtes",
+      "tags": [
+        "enums.type_of_ingredient.grain"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 350.0,
+      "proteins_per_100g": 13.0,
+      "carbs_per_100g": 70.0,
+      "fats_per_100g": 1.5
+    },
+    {
+      "name": "Parmesan",
+      "tags": [
+        "enums.type_of_ingredient.dairy"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 431.0,
+      "proteins_per_100g": 38.0,
+      "carbs_per_100g": 4.1,
+      "fats_per_100g": 29.0
+    },
+    {
+      "name": "Champignons de Paris",
+      "tags": [
+        "enums.type_of_ingredient.vegetable"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 22.0,
+      "proteins_per_100g": 3.1,
+      "carbs_per_100g": 3.3,
+      "fats_per_100g": 0.3
+    },
+    {
+      "name": "Épinards frais",
+      "tags": [
+        "enums.type_of_ingredient.vegetable"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 23.0,
+      "proteins_per_100g": 2.9,
+      "carbs_per_100g": 3.6,
+      "fats_per_100g": 0.4
+    },
+    {
+      "name": "Patate douce",
+      "tags": [
+        "enums.type_of_ingredient.vegetable"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 86.0,
+      "proteins_per_100g": 1.6,
+      "carbs_per_100g": 20.0,
+      "fats_per_100g": 0.1
+    },
+    {
+      "name": "Quinoa",
+      "tags": [
+        "enums.type_of_ingredient.grain"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 368.0,
+      "proteins_per_100g": 14.0,
+      "carbs_per_100g": 64.0,
+      "fats_per_100g": 6.0
+    },
+    {
+      "name": "Feta",
+      "tags": [
+        "enums.type_of_ingredient.dairy"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 264.0,
+      "proteins_per_100g": 14.0,
+      "carbs_per_100g": 4.1,
+      "fats_per_100g": 21.0
+    },
+    {
+      "name": "Fromage blanc 3%",
+      "tags": [
+        "enums.type_of_ingredient.dairy"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 75.0,
+      "proteins_per_100g": 8.0,
+      "carbs_per_100g": 4.0,
+      "fats_per_100g": 3.0
+    },
+    {
+      "name": "Pomme",
+      "tags": [
+        "enums.type_of_ingredient.fruit"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 52.0,
+      "proteins_per_100g": 0.3,
+      "carbs_per_100g": 14.0,
+      "fats_per_100g": 0.2
+    },
+    {
+      "name": "Amandes",
+      "tags": [
+        "enums.type_of_ingredient.nut"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 579.0,
+      "proteins_per_100g": 21.0,
+      "carbs_per_100g": 22.0,
+      "fats_per_100g": 50.0
+    },
+    {
+      "name": "Fraises",
+      "tags": [
+        "enums.type_of_ingredient.fruit"
+      ],
+      "free_tags": [],
+      "calories_per_100g": 32.0,
+      "proteins_per_100g": 0.7,
+      "carbs_per_100g": 7.7,
+      "fats_per_100g": 0.3
+    }
+  ],
+  "recipes": [
+    {
+      "title": "Œuf sur le plat",
+      "description": "Une recette simple, saine et équilibrée de : œuf sur le plat.",
+      "instructions": "1. Chauffer le beurre.\n2. Cuire l'œuf sur le plat 3 min.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 108.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Porridge d'avoine aux fruits",
+      "description": "Une recette simple, saine et équilibrée de : porridge d'avoine aux fruits.",
+      "instructions": "1. Mélanger l'avoine et le lait.\n2. Chauffer 3 min et ajouter les fruits.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "fibres",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Flocons d'avoine",
+          "quantity": 47.5,
+          "unit": "g"
+        },
+        {
+          "name": "Lait demi-écrémé",
+          "quantity": 190.0,
+          "unit": "g"
+        },
+        {
+          "name": "Banane",
+          "quantity": 95.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Œufs brouillés simples",
+      "description": "Une recette simple, saine et équilibrée de : œufs brouillés simples.",
+      "instructions": "1. Battre les œufs.\n2. Cuire à feu doux en remuant.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "protéines",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 180.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Tartine de pain complet au miel",
+      "description": "Une recette simple, saine et équilibrée de : tartine de pain complet au miel.",
+      "instructions": "1. Griller le pain.\n2. Tartiner le beurre et le miel.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "glucides",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pain complet",
+          "quantity": 63.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.5,
+          "unit": "g"
+        },
+        {
+          "name": "Miel",
+          "quantity": 15.8,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Omelette nature minute",
+      "description": "Une recette simple, saine et équilibrée de : omelette nature minute.",
+      "instructions": "1. Battre les œufs.\n2. Cuire 4 minutes à la poêle.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "keto",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 108.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 4.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de tomates simple",
+      "description": "Une recette simple, saine et équilibrée de : salade de tomates simple.",
+      "instructions": "1. Couper les tomates.\n2. Assaisonner d'huile, sel et poivre.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "frais",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Tomate",
+          "quantity": 190.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 9.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Carottes râpées au citron",
+      "description": "Une recette simple, saine et équilibrée de : carottes râpées au citron.",
+      "instructions": "1. Râper les carottes.\n2. Ajouter l'huile d'olive et un jus de citron.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "léger",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Carotte",
+          "quantity": 150.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 10.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de concombre à la crème",
+      "description": "Une recette simple, saine et équilibrée de : salade de concombre à la crème.",
+      "instructions": "1. Trancher le concombre.\n2. Mélanger avec la crème.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 15,
+      "servings": 2,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "frais",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Concombre",
+          "quantity": 262.5,
+          "unit": "g"
+        },
+        {
+          "name": "Crème fraîche 30%",
+          "quantity": 52.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Entrée Avocat et thon",
+      "description": "Une recette simple, saine et équilibrée de : entrée avocat et thon.",
+      "instructions": "1. Couper l'avocat en deux.\n2. Garnir le centre avec le thon émietté.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "healthy",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Avocat",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Thon au naturel (boite)",
+          "quantity": 72.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de lentilles tièdes",
+      "description": "Une recette simple, saine et équilibrée de : salade de lentilles tièdes.",
+      "instructions": "1. Cuire les lentilles.\n2. Servir tiède avec l'huile.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 25,
+      "servings": 2,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "fibres",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Lentilles vertes",
+          "quantity": 114.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 14.2,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Blanc de poulet et brocoli",
+      "description": "Une recette simple, saine et équilibrée de : blanc de poulet et brocoli.",
+      "instructions": "1. Saisir le poulet.\n2. Cuire le brocoli à la vapeur.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "diet",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Blanc de poulet",
+          "quantity": 150.0,
+          "unit": "g"
+        },
+        {
+          "name": "Brocoli",
+          "quantity": 200.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 10.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Saumon grillé et riz",
+      "description": "Une recette simple, saine et équilibrée de : saumon grillé et riz.",
+      "instructions": "1. Cuire le riz.\n2. Griller le saumon côté peau.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "omega3",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pavé de saumon",
+          "quantity": 147.0,
+          "unit": "g"
+        },
+        {
+          "name": "Riz arborio",
+          "quantity": 84.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Pâtes simples au parmesan",
+      "description": "Une recette simple, saine et équilibrée de : pâtes simples au parmesan.",
+      "instructions": "1. Cuire les pâtes al dente.\n2. Mélanger avec le beurre et le parmesan.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "classic",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pâtes",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 13.5,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 18.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Risotto aux champignons complet",
+      "description": "Une recette simple, saine et équilibrée de : risotto aux champignons complet.",
+      "instructions": "1. Nacer le riz.\n2. Ajouter du bouillon louche par louche avec les champignons.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 20,
+      "servings": 2,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "crémeux",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Riz arborio",
+          "quantity": 152.0,
+          "unit": "g"
+        },
+        {
+          "name": "Champignons de Paris",
+          "quantity": 190.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 28.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Omelette aux épinards frais",
+      "description": "Une recette simple, saine et équilibrée de : omelette aux épinards frais.",
+      "instructions": "1. Tomber les épinards au beurre.\n2. Verser les œufs battus dessus.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "low-carb",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 180.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 100.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Poulet rôti et patates douces",
+      "description": "Une recette simple, saine et équilibrée de : poulet rôti et patates douces.",
+      "instructions": "1. Couper la patate douce en cubes.\n2. Enfourner le tout avec l'huile à 200°C.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 5,
+      "servings": 2,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "repas complet",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Blanc de poulet",
+          "quantity": 315.0,
+          "unit": "g"
+        },
+        {
+          "name": "Patate douce",
+          "quantity": 420.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 21.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Poêlée de riz au thon et tomates",
+      "description": "Une recette simple, saine et équilibrée de : poêlée de riz au thon et tomates.",
+      "instructions": "1. Cuire le riz.\n2. Sauter à la poêle avec le thon et les tomates.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "étudiant",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Riz arborio",
+          "quantity": 72.0,
+          "unit": "g"
+        },
+        {
+          "name": "Thon au naturel (boite)",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Tomate",
+          "quantity": 135.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de quinoa et feta",
+      "description": "Une recette simple, saine et équilibrée de : salade de quinoa et feta.",
+      "instructions": "1. Cuire le quinoa et laisser refroidir.\n2. Mélanger avec la feta et le concombre.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "végétarien",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Quinoa",
+          "quantity": 76.0,
+          "unit": "g"
+        },
+        {
+          "name": "Feta",
+          "quantity": 57.0,
+          "unit": "g"
+        },
+        {
+          "name": "Concombre",
+          "quantity": 95.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Pâtes au thon et à la crème",
+      "description": "Une recette simple, saine et équilibrée de : pâtes au thon et à la crème.",
+      "instructions": "1. Cuire les pâtes.\n2. Ajouter le thon et la crème en fin de cuisson.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pâtes",
+          "quantity": 100.0,
+          "unit": "g"
+        },
+        {
+          "name": "Thon au naturel (boite)",
+          "quantity": 80.0,
+          "unit": "g"
+        },
+        {
+          "name": "Crème fraîche 30%",
+          "quantity": 40.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Saumon vapeur et brocoli",
+      "description": "Une recette simple, saine et équilibrée de : saumon vapeur et brocoli.",
+      "instructions": "1. Placer le saumon et le brocoli dans le cuiseur vapeur.\n2. Cuire 10 min.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "clean-eating",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pavé de saumon",
+          "quantity": 136.5,
+          "unit": "g"
+        },
+        {
+          "name": "Brocoli",
+          "quantity": 262.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Fromage blanc au miel",
+      "description": "Une recette simple, saine et équilibrée de : fromage blanc au miel.",
+      "instructions": "1. Servir le fromage blanc frais.\n2. Arroser de miel.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "sucré",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Fromage blanc 3%",
+          "quantity": 180.0,
+          "unit": "g"
+        },
+        {
+          "name": "Miel",
+          "quantity": 13.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Poignée d'amandes et pomme",
+      "description": "Une recette simple, saine et équilibrée de : poignée d'amandes et pomme.",
+      "instructions": "1. Couper la pomme en quartiers.\n2. Déguster avec les amandes.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "sain",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pomme",
+          "quantity": 142.5,
+          "unit": "g"
+        },
+        {
+          "name": "Amandes",
+          "quantity": 28.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Fromage blanc aux fraises",
+      "description": "Une recette simple, saine et équilibrée de : fromage blanc aux fraises.",
+      "instructions": "1. Équeuter et couper les fraises.\n2. Ajouter au fromage blanc.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "léger",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Fromage blanc 3%",
+          "quantity": 200.0,
+          "unit": "g"
+        },
+        {
+          "name": "Fraises",
+          "quantity": 100.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Banane et amandes",
+      "description": "Une recette simple, saine et équilibrée de : banane et amandes.",
+      "instructions": "1. Éplucher la banane.\n2. Consommer avant le sport avec les amandes.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "énergie",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Banane",
+          "quantity": 115.5,
+          "unit": "g"
+        },
+        {
+          "name": "Amandes",
+          "quantity": 21.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Tartine d'avocat simple",
+      "description": "Une recette simple, saine et équilibrée de : tartine d'avocat simple.",
+      "instructions": "1. Toaster le pain complet.\n2. Écraser l'avocat sur la tranche.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "salé",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pain complet",
+          "quantity": 45.0,
+          "unit": "g"
+        },
+        {
+          "name": "Avocat",
+          "quantity": 54.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Lentilles au poulet",
+      "description": "Une recette simple, saine et équilibrée de : lentilles au poulet.",
+      "instructions": "1. Cuire les lentilles.\n2. Poêler le poulet en dés et assembler.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 5,
+      "servings": 2,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "protéines",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Lentilles vertes",
+          "quantity": 152.0,
+          "unit": "g"
+        },
+        {
+          "name": "Blanc de poulet",
+          "quantity": 237.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de feta et tomates",
+      "description": "Une recette simple, saine et équilibrée de : salade de feta et tomates.",
+      "instructions": "1. Couper tomates et feta.\n2. Verser l'huile d'olive.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "grec",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Tomate",
+          "quantity": 200.0,
+          "unit": "g"
+        },
+        {
+          "name": "Feta",
+          "quantity": 50.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 10.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Porridge d'avoine aux pommes",
+      "description": "Une recette simple, saine et équilibrée de : porridge d'avoine aux pommes.",
+      "instructions": "1. Cuire l'avoine dans le lait avec des dés de pomme.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "automne",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Flocons d'avoine",
+          "quantity": 52.5,
+          "unit": "g"
+        },
+        {
+          "name": "Lait demi-écrémé",
+          "quantity": 210.0,
+          "unit": "g"
+        },
+        {
+          "name": "Pomme",
+          "quantity": 105.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Œufs au miroir aux champignons",
+      "description": "Une recette simple, saine et équilibrée de : œufs au miroir aux champignons.",
+      "instructions": "1. Sauter les champignons.\n2. Casser les œufs par-dessus.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "brunch",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 108.0,
+          "unit": "g"
+        },
+        {
+          "name": "Champignons de Paris",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Quinoa sauté aux légumes",
+      "description": "Une recette simple, saine et équilibrée de : quinoa sauté aux légumes.",
+      "instructions": "1. Cuire le quinoa.\n2. Sauter au wok avec les légumes émincés.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "vegan",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Quinoa",
+          "quantity": 76.0,
+          "unit": "g"
+        },
+        {
+          "name": "Carotte",
+          "quantity": 76.0,
+          "unit": "g"
+        },
+        {
+          "name": "Brocoli",
+          "quantity": 95.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Œuf sur le plat touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : œuf sur le plat touche de parmesan.",
+      "instructions": "1. Chauffer le beurre.\n2. Cuire l'œuf sur le plat 3 min.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 120.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 15.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Porridge d'avoine aux fruits touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : porridge d'avoine aux fruits touche de parmesan.",
+      "instructions": "1. Mélanger l'avoine et le lait.\n2. Chauffer 3 min et ajouter les fruits.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "fibres",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Flocons d'avoine",
+          "quantity": 52.5,
+          "unit": "g"
+        },
+        {
+          "name": "Lait demi-écrémé",
+          "quantity": 210.0,
+          "unit": "g"
+        },
+        {
+          "name": "Banane",
+          "quantity": 105.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 15.8,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Œufs brouillés simples touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : œufs brouillés simples touche de parmesan.",
+      "instructions": "1. Battre les œufs.\n2. Cuire à feu doux en remuant.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "protéines",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 162.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 13.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Tartine de pain complet au miel touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : tartine de pain complet au miel touche de parmesan.",
+      "instructions": "1. Griller le pain.\n2. Tartiner le beurre et le miel.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "glucides",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pain complet",
+          "quantity": 57.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.5,
+          "unit": "g"
+        },
+        {
+          "name": "Miel",
+          "quantity": 14.2,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 14.2,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Omelette nature minute touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : omelette nature minute touche de parmesan.",
+      "instructions": "1. Battre les œufs.\n2. Cuire 4 minutes à la poêle.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "keto",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 120.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 5.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 15.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de tomates simple touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : salade de tomates simple touche de parmesan.",
+      "instructions": "1. Couper les tomates.\n2. Assaisonner d'huile, sel et poivre.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "frais",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Tomate",
+          "quantity": 210.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 10.5,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 15.8,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Carottes râpées au citron touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : carottes râpées au citron touche de parmesan.",
+      "instructions": "1. Râper les carottes.\n2. Ajouter l'huile d'olive et un jus de citron.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "léger",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Carotte",
+          "quantity": 135.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 9.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 13.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de concombre à la crème touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : salade de concombre à la crème touche de parmesan.",
+      "instructions": "1. Trancher le concombre.\n2. Mélanger avec la crème.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 15,
+      "servings": 2,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "frais",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Concombre",
+          "quantity": 237.5,
+          "unit": "g"
+        },
+        {
+          "name": "Crème fraîche 30%",
+          "quantity": 47.5,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 14.2,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Entrée Avocat et thon touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : entrée avocat et thon touche de parmesan.",
+      "instructions": "1. Couper l'avocat en deux.\n2. Garnir le centre avec le thon émietté.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "healthy",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Avocat",
+          "quantity": 100.0,
+          "unit": "g"
+        },
+        {
+          "name": "Thon au naturel (boite)",
+          "quantity": 80.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 15.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de lentilles tièdes touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : salade de lentilles tièdes touche de parmesan.",
+      "instructions": "1. Cuire les lentilles.\n2. Servir tiède avec l'huile.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 25,
+      "servings": 2,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "fibres",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Lentilles vertes",
+          "quantity": 126.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 15.8,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 15.8,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Blanc de poulet et brocoli touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : blanc de poulet et brocoli touche de parmesan.",
+      "instructions": "1. Saisir le poulet.\n2. Cuire le brocoli à la vapeur.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "diet",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Blanc de poulet",
+          "quantity": 135.0,
+          "unit": "g"
+        },
+        {
+          "name": "Brocoli",
+          "quantity": 180.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 9.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 13.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Saumon grillé et riz touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : saumon grillé et riz touche de parmesan.",
+      "instructions": "1. Cuire le riz.\n2. Griller le saumon côté peau.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "omega3",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pavé de saumon",
+          "quantity": 133.0,
+          "unit": "g"
+        },
+        {
+          "name": "Riz arborio",
+          "quantity": 76.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 14.2,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Pâtes simples au parmesan touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : pâtes simples au parmesan touche de parmesan.",
+      "instructions": "1. Cuire les pâtes al dente.\n2. Mélanger avec le beurre et le parmesan.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "classic",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pâtes",
+          "quantity": 100.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 15.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 20.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 15.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Risotto aux champignons complet touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : risotto aux champignons complet touche de parmesan.",
+      "instructions": "1. Nacer le riz.\n2. Ajouter du bouillon louche par louche avec les champignons.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 20,
+      "servings": 2,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "crémeux",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Riz arborio",
+          "quantity": 168.0,
+          "unit": "g"
+        },
+        {
+          "name": "Champignons de Paris",
+          "quantity": 210.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 31.5,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 15.8,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Omelette aux épinards frais touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : omelette aux épinards frais touche de parmesan.",
+      "instructions": "1. Tomber les épinards au beurre.\n2. Verser les œufs battus dessus.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "low-carb",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 162.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 13.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Poulet rôti et patates douces touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : poulet rôti et patates douces touche de parmesan.",
+      "instructions": "1. Couper la patate douce en cubes.\n2. Enfourner le tout avec l'huile à 200°C.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 5,
+      "servings": 2,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "repas complet",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Blanc de poulet",
+          "quantity": 285.0,
+          "unit": "g"
+        },
+        {
+          "name": "Patate douce",
+          "quantity": 380.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 19.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 14.2,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Poêlée de riz au thon et tomates touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : poêlée de riz au thon et tomates touche de parmesan.",
+      "instructions": "1. Cuire le riz.\n2. Sauter à la poêle avec le thon et les tomates.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "étudiant",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Riz arborio",
+          "quantity": 80.0,
+          "unit": "g"
+        },
+        {
+          "name": "Thon au naturel (boite)",
+          "quantity": 100.0,
+          "unit": "g"
+        },
+        {
+          "name": "Tomate",
+          "quantity": 150.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 15.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de quinoa et feta touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : salade de quinoa et feta touche de parmesan.",
+      "instructions": "1. Cuire le quinoa et laisser refroidir.\n2. Mélanger avec la feta et le concombre.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "végétarien",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Quinoa",
+          "quantity": 84.0,
+          "unit": "g"
+        },
+        {
+          "name": "Feta",
+          "quantity": 63.0,
+          "unit": "g"
+        },
+        {
+          "name": "Concombre",
+          "quantity": 105.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 15.8,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Pâtes au thon et à la crème touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : pâtes au thon et à la crème touche de parmesan.",
+      "instructions": "1. Cuire les pâtes.\n2. Ajouter le thon et la crème en fin de cuisson.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pâtes",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Thon au naturel (boite)",
+          "quantity": 72.0,
+          "unit": "g"
+        },
+        {
+          "name": "Crème fraîche 30%",
+          "quantity": 36.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 13.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Saumon vapeur et brocoli touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : saumon vapeur et brocoli touche de parmesan.",
+      "instructions": "1. Placer le saumon et le brocoli dans le cuiseur vapeur.\n2. Cuire 10 min.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "clean-eating",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pavé de saumon",
+          "quantity": 123.5,
+          "unit": "g"
+        },
+        {
+          "name": "Brocoli",
+          "quantity": 237.5,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 14.2,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Fromage blanc au miel touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : fromage blanc au miel touche de parmesan.",
+      "instructions": "1. Servir le fromage blanc frais.\n2. Arroser de miel.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "sucré",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Fromage blanc 3%",
+          "quantity": 200.0,
+          "unit": "g"
+        },
+        {
+          "name": "Miel",
+          "quantity": 15.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 15.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Poignée d'amandes et pomme touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : poignée d'amandes et pomme touche de parmesan.",
+      "instructions": "1. Couper la pomme en quartiers.\n2. Déguster avec les amandes.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "sain",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pomme",
+          "quantity": 157.5,
+          "unit": "g"
+        },
+        {
+          "name": "Amandes",
+          "quantity": 31.5,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 15.8,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Fromage blanc aux fraises touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : fromage blanc aux fraises touche de parmesan.",
+      "instructions": "1. Équeuter et couper les fraises.\n2. Ajouter au fromage blanc.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "léger",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Fromage blanc 3%",
+          "quantity": 180.0,
+          "unit": "g"
+        },
+        {
+          "name": "Fraises",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 13.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Banane et amandes touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : banane et amandes touche de parmesan.",
+      "instructions": "1. Éplucher la banane.\n2. Consommer avant le sport avec les amandes.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "énergie",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Banane",
+          "quantity": 104.5,
+          "unit": "g"
+        },
+        {
+          "name": "Amandes",
+          "quantity": 19.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 14.2,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Tartine d'avocat simple touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : tartine d'avocat simple touche de parmesan.",
+      "instructions": "1. Toaster le pain complet.\n2. Écraser l'avocat sur la tranche.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "salé",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pain complet",
+          "quantity": 50.0,
+          "unit": "g"
+        },
+        {
+          "name": "Avocat",
+          "quantity": 60.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 15.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Lentilles au poulet touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : lentilles au poulet touche de parmesan.",
+      "instructions": "1. Cuire les lentilles.\n2. Poêler le poulet en dés et assembler.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 5,
+      "servings": 2,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "protéines",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Lentilles vertes",
+          "quantity": 168.0,
+          "unit": "g"
+        },
+        {
+          "name": "Blanc de poulet",
+          "quantity": 262.5,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 15.8,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de feta et tomates touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : salade de feta et tomates touche de parmesan.",
+      "instructions": "1. Couper tomates et feta.\n2. Verser l'huile d'olive.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "grec",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Tomate",
+          "quantity": 180.0,
+          "unit": "g"
+        },
+        {
+          "name": "Feta",
+          "quantity": 45.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 9.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 13.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Porridge d'avoine aux pommes touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : porridge d'avoine aux pommes touche de parmesan.",
+      "instructions": "1. Cuire l'avoine dans le lait avec des dés de pomme.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "automne",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Flocons d'avoine",
+          "quantity": 47.5,
+          "unit": "g"
+        },
+        {
+          "name": "Lait demi-écrémé",
+          "quantity": 190.0,
+          "unit": "g"
+        },
+        {
+          "name": "Pomme",
+          "quantity": 95.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 14.2,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Œufs au miroir aux champignons touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : œufs au miroir aux champignons touche de parmesan.",
+      "instructions": "1. Sauter les champignons.\n2. Casser les œufs par-dessus.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "brunch",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 120.0,
+          "unit": "g"
+        },
+        {
+          "name": "Champignons de Paris",
+          "quantity": 100.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 15.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Quinoa sauté aux légumes touche de parmesan",
+      "description": "Une recette simple, saine et équilibrée de : quinoa sauté aux légumes touche de parmesan.",
+      "instructions": "1. Cuire le quinoa.\n2. Sauter au wok avec les légumes émincés.\n3. Saupoudrer de parmesan râpé au moment de servir.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "vegan",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Quinoa",
+          "quantity": 84.0,
+          "unit": "g"
+        },
+        {
+          "name": "Carotte",
+          "quantity": 84.0,
+          "unit": "g"
+        },
+        {
+          "name": "Brocoli",
+          "quantity": 105.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 15.8,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Œuf sur le plat sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : œuf sur le plat sur lit d'épinards.",
+      "instructions": "1. Chauffer le beurre.\n2. Cuire l'œuf sur le plat 3 min.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 108.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 45.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Porridge d'avoine aux fruits sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : porridge d'avoine aux fruits sur lit d'épinards.",
+      "instructions": "1. Mélanger l'avoine et le lait.\n2. Chauffer 3 min et ajouter les fruits.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "fibres",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Flocons d'avoine",
+          "quantity": 47.5,
+          "unit": "g"
+        },
+        {
+          "name": "Lait demi-écrémé",
+          "quantity": 190.0,
+          "unit": "g"
+        },
+        {
+          "name": "Banane",
+          "quantity": 95.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 47.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Œufs brouillés simples sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : œufs brouillés simples sur lit d'épinards.",
+      "instructions": "1. Battre les œufs.\n2. Cuire à feu doux en remuant.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "protéines",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 180.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 50.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Tartine de pain complet au miel sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : tartine de pain complet au miel sur lit d'épinards.",
+      "instructions": "1. Griller le pain.\n2. Tartiner le beurre et le miel.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "glucides",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pain complet",
+          "quantity": 63.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.5,
+          "unit": "g"
+        },
+        {
+          "name": "Miel",
+          "quantity": 15.8,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 52.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Omelette nature minute sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : omelette nature minute sur lit d'épinards.",
+      "instructions": "1. Battre les œufs.\n2. Cuire 4 minutes à la poêle.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "keto",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 108.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 4.5,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 45.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de tomates simple sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : salade de tomates simple sur lit d'épinards.",
+      "instructions": "1. Couper les tomates.\n2. Assaisonner d'huile, sel et poivre.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "frais",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Tomate",
+          "quantity": 190.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 9.5,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 47.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Carottes râpées au citron sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : carottes râpées au citron sur lit d'épinards.",
+      "instructions": "1. Râper les carottes.\n2. Ajouter l'huile d'olive et un jus de citron.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "léger",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Carotte",
+          "quantity": 150.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 10.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 50.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de concombre à la crème sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : salade de concombre à la crème sur lit d'épinards.",
+      "instructions": "1. Trancher le concombre.\n2. Mélanger avec la crème.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 15,
+      "servings": 2,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "frais",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Concombre",
+          "quantity": 262.5,
+          "unit": "g"
+        },
+        {
+          "name": "Crème fraîche 30%",
+          "quantity": 52.5,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 52.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Entrée Avocat et thon sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : entrée avocat et thon sur lit d'épinards.",
+      "instructions": "1. Couper l'avocat en deux.\n2. Garnir le centre avec le thon émietté.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "healthy",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Avocat",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Thon au naturel (boite)",
+          "quantity": 72.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 45.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de lentilles tièdes sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : salade de lentilles tièdes sur lit d'épinards.",
+      "instructions": "1. Cuire les lentilles.\n2. Servir tiède avec l'huile.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 25,
+      "servings": 2,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "fibres",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Lentilles vertes",
+          "quantity": 114.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 14.2,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 47.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Blanc de poulet et brocoli sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : blanc de poulet et brocoli sur lit d'épinards.",
+      "instructions": "1. Saisir le poulet.\n2. Cuire le brocoli à la vapeur.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "diet",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Blanc de poulet",
+          "quantity": 150.0,
+          "unit": "g"
+        },
+        {
+          "name": "Brocoli",
+          "quantity": 200.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 10.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 50.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Saumon grillé et riz sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : saumon grillé et riz sur lit d'épinards.",
+      "instructions": "1. Cuire le riz.\n2. Griller le saumon côté peau.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "omega3",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pavé de saumon",
+          "quantity": 147.0,
+          "unit": "g"
+        },
+        {
+          "name": "Riz arborio",
+          "quantity": 84.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 52.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Pâtes simples au parmesan sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : pâtes simples au parmesan sur lit d'épinards.",
+      "instructions": "1. Cuire les pâtes al dente.\n2. Mélanger avec le beurre et le parmesan.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "classic",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pâtes",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 13.5,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 18.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 45.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Risotto aux champignons complet sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : risotto aux champignons complet sur lit d'épinards.",
+      "instructions": "1. Nacer le riz.\n2. Ajouter du bouillon louche par louche avec les champignons.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 20,
+      "servings": 2,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "crémeux",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Riz arborio",
+          "quantity": 152.0,
+          "unit": "g"
+        },
+        {
+          "name": "Champignons de Paris",
+          "quantity": 190.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 28.5,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 47.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Omelette aux épinards frais sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : omelette aux épinards frais sur lit d'épinards.",
+      "instructions": "1. Tomber les épinards au beurre.\n2. Verser les œufs battus dessus.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "low-carb",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 180.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 100.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 50.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Poulet rôti et patates douces sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : poulet rôti et patates douces sur lit d'épinards.",
+      "instructions": "1. Couper la patate douce en cubes.\n2. Enfourner le tout avec l'huile à 200°C.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 5,
+      "servings": 2,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "repas complet",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Blanc de poulet",
+          "quantity": 315.0,
+          "unit": "g"
+        },
+        {
+          "name": "Patate douce",
+          "quantity": 420.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 21.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 52.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Poêlée de riz au thon et tomates sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : poêlée de riz au thon et tomates sur lit d'épinards.",
+      "instructions": "1. Cuire le riz.\n2. Sauter à la poêle avec le thon et les tomates.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "étudiant",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Riz arborio",
+          "quantity": 72.0,
+          "unit": "g"
+        },
+        {
+          "name": "Thon au naturel (boite)",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Tomate",
+          "quantity": 135.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 45.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de quinoa et feta sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : salade de quinoa et feta sur lit d'épinards.",
+      "instructions": "1. Cuire le quinoa et laisser refroidir.\n2. Mélanger avec la feta et le concombre.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "végétarien",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Quinoa",
+          "quantity": 76.0,
+          "unit": "g"
+        },
+        {
+          "name": "Feta",
+          "quantity": 57.0,
+          "unit": "g"
+        },
+        {
+          "name": "Concombre",
+          "quantity": 95.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 47.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Pâtes au thon et à la crème sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : pâtes au thon et à la crème sur lit d'épinards.",
+      "instructions": "1. Cuire les pâtes.\n2. Ajouter le thon et la crème en fin de cuisson.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pâtes",
+          "quantity": 100.0,
+          "unit": "g"
+        },
+        {
+          "name": "Thon au naturel (boite)",
+          "quantity": 80.0,
+          "unit": "g"
+        },
+        {
+          "name": "Crème fraîche 30%",
+          "quantity": 40.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 50.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Saumon vapeur et brocoli sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : saumon vapeur et brocoli sur lit d'épinards.",
+      "instructions": "1. Placer le saumon et le brocoli dans le cuiseur vapeur.\n2. Cuire 10 min.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "clean-eating",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pavé de saumon",
+          "quantity": 136.5,
+          "unit": "g"
+        },
+        {
+          "name": "Brocoli",
+          "quantity": 262.5,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 52.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Fromage blanc au miel sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : fromage blanc au miel sur lit d'épinards.",
+      "instructions": "1. Servir le fromage blanc frais.\n2. Arroser de miel.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "sucré",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Fromage blanc 3%",
+          "quantity": 180.0,
+          "unit": "g"
+        },
+        {
+          "name": "Miel",
+          "quantity": 13.5,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 45.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Poignée d'amandes et pomme sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : poignée d'amandes et pomme sur lit d'épinards.",
+      "instructions": "1. Couper la pomme en quartiers.\n2. Déguster avec les amandes.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "sain",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pomme",
+          "quantity": 142.5,
+          "unit": "g"
+        },
+        {
+          "name": "Amandes",
+          "quantity": 28.5,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 47.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Fromage blanc aux fraises sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : fromage blanc aux fraises sur lit d'épinards.",
+      "instructions": "1. Équeuter et couper les fraises.\n2. Ajouter au fromage blanc.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "léger",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Fromage blanc 3%",
+          "quantity": 200.0,
+          "unit": "g"
+        },
+        {
+          "name": "Fraises",
+          "quantity": 100.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 50.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Banane et amandes sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : banane et amandes sur lit d'épinards.",
+      "instructions": "1. Éplucher la banane.\n2. Consommer avant le sport avec les amandes.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "énergie",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Banane",
+          "quantity": 115.5,
+          "unit": "g"
+        },
+        {
+          "name": "Amandes",
+          "quantity": 21.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 52.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Tartine d'avocat simple sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : tartine d'avocat simple sur lit d'épinards.",
+      "instructions": "1. Toaster le pain complet.\n2. Écraser l'avocat sur la tranche.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "salé",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pain complet",
+          "quantity": 45.0,
+          "unit": "g"
+        },
+        {
+          "name": "Avocat",
+          "quantity": 54.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 45.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Lentilles au poulet sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : lentilles au poulet sur lit d'épinards.",
+      "instructions": "1. Cuire les lentilles.\n2. Poêler le poulet en dés et assembler.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 5,
+      "servings": 2,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "protéines",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Lentilles vertes",
+          "quantity": 152.0,
+          "unit": "g"
+        },
+        {
+          "name": "Blanc de poulet",
+          "quantity": 237.5,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 47.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de feta et tomates sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : salade de feta et tomates sur lit d'épinards.",
+      "instructions": "1. Couper tomates et feta.\n2. Verser l'huile d'olive.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "grec",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Tomate",
+          "quantity": 200.0,
+          "unit": "g"
+        },
+        {
+          "name": "Feta",
+          "quantity": 50.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 10.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 50.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Porridge d'avoine aux pommes sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : porridge d'avoine aux pommes sur lit d'épinards.",
+      "instructions": "1. Cuire l'avoine dans le lait avec des dés de pomme.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "automne",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Flocons d'avoine",
+          "quantity": 52.5,
+          "unit": "g"
+        },
+        {
+          "name": "Lait demi-écrémé",
+          "quantity": 210.0,
+          "unit": "g"
+        },
+        {
+          "name": "Pomme",
+          "quantity": 105.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 52.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Œufs au miroir aux champignons sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : œufs au miroir aux champignons sur lit d'épinards.",
+      "instructions": "1. Sauter les champignons.\n2. Casser les œufs par-dessus.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "brunch",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 108.0,
+          "unit": "g"
+        },
+        {
+          "name": "Champignons de Paris",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 45.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Quinoa sauté aux légumes sur lit d'épinards",
+      "description": "Une recette simple, saine et équilibrée de : quinoa sauté aux légumes sur lit d'épinards.",
+      "instructions": "1. Cuire le quinoa.\n2. Sauter au wok avec les légumes émincés.\n3. Servir bien chaud sur un lit d'épinards frais.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "vegan",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Quinoa",
+          "quantity": 76.0,
+          "unit": "g"
+        },
+        {
+          "name": "Carotte",
+          "quantity": 76.0,
+          "unit": "g"
+        },
+        {
+          "name": "Brocoli",
+          "quantity": 95.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 47.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Œuf sur le plat et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : œuf sur le plat et filet d'huile d'olive.",
+      "instructions": "1. Chauffer le beurre.\n2. Cuire l'œuf sur le plat 3 min.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 120.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 8.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Porridge d'avoine aux fruits et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : porridge d'avoine aux fruits et filet d'huile d'olive.",
+      "instructions": "1. Mélanger l'avoine et le lait.\n2. Chauffer 3 min et ajouter les fruits.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "fibres",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Flocons d'avoine",
+          "quantity": 52.5,
+          "unit": "g"
+        },
+        {
+          "name": "Lait demi-écrémé",
+          "quantity": 210.0,
+          "unit": "g"
+        },
+        {
+          "name": "Banane",
+          "quantity": 105.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 8.4,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Œufs brouillés simples et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : œufs brouillés simples et filet d'huile d'olive.",
+      "instructions": "1. Battre les œufs.\n2. Cuire à feu doux en remuant.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "protéines",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 162.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 7.2,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Tartine de pain complet au miel et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : tartine de pain complet au miel et filet d'huile d'olive.",
+      "instructions": "1. Griller le pain.\n2. Tartiner le beurre et le miel.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "glucides",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pain complet",
+          "quantity": 57.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.5,
+          "unit": "g"
+        },
+        {
+          "name": "Miel",
+          "quantity": 14.2,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 7.6,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Omelette nature minute et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : omelette nature minute et filet d'huile d'olive.",
+      "instructions": "1. Battre les œufs.\n2. Cuire 4 minutes à la poêle.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "keto",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 120.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 5.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 8.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de tomates simple et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : salade de tomates simple et filet d'huile d'olive.",
+      "instructions": "1. Couper les tomates.\n2. Assaisonner d'huile, sel et poivre.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "frais",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Tomate",
+          "quantity": 210.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 10.5,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 8.4,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Carottes râpées au citron et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : carottes râpées au citron et filet d'huile d'olive.",
+      "instructions": "1. Râper les carottes.\n2. Ajouter l'huile d'olive et un jus de citron.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "léger",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Carotte",
+          "quantity": 135.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 9.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 7.2,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de concombre à la crème et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : salade de concombre à la crème et filet d'huile d'olive.",
+      "instructions": "1. Trancher le concombre.\n2. Mélanger avec la crème.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 15,
+      "servings": 2,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "frais",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Concombre",
+          "quantity": 237.5,
+          "unit": "g"
+        },
+        {
+          "name": "Crème fraîche 30%",
+          "quantity": 47.5,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 7.6,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Entrée Avocat et thon et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : entrée avocat et thon et filet d'huile d'olive.",
+      "instructions": "1. Couper l'avocat en deux.\n2. Garnir le centre avec le thon émietté.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "healthy",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Avocat",
+          "quantity": 100.0,
+          "unit": "g"
+        },
+        {
+          "name": "Thon au naturel (boite)",
+          "quantity": 80.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 8.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de lentilles tièdes et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : salade de lentilles tièdes et filet d'huile d'olive.",
+      "instructions": "1. Cuire les lentilles.\n2. Servir tiède avec l'huile.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 25,
+      "servings": 2,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "fibres",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Lentilles vertes",
+          "quantity": 126.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 15.8,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 8.4,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Blanc de poulet et brocoli et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : blanc de poulet et brocoli et filet d'huile d'olive.",
+      "instructions": "1. Saisir le poulet.\n2. Cuire le brocoli à la vapeur.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "diet",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Blanc de poulet",
+          "quantity": 135.0,
+          "unit": "g"
+        },
+        {
+          "name": "Brocoli",
+          "quantity": 180.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 9.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 7.2,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Saumon grillé et riz et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : saumon grillé et riz et filet d'huile d'olive.",
+      "instructions": "1. Cuire le riz.\n2. Griller le saumon côté peau.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "omega3",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pavé de saumon",
+          "quantity": 133.0,
+          "unit": "g"
+        },
+        {
+          "name": "Riz arborio",
+          "quantity": 76.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 7.6,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Pâtes simples au parmesan et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : pâtes simples au parmesan et filet d'huile d'olive.",
+      "instructions": "1. Cuire les pâtes al dente.\n2. Mélanger avec le beurre et le parmesan.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "classic",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pâtes",
+          "quantity": 100.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 15.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 20.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 8.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Risotto aux champignons complet et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : risotto aux champignons complet et filet d'huile d'olive.",
+      "instructions": "1. Nacer le riz.\n2. Ajouter du bouillon louche par louche avec les champignons.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 20,
+      "servings": 2,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "crémeux",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Riz arborio",
+          "quantity": 168.0,
+          "unit": "g"
+        },
+        {
+          "name": "Champignons de Paris",
+          "quantity": 210.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 31.5,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 8.4,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Omelette aux épinards frais et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : omelette aux épinards frais et filet d'huile d'olive.",
+      "instructions": "1. Tomber les épinards au beurre.\n2. Verser les œufs battus dessus.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "low-carb",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 162.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 7.2,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Poulet rôti et patates douces et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : poulet rôti et patates douces et filet d'huile d'olive.",
+      "instructions": "1. Couper la patate douce en cubes.\n2. Enfourner le tout avec l'huile à 200°C.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 5,
+      "servings": 2,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "repas complet",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Blanc de poulet",
+          "quantity": 285.0,
+          "unit": "g"
+        },
+        {
+          "name": "Patate douce",
+          "quantity": 380.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 19.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 7.6,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Poêlée de riz au thon et tomates et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : poêlée de riz au thon et tomates et filet d'huile d'olive.",
+      "instructions": "1. Cuire le riz.\n2. Sauter à la poêle avec le thon et les tomates.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "étudiant",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Riz arborio",
+          "quantity": 80.0,
+          "unit": "g"
+        },
+        {
+          "name": "Thon au naturel (boite)",
+          "quantity": 100.0,
+          "unit": "g"
+        },
+        {
+          "name": "Tomate",
+          "quantity": 150.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 8.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de quinoa et feta et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : salade de quinoa et feta et filet d'huile d'olive.",
+      "instructions": "1. Cuire le quinoa et laisser refroidir.\n2. Mélanger avec la feta et le concombre.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "végétarien",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Quinoa",
+          "quantity": 84.0,
+          "unit": "g"
+        },
+        {
+          "name": "Feta",
+          "quantity": 63.0,
+          "unit": "g"
+        },
+        {
+          "name": "Concombre",
+          "quantity": 105.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 8.4,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Pâtes au thon et à la crème et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : pâtes au thon et à la crème et filet d'huile d'olive.",
+      "instructions": "1. Cuire les pâtes.\n2. Ajouter le thon et la crème en fin de cuisson.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pâtes",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Thon au naturel (boite)",
+          "quantity": 72.0,
+          "unit": "g"
+        },
+        {
+          "name": "Crème fraîche 30%",
+          "quantity": 36.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 7.2,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Saumon vapeur et brocoli et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : saumon vapeur et brocoli et filet d'huile d'olive.",
+      "instructions": "1. Placer le saumon et le brocoli dans le cuiseur vapeur.\n2. Cuire 10 min.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "clean-eating",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pavé de saumon",
+          "quantity": 123.5,
+          "unit": "g"
+        },
+        {
+          "name": "Brocoli",
+          "quantity": 237.5,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 7.6,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Fromage blanc au miel et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : fromage blanc au miel et filet d'huile d'olive.",
+      "instructions": "1. Servir le fromage blanc frais.\n2. Arroser de miel.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "sucré",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Fromage blanc 3%",
+          "quantity": 200.0,
+          "unit": "g"
+        },
+        {
+          "name": "Miel",
+          "quantity": 15.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 8.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Poignée d'amandes et pomme et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : poignée d'amandes et pomme et filet d'huile d'olive.",
+      "instructions": "1. Couper la pomme en quartiers.\n2. Déguster avec les amandes.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "sain",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pomme",
+          "quantity": 157.5,
+          "unit": "g"
+        },
+        {
+          "name": "Amandes",
+          "quantity": 31.5,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 8.4,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Fromage blanc aux fraises et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : fromage blanc aux fraises et filet d'huile d'olive.",
+      "instructions": "1. Équeuter et couper les fraises.\n2. Ajouter au fromage blanc.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "léger",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Fromage blanc 3%",
+          "quantity": 180.0,
+          "unit": "g"
+        },
+        {
+          "name": "Fraises",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 7.2,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Banane et amandes et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : banane et amandes et filet d'huile d'olive.",
+      "instructions": "1. Éplucher la banane.\n2. Consommer avant le sport avec les amandes.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "énergie",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Banane",
+          "quantity": 104.5,
+          "unit": "g"
+        },
+        {
+          "name": "Amandes",
+          "quantity": 19.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 7.6,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Tartine d'avocat simple et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : tartine d'avocat simple et filet d'huile d'olive.",
+      "instructions": "1. Toaster le pain complet.\n2. Écraser l'avocat sur la tranche.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "salé",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pain complet",
+          "quantity": 50.0,
+          "unit": "g"
+        },
+        {
+          "name": "Avocat",
+          "quantity": 60.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 8.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Lentilles au poulet et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : lentilles au poulet et filet d'huile d'olive.",
+      "instructions": "1. Cuire les lentilles.\n2. Poêler le poulet en dés et assembler.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 5,
+      "servings": 2,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "protéines",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Lentilles vertes",
+          "quantity": 168.0,
+          "unit": "g"
+        },
+        {
+          "name": "Blanc de poulet",
+          "quantity": 262.5,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 8.4,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de feta et tomates et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : salade de feta et tomates et filet d'huile d'olive.",
+      "instructions": "1. Couper tomates et feta.\n2. Verser l'huile d'olive.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "grec",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Tomate",
+          "quantity": 180.0,
+          "unit": "g"
+        },
+        {
+          "name": "Feta",
+          "quantity": 45.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 9.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 7.2,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Porridge d'avoine aux pommes et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : porridge d'avoine aux pommes et filet d'huile d'olive.",
+      "instructions": "1. Cuire l'avoine dans le lait avec des dés de pomme.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "automne",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Flocons d'avoine",
+          "quantity": 47.5,
+          "unit": "g"
+        },
+        {
+          "name": "Lait demi-écrémé",
+          "quantity": 190.0,
+          "unit": "g"
+        },
+        {
+          "name": "Pomme",
+          "quantity": 95.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 7.6,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Œufs au miroir aux champignons et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : œufs au miroir aux champignons et filet d'huile d'olive.",
+      "instructions": "1. Sauter les champignons.\n2. Casser les œufs par-dessus.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "brunch",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 120.0,
+          "unit": "g"
+        },
+        {
+          "name": "Champignons de Paris",
+          "quantity": 100.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 8.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Quinoa sauté aux légumes et filet d'huile d'olive",
+      "description": "Une recette simple, saine et équilibrée de : quinoa sauté aux légumes et filet d'huile d'olive.",
+      "instructions": "1. Cuire le quinoa.\n2. Sauter au wok avec les légumes émincés.\n3. Finaliser avec un léger filet d'huile d'olive extra vierge.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "vegan",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Quinoa",
+          "quantity": 84.0,
+          "unit": "g"
+        },
+        {
+          "name": "Carotte",
+          "quantity": 84.0,
+          "unit": "g"
+        },
+        {
+          "name": "Brocoli",
+          "quantity": 105.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 8.4,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Œuf sur le plat version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : œuf sur le plat version gourmande au beurre.",
+      "instructions": "1. Chauffer le beurre.\n2. Cuire l'œuf sur le plat 3 min.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 108.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Porridge d'avoine aux fruits version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : porridge d'avoine aux fruits version gourmande au beurre.",
+      "instructions": "1. Mélanger l'avoine et le lait.\n2. Chauffer 3 min et ajouter les fruits.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "fibres",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Flocons d'avoine",
+          "quantity": 47.5,
+          "unit": "g"
+        },
+        {
+          "name": "Lait demi-écrémé",
+          "quantity": 190.0,
+          "unit": "g"
+        },
+        {
+          "name": "Banane",
+          "quantity": 95.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Œufs brouillés simples version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : œufs brouillés simples version gourmande au beurre.",
+      "instructions": "1. Battre les œufs.\n2. Cuire à feu doux en remuant.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "protéines",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 180.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Tartine de pain complet au miel version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : tartine de pain complet au miel version gourmande au beurre.",
+      "instructions": "1. Griller le pain.\n2. Tartiner le beurre et le miel.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "glucides",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pain complet",
+          "quantity": 63.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.5,
+          "unit": "g"
+        },
+        {
+          "name": "Miel",
+          "quantity": 15.8,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Omelette nature minute version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : omelette nature minute version gourmande au beurre.",
+      "instructions": "1. Battre les œufs.\n2. Cuire 4 minutes à la poêle.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "keto",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 108.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 4.5,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de tomates simple version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : salade de tomates simple version gourmande au beurre.",
+      "instructions": "1. Couper les tomates.\n2. Assaisonner d'huile, sel et poivre.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "frais",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Tomate",
+          "quantity": 190.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 9.5,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Carottes râpées au citron version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : carottes râpées au citron version gourmande au beurre.",
+      "instructions": "1. Râper les carottes.\n2. Ajouter l'huile d'olive et un jus de citron.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "léger",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Carotte",
+          "quantity": 150.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 10.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de concombre à la crème version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : salade de concombre à la crème version gourmande au beurre.",
+      "instructions": "1. Trancher le concombre.\n2. Mélanger avec la crème.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 15,
+      "servings": 2,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "frais",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Concombre",
+          "quantity": 262.5,
+          "unit": "g"
+        },
+        {
+          "name": "Crème fraîche 30%",
+          "quantity": 52.5,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Entrée Avocat et thon version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : entrée avocat et thon version gourmande au beurre.",
+      "instructions": "1. Couper l'avocat en deux.\n2. Garnir le centre avec le thon émietté.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "healthy",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Avocat",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Thon au naturel (boite)",
+          "quantity": 72.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de lentilles tièdes version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : salade de lentilles tièdes version gourmande au beurre.",
+      "instructions": "1. Cuire les lentilles.\n2. Servir tiède avec l'huile.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 25,
+      "servings": 2,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "fibres",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Lentilles vertes",
+          "quantity": 114.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 14.2,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Blanc de poulet et brocoli version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : blanc de poulet et brocoli version gourmande au beurre.",
+      "instructions": "1. Saisir le poulet.\n2. Cuire le brocoli à la vapeur.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "diet",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Blanc de poulet",
+          "quantity": 150.0,
+          "unit": "g"
+        },
+        {
+          "name": "Brocoli",
+          "quantity": 200.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 10.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Saumon grillé et riz version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : saumon grillé et riz version gourmande au beurre.",
+      "instructions": "1. Cuire le riz.\n2. Griller le saumon côté peau.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "omega3",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pavé de saumon",
+          "quantity": 147.0,
+          "unit": "g"
+        },
+        {
+          "name": "Riz arborio",
+          "quantity": 84.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Pâtes simples au parmesan version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : pâtes simples au parmesan version gourmande au beurre.",
+      "instructions": "1. Cuire les pâtes al dente.\n2. Mélanger avec le beurre et le parmesan.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "classic",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pâtes",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 13.5,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 18.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Risotto aux champignons complet version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : risotto aux champignons complet version gourmande au beurre.",
+      "instructions": "1. Nacer le riz.\n2. Ajouter du bouillon louche par louche avec les champignons.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 20,
+      "servings": 2,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "crémeux",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Riz arborio",
+          "quantity": 152.0,
+          "unit": "g"
+        },
+        {
+          "name": "Champignons de Paris",
+          "quantity": 190.0,
+          "unit": "g"
+        },
+        {
+          "name": "Parmesan",
+          "quantity": 28.5,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Omelette aux épinards frais version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : omelette aux épinards frais version gourmande au beurre.",
+      "instructions": "1. Tomber les épinards au beurre.\n2. Verser les œufs battus dessus.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "low-carb",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 180.0,
+          "unit": "g"
+        },
+        {
+          "name": "Épinards frais",
+          "quantity": 100.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Poulet rôti et patates douces version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : poulet rôti et patates douces version gourmande au beurre.",
+      "instructions": "1. Couper la patate douce en cubes.\n2. Enfourner le tout avec l'huile à 200°C.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 5,
+      "servings": 2,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "repas complet",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Blanc de poulet",
+          "quantity": 315.0,
+          "unit": "g"
+        },
+        {
+          "name": "Patate douce",
+          "quantity": 420.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 21.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Poêlée de riz au thon et tomates version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : poêlée de riz au thon et tomates version gourmande au beurre.",
+      "instructions": "1. Cuire le riz.\n2. Sauter à la poêle avec le thon et les tomates.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "étudiant",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Riz arborio",
+          "quantity": 72.0,
+          "unit": "g"
+        },
+        {
+          "name": "Thon au naturel (boite)",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Tomate",
+          "quantity": 135.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de quinoa et feta version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : salade de quinoa et feta version gourmande au beurre.",
+      "instructions": "1. Cuire le quinoa et laisser refroidir.\n2. Mélanger avec la feta et le concombre.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "végétarien",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Quinoa",
+          "quantity": 76.0,
+          "unit": "g"
+        },
+        {
+          "name": "Feta",
+          "quantity": 57.0,
+          "unit": "g"
+        },
+        {
+          "name": "Concombre",
+          "quantity": 95.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Pâtes au thon et à la crème version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : pâtes au thon et à la crème version gourmande au beurre.",
+      "instructions": "1. Cuire les pâtes.\n2. Ajouter le thon et la crème en fin de cuisson.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pâtes",
+          "quantity": 100.0,
+          "unit": "g"
+        },
+        {
+          "name": "Thon au naturel (boite)",
+          "quantity": 80.0,
+          "unit": "g"
+        },
+        {
+          "name": "Crème fraîche 30%",
+          "quantity": 40.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Saumon vapeur et brocoli version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : saumon vapeur et brocoli version gourmande au beurre.",
+      "instructions": "1. Placer le saumon et le brocoli dans le cuiseur vapeur.\n2. Cuire 10 min.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "clean-eating",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pavé de saumon",
+          "quantity": 136.5,
+          "unit": "g"
+        },
+        {
+          "name": "Brocoli",
+          "quantity": 262.5,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Fromage blanc au miel version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : fromage blanc au miel version gourmande au beurre.",
+      "instructions": "1. Servir le fromage blanc frais.\n2. Arroser de miel.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 5,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "sucré",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Fromage blanc 3%",
+          "quantity": 180.0,
+          "unit": "g"
+        },
+        {
+          "name": "Miel",
+          "quantity": 13.5,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Poignée d'amandes et pomme version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : poignée d'amandes et pomme version gourmande au beurre.",
+      "instructions": "1. Couper la pomme en quartiers.\n2. Déguster avec les amandes.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "sain",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pomme",
+          "quantity": 142.5,
+          "unit": "g"
+        },
+        {
+          "name": "Amandes",
+          "quantity": 28.5,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Fromage blanc aux fraises version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : fromage blanc aux fraises version gourmande au beurre.",
+      "instructions": "1. Équeuter et couper les fraises.\n2. Ajouter au fromage blanc.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "léger",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Fromage blanc 3%",
+          "quantity": 200.0,
+          "unit": "g"
+        },
+        {
+          "name": "Fraises",
+          "quantity": 100.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Banane et amandes version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : banane et amandes version gourmande au beurre.",
+      "instructions": "1. Éplucher la banane.\n2. Consommer avant le sport avec les amandes.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "énergie",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Banane",
+          "quantity": 115.5,
+          "unit": "g"
+        },
+        {
+          "name": "Amandes",
+          "quantity": 21.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Tartine d'avocat simple version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : tartine d'avocat simple version gourmande au beurre.",
+      "instructions": "1. Toaster le pain complet.\n2. Écraser l'avocat sur la tranche.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.snack",
+      "tags": {},
+      "free_tags": [
+        "salé",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Pain complet",
+          "quantity": 45.0,
+          "unit": "g"
+        },
+        {
+          "name": "Avocat",
+          "quantity": 54.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Lentilles au poulet version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : lentilles au poulet version gourmande au beurre.",
+      "instructions": "1. Cuire les lentilles.\n2. Poêler le poulet en dés et assembler.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 5,
+      "servings": 2,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "protéines",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Lentilles vertes",
+          "quantity": 152.0,
+          "unit": "g"
+        },
+        {
+          "name": "Blanc de poulet",
+          "quantity": 237.5,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Salade de feta et tomates version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : salade de feta et tomates version gourmande au beurre.",
+      "instructions": "1. Couper tomates et feta.\n2. Verser l'huile d'olive.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 10,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.starter",
+      "tags": {},
+      "free_tags": [
+        "grec",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Tomate",
+          "quantity": 200.0,
+          "unit": "g"
+        },
+        {
+          "name": "Feta",
+          "quantity": 50.0,
+          "unit": "g"
+        },
+        {
+          "name": "Huile d'olive",
+          "quantity": 10.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Porridge d'avoine aux pommes version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : porridge d'avoine aux pommes version gourmande au beurre.",
+      "instructions": "1. Cuire l'avoine dans le lait avec des dés de pomme.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 5,
+      "cook_time_minutes": 15,
+      "servings": 1,
+      "difficulty": "enums.difficulty.medium",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.breakfast",
+      "tags": {},
+      "free_tags": [
+        "automne",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Flocons d'avoine",
+          "quantity": 52.5,
+          "unit": "g"
+        },
+        {
+          "name": "Lait demi-écrémé",
+          "quantity": 210.0,
+          "unit": "g"
+        },
+        {
+          "name": "Pomme",
+          "quantity": 105.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 10.5,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Œufs au miroir aux champignons version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : œufs au miroir aux champignons version gourmande au beurre.",
+      "instructions": "1. Sauter les champignons.\n2. Casser les œufs par-dessus.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 20,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "brunch",
+        "rapide"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Œuf entier",
+          "quantity": 108.0,
+          "unit": "g"
+        },
+        {
+          "name": "Champignons de Paris",
+          "quantity": 90.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.0,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "title": "Quinoa sauté aux légumes version gourmande au beurre",
+      "description": "Une recette simple, saine et équilibrée de : quinoa sauté aux légumes version gourmande au beurre.",
+      "instructions": "1. Cuire le quinoa.\n2. Sauter au wok avec les légumes émincés.\n3. Lier le tout avec une noix de beurre hors du feu.",
+      "prep_time_minutes": 15,
+      "cook_time_minutes": 25,
+      "servings": 1,
+      "difficulty": "enums.difficulty.easy",
+      "cuisine_origin": "enums.origin_recipe.cuisine_origine.french",
+      "origin_recipe": "enums.origin_recipe.personal",
+      "course_type": "enums.course_type.main",
+      "tags": {},
+      "free_tags": [
+        "vegan",
+        "healthy"
+      ],
+      "book_name": null,
+      "source_url": null,
+      "image_url": "https://api-recipe.localhost/static/recipes/default.jpg",
+      "ingredients": [
+        {
+          "name": "Quinoa",
+          "quantity": 76.0,
+          "unit": "g"
+        },
+        {
+          "name": "Carotte",
+          "quantity": 76.0,
+          "unit": "g"
+        },
+        {
+          "name": "Brocoli",
+          "quantity": 95.0,
+          "unit": "g"
+        },
+        {
+          "name": "Beurre",
+          "quantity": 9.5,
+          "unit": "g"
+        }
+      ]
+    }
+  ]
+}

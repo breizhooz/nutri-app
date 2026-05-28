@@ -100,7 +100,9 @@ DAYS = [
 ]
 MEAL_TYPES = [
     "enums.meal_type.breakfast",
+    "enums.meal_type.morning_snack",
     "enums.meal_type.lunch",
+    "enums.meal_type.afternoon_snack",
     "enums.meal_type.dinner",
 ]
 

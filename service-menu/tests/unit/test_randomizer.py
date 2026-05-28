@@ -87,35 +87,46 @@ class TestGenerateSlots:
     def _client(self, recipes):
         return MockRecipeClient(recipes)
 
-    async def test_default_produces_14_slots(self):
+    async def test_default_produces_35_slots(self):
         slots = await generate_slots(
-            self._client([make_recipe(i) for i in range(1, 25)]),
+            self._client([make_recipe(i) for i in range(1, 50)]),
             nb_persons=2,
             start_date=date(2026, 1, 6),
             exclusions=[],
         )
-        assert len(slots) == 14
+        assert len(slots) == 35
+
+    async def test_slots_inherit_menu_nb_persons(self):
+        slots = await generate_slots(
+            self._client([make_recipe(i) for i in range(1, 25)]),
+            nb_persons=3,
+            start_date=date(2026, 1, 6),
+            exclusions=[],
+        )
+        assert all(s.nb_persons == 3 for s in slots)
 
     async def test_all_seven_days_covered(self):
         slots = await generate_slots(
-            self._client([make_recipe(i) for i in range(1, 25)]),
+            self._client([make_recipe(i) for i in range(1, 50)]),
             nb_persons=1,
             start_date=date(2026, 1, 6),
             exclusions=[],
         )
         assert {s.day_of_week for s in slots} == set(DayOfWeek)
 
-    async def test_default_meal_types_are_lunch_and_dinner(self):
+    async def test_default_meal_types_are_all_five(self):
         slots = await generate_slots(
-            self._client([make_recipe(i) for i in range(1, 25)]),
+            self._client([make_recipe(i) for i in range(1, 50)]),
             nb_persons=1,
             start_date=date(2026, 1, 6),
             exclusions=[],
         )
         types = {s.meal_type for s in slots}
+        assert MealType.BREAKFAST in types
+        assert MealType.MORNING_SNACK in types
         assert MealType.LUNCH in types
+        assert MealType.AFTERNOON_SNACK in types
         assert MealType.DINNER in types
-        assert MealType.BREAKFAST not in types
 
     async def test_custom_single_meal_type(self):
         slots = await generate_slots(
@@ -127,6 +138,44 @@ class TestGenerateSlots:
         )
         assert len(slots) == 7
         assert all(s.meal_type == MealType.LUNCH for s in slots)
+
+    async def test_breakfast_uses_only_breakfast_appropriate_recipes(self):
+        breakfast = [
+            make_recipe(i, course_type="enums.course_type.breakfast")
+            for i in range(1, 10)
+        ]
+        snacks = [
+            make_recipe(i, course_type="enums.course_type.snack")
+            for i in range(10, 15)
+        ]
+        mains = [
+            make_recipe(i, course_type="enums.course_type.main")
+            for i in range(20, 40)
+        ]
+        sauces = [
+            make_recipe(i, course_type="enums.course_type.sauce")
+            for i in range(40, 44)
+        ]
+        slots = await generate_slots(
+            self._client(breakfast + snacks + mains + sauces),
+            nb_persons=1,
+            start_date=date(2026, 1, 6),
+            exclusions=[],
+        )
+        allowed_breakfast_ids = {r["id"] for r in breakfast + snacks}
+        main_ids = {r["id"] for r in mains}
+        sauce_ids = {r["id"] for r in sauces}
+        breakfast_slots = [s for s in slots if s.meal_type == MealType.BREAKFAST]
+        lunch_dinner = [
+            s
+            for s in slots
+            if s.meal_type in (MealType.LUNCH, MealType.DINNER)
+        ]
+        assert breakfast_slots
+        assert all(s.recipe_id in allowed_breakfast_ids for s in breakfast_slots)
+        # Pas de sauce nulle part, et midi/soir tirent dans les plats principaux.
+        assert all(s.recipe_id not in sauce_ids for s in slots)
+        assert all(s.recipe_id in main_ids for s in lunch_dinner)
 
     async def test_three_meal_types_produces_21_slots(self):
         slots = await generate_slots(
@@ -171,7 +220,7 @@ class TestGenerateSlots:
             start_date=date(2026, 1, 6),
             exclusions=[],
         )
-        assert len(slots) == 14
+        assert len(slots) == 35
 
     async def test_caloric_soft_filter_applied_when_pool_large_enough(self):
         high = [
@@ -217,7 +266,7 @@ class TestGenerateSlots:
             exclusions=[],
             duration_days=3,
         )
-        assert len(slots) == 6
+        assert len(slots) == 15
 
     async def test_slot_recipe_ids_are_valid(self):
         recipes = [make_recipe(i) for i in range(1, 25)]

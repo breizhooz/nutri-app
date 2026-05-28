@@ -12,5 +12,5 @@ pytest-cov==4.1.0
 httpx==0.25.2
 aiosqlite>=0.20.0
 PyJWT==2.9.0
-weasyprint>=68.1
+fpdf2>=2.7.9
 python-docx>=1.2.0

@@ -60,14 +60,24 @@ class ServicesRecipeClient:
         if self._client:
             await self._client.aclose()
 
-    async def get_recipes(self, skip: int = 0, limit: int = 200) -> list[dict]:
+    async def get_recipes(self, max_recipes: int = 200) -> list[dict]:
         try:
-            response = await self._client.get(
-                "/api/v1/recipes/",
-                params={"skip": skip, "limit": limit},
-            )
-            response.raise_for_status()
-            return response.json()
+            all_items: list[dict] = []
+            page = 1
+            page_size = 50
+            while len(all_items) < max_recipes:
+                response = await self._client.get(
+                    "/api/v1/recipe",
+                    params={"page": page, "page_size": page_size},
+                )
+                response.raise_for_status()
+                data = response.json()
+                items = data.get("items", [])
+                all_items.extend(items)
+                if len(items) < page_size or len(all_items) >= data.get("total", 0):
+                    break
+                page += 1
+            return all_items
         except httpx.HTTPStatusError as e:
             raise ServiceUnavailableError(
                 f"service-recipe responded {e.response.status_code}"
@@ -77,7 +87,7 @@ class ServicesRecipeClient:
 
     async def get_recipe_by_id(self, recipe_id: int) -> dict | None:
         try:
-            response = await self._client.get(f"/api/v1/recipes/id/{recipe_id}")
+            response = await self._client.get(f"/api/v1/recipe/id/{recipe_id}")
             if response.status_code == 404:
                 return None
             response.raise_for_status()
@@ -91,7 +101,7 @@ class ServicesRecipeClient:
 
     async def get_recipe_by_slug(self, slug: str) -> dict | None:
         try:
-            response = await self._client.get(f"/api/v1/recipes/{slug}")
+            response = await self._client.get(f"/api/v1/recipe/{slug}")
             if response.status_code == 404:
                 return None
             response.raise_for_status()
