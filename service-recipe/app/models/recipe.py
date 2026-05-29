@@ -76,7 +76,16 @@ class Recipe(AbstractModel):
     book_name: Mapped[str | None] = mapped_column(String(300))
     source_url: Mapped[str | None] = mapped_column(Text)
 
+    # image_url = image finale validée (HD). image_thumb_url = sa miniature.
     image_url: Mapped[str | None] = mapped_column(Text)
+    image_thumb_url: Mapped[str | None] = mapped_column(Text)
+
+    # Propositions Unsplash temporaires (liste de dicts : voir ImageSuggestion).
+    image_suggestions: Mapped[list[Any]] = mapped_column(
+        JSON, default=list, server_default="[]"
+    )
+    # Mot-clé de recherche d'images (titre par défaut, ou saisie libre de l'utilisateur).
+    image_search_keyword: Mapped[str | None] = mapped_column(String(300))
 
     # nutrition (per serving, calculated by service-nutrition)
     calories_per_serving: Mapped[float | None] = mapped_column(Float, nullable=True)

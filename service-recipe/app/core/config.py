@@ -23,5 +23,12 @@ class Settings(BaseSettings):
     SERVICE_NUTRITION_URL: str = ""
     SERVICE_NUTRITION_TOKEN: str = ""
 
+    # Unsplash : authentification "public/application-only" (header Client-ID).
+    # Le SECRET_KEY n'est requis que pour le flux OAuth user (non utilisé ici), mais
+    # on le provisionne pour un usage futur.
+    UNSPLASH_ACCESS_KEY: str = ""
+    UNSPLASH_SECRET_KEY: str = ""
+    UNSPLASH_API_URL: str = "https://api.unsplash.com"
+
 
 settings = Settings()

@@ -20,6 +20,8 @@ from app.schemas.recipe import (
     RecipeUpdate,
     PaginatedRecipeResponse,
     RecipeManualCreate,
+    ImageSearchRequest,
+    ImageSelectRequest,
 )
 from app.core.utils import slugify
 from app.i18n import LocalizedHTTPException
@@ -153,10 +155,10 @@ async def update_recipe(
 async def create_recipe(
     recipe_data: RecipeCreate,
     request: Request,
-    session: AsyncSession = Depends(get_session),
+    service: RecipeService = Depends(RecipeServiceFactory.inject),
     user_client: ServicesUserClient = Depends(get_user_client),
     current_user_id: str = Depends(get_current_user_id),
-):
+) -> RecipeResponse:
     try:
         exists = await user_client.user_exist(current_user_id)
     except ServiceUnavailableError:
@@ -164,76 +166,7 @@ async def create_recipe(
     if not exists:
         raise LocalizedHTTPException.user_id_not_exists(request)
 
-    # Générer le slug à partir du titre
-    slug = slugify(recipe_data.title)
-
-    # Vérifier que le slug n'existe pas déjà
-    existing = await session.execute(select(Recipe).where(Recipe.slug == slug))
-    if existing.scalar_one_or_none():
-        # Ajouter un suffixe numérique si doublon
-        i = 1
-        while True:
-            if i > 100:
-                raise LocalizedHTTPException.slug_too_big(request)
-            new_slug = f"{slug}-{i}"
-            existing = await session.execute(
-                select(Recipe).where(Recipe.slug == new_slug)
-            )
-            if not existing.scalar_one_or_none():
-                slug = new_slug
-                break
-            i += 1
-
-    # Créer la recette
-    recipe = Recipe(
-        title=recipe_data.title,
-        slug=slug,
-        description=recipe_data.description,
-        instructions=recipe_data.instructions,
-        prep_time_minutes=recipe_data.prep_time_minutes,
-        cook_time_minutes=recipe_data.cook_time_minutes,
-        servings=recipe_data.servings,
-        difficulty=recipe_data.difficulty,
-        cuisine_origin=recipe_data.cuisine_origin,
-        origin_recipe=recipe_data.origin_recipe,
-        course_type=recipe_data.course_type,
-        tags=recipe_data.tags,
-        book_name=recipe_data.book_name,
-        source_url=recipe_data.source_url,
-        image_url=recipe_data.image_url,
-        created_by_user_id=recipe_data.created_by_user_id or current_user_id,
-    )
-
-    session.add(recipe)
-    await session.flush()  # Obtenir recipe.id
-
-    # Ajouter les ingrédients
-    for ing_data in recipe_data.recipe_ingredients:
-        recipe_ingredient = RecipeIngredient(
-            recipe_id=recipe.id,
-            ingredient_id=ing_data.ingredient_id,
-            quantity=ing_data.quantity,
-            unit=ing_data.unit,
-        )
-        session.add(recipe_ingredient)
-
-    await session.commit()
-    await session.refresh(recipe)
-
-    recipe_with_relations = await _load_with_relations(session, recipe.id)
-    recipe_to_return = (
-        recipe_with_relations if recipe_with_relations is not None else recipe
-    )
-
-    try:
-        await search_service.index_recipe(recipe_to_return)
-    except Exception as e:
-        locale = getattr(request.state, "locale", "fr")
-        print(
-            f"{t.get('elasticsearch.errors.indexation_for_recipe', locale=locale)} : {e}"
-        )
-
-    return recipe_to_return
+    return await service.create(recipe_data, current_user_id)
 
 
 @router.get("", response_model=PaginatedRecipeResponse)
@@ -371,6 +304,28 @@ async def upload_recipe_image(
     return await service.update_image_url(
         recipe_id, user_id=current_user_id, image_url=image_url
     )
+
+
+@router.post("/id/{recipe_id}/image-suggestions", response_model=RecipeResponse)
+async def refresh_image_suggestions(
+    recipe_id: int,
+    body: ImageSearchRequest,
+    service: RecipeService = Depends(RecipeServiceFactory.inject),
+    current_user_id: str = Depends(get_current_user_id),
+) -> RecipeResponse:
+    """Relance une recherche Unsplash avec un mot-clé libre et renvoie 4 propositions."""
+    return await service.refresh_suggestions(recipe_id, body.keyword, current_user_id)
+
+
+@router.post("/id/{recipe_id}/image/select", response_model=RecipeResponse)
+async def select_recipe_image(
+    recipe_id: int,
+    body: ImageSelectRequest,
+    service: RecipeService = Depends(RecipeServiceFactory.inject),
+    current_user_id: str = Depends(get_current_user_id),
+) -> RecipeResponse:
+    """Valide et enregistre l'image finale choisie parmi les propositions Unsplash."""
+    return await service.select_image(recipe_id, body.unsplash_id, current_user_id)
 
 
 @router.post("/reindex", status_code=status.HTTP_200_OK)

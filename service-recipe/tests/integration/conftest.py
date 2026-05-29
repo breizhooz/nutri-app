@@ -85,6 +85,9 @@ def make_mock_recipe(
     recipe.book_name = None
     recipe.source_url = None
     recipe.image_url = None
+    recipe.image_thumb_url = None
+    recipe.image_suggestions = []
+    recipe.image_search_keyword = None
     recipe.created_by_user_id = "123e4567-e89b-12d3-a456-426614174000"
     recipe.created_at = datetime(2026, 1, 1, 12, 0, 0)
     recipe.updated_at = datetime(2026, 1, 1, 12, 0, 0)

@@ -82,7 +82,37 @@ class RecipeRepository:
         assert loaded is not None
         return loaded
 
-<<<<<<< Updated upstream
+    async def update_image_suggestions(
+        self, recipe_id: int, keyword: str, suggestions: list[dict]
+    ) -> Recipe | None:
+        recipe = await self.session.get(Recipe, recipe_id)
+        if recipe is None:
+            return None
+        recipe.image_search_keyword = keyword
+        recipe.image_suggestions = suggestions
+        await self.session.commit()
+        return await self.get_by_id_with_relations(recipe_id)
+
+    async def select_final_image(
+        self, recipe_id: int, image_url: str, thumb_url: str | None
+    ) -> Recipe | None:
+        recipe = await self.session.get(Recipe, recipe_id)
+        if recipe is None:
+            return None
+        recipe.image_url = image_url
+        recipe.image_thumb_url = thumb_url
+        await self.session.commit()
+        return await self.get_by_id_with_relations(recipe_id)
+
+    async def count_by_user(self) -> list[tuple[str, int]]:
+        """Return (created_by_user_id, recipe_count) for every author."""
+        result = await self.session.execute(
+            select(Recipe.created_by_user_id, func.count())
+            .where(Recipe.created_by_user_id.is_not(None))
+            .group_by(Recipe.created_by_user_id)
+        )
+        return [(str(user_id), count) for user_id, count in result.all()]
+
     async def update_macros(
         self,
         recipe_id: int,
@@ -99,16 +129,6 @@ class RecipeRepository:
         recipe.carbs_per_serving = carbs
         recipe.fats_per_serving = fats
         await self.session.commit()
-=======
-    async def count_by_user(self) -> list[tuple[str, int]]:
-        """Return (created_by_user_id, recipe_count) for every author."""
-        result = await self.session.execute(
-            select(Recipe.created_by_user_id, func.count())
-            .where(Recipe.created_by_user_id.is_not(None))
-            .group_by(Recipe.created_by_user_id)
-        )
-        return [(str(user_id), count) for user_id, count in result.all()]
->>>>>>> Stashed changes
 
     async def create(
         self, recipe: Recipe, recipe_ingredients: list[RecipeIngredient]

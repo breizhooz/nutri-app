@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -60,28 +60,12 @@ def override_user_client_exists():
 
 
 @pytest.mark.asyncio
-async def test_create_recipe_with_valid_user_returns_201(
-    override_db, override_user_client_exists
-):
-    from datetime import datetime
-    from unittest.mock import AsyncMock
-    from app.core.deps import get_current_user_id
+async def test_create_recipe_with_valid_user_returns_201(override_user_client_exists):
+    """create_recipe délègue désormais à RecipeService : on mocke au niveau service."""
+    mock_service = AsyncMock()
+    mock_service.create.return_value = _make_recipe_response()
 
-    async def mock_refresh(obj):
-        obj.id = 1
-        obj.created_at = datetime(2026, 1, 1, 12, 0, 0)
-        obj.updated_at = datetime(2026, 1, 1, 12, 0, 0)
-        obj.recipe_ingredients = []
-        obj.free_tags = []
-        if obj.cuisine_origin is None:
-            obj.cuisine_origin = CuisineOrigin.FRENCH
-        if obj.course_type is None:
-            obj.course_type = CourseType.MAIN_COURSE
-        if obj.tags is None:
-            obj.tags = {}
-
-    override_db.refresh.side_effect = mock_refresh
-
+    app.dependency_overrides[RecipeServiceFactory.inject] = lambda: mock_service
     app.dependency_overrides[get_current_user_id] = lambda: (
         "123e4567-e89b-12d3-a456-426614174000"
     )
@@ -92,18 +76,15 @@ async def test_create_recipe_with_valid_user_returns_201(
         "recipe_ingredients": [],
     }
 
-    # ← Patch ES pour ne pas avoir besoin d'un ES qui tourne
-    with patch(
-        "app.api.routes.recipes.search_service.index_recipe", new_callable=AsyncMock
-    ):
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
-            response = await client.post("/api/v1/recipe", json=payload)
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.post("/api/v1/recipe", json=payload)
 
-    app.dependency_overrides.pop(get_current_user_id, None)
+    app.dependency_overrides.clear()
 
     assert response.status_code == 201
+    mock_service.create.assert_called_once()
 
 
 # ─── POST /manual ─────────────────────────────────────────────────────────────
@@ -128,6 +109,9 @@ def _make_recipe_response() -> MagicMock:
     r.book_name = None
     r.source_url = None
     r.image_url = None
+    r.image_thumb_url = None
+    r.image_suggestions = []
+    r.image_search_keyword = None
     r.created_by_user_id = "user-1"
     r.calories_per_serving = None
     r.proteins_per_serving = None

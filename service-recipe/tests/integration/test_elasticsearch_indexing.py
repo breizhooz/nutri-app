@@ -1,29 +1,42 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 from .conftest import make_mock_recipe
 
+from app.api.routes.recipes import RecipeServiceFactory
+from app.main import app
+from app.services.recipe_service import RecipeService
+from app.services.search_service import search_service
+from app.services.unsplash_service import UnsplashService
+
 BASE = "/api/v1/recipe"
+
+
+def _override_service_with_real_search(recipe) -> RecipeService:
+    """RecipeService réel (donc vrai search_service → ES patché) câblé sur un
+    repository mocké. Unsplash désactivé (pas d'appel réseau)."""
+    repo = AsyncMock()
+    repo.slug_exists.return_value = False
+    repo.create.return_value = recipe
+    repo.get_by_id_with_relations.return_value = recipe
+    repo.update_image_suggestions.return_value = recipe
+    service = RecipeService(
+        repo,
+        search_service,
+        nutrition_client=AsyncMock(),
+        unsplash=UnsplashService(access_key=""),
+    )
+    app.dependency_overrides[RecipeServiceFactory.inject] = lambda: service
+    return service
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_create_recipe_triggers_es_indexation(
-    override_db, override_user_client, mock_es, http_client
+    override_user_client, mock_es, http_client
 ):
     """Après une création, es_client.index() doit être appelé une fois."""
     mock_recipe = make_mock_recipe()
-
-    async def mock_refresh(obj):
-        obj.id = mock_recipe.id
-        obj.created_at = mock_recipe.created_at
-        obj.updated_at = mock_recipe.updated_at
-        obj.recipe_ingredients = []
-        obj.cuisine_origin = mock_recipe.cuisine_origin
-        obj.course_type = mock_recipe.course_type
-        obj.tags = {}
-        obj.free_tags = []
-
-    override_db.refresh.side_effect = mock_refresh
+    _override_service_with_real_search(mock_recipe)
 
     async with http_client as client:
         response = await client.post(
@@ -34,6 +47,8 @@ async def test_create_recipe_triggers_es_indexation(
                 "recipe_ingredients": [],
             },
         )
+
+    app.dependency_overrides.pop(RecipeServiceFactory.inject, None)
 
     assert response.status_code == 201
     mock_es.index.assert_called_once()
@@ -48,25 +63,11 @@ async def test_create_recipe_triggers_es_indexation(
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_create_recipe_es_failure_does_not_break_crud(
-    override_db, override_user_client, mock_es, http_client
+    override_user_client, mock_es, http_client
 ):
     """Si ES est down, la création en DB doit quand même réussir."""
     mock_es.index.side_effect = Exception("ES connection refused")
-
-    async def mock_refresh(obj):
-        from datetime import datetime
-        from app.models.enums import CuisineOrigin, CourseType
-
-        obj.id = 1
-        obj.created_at = datetime(2026, 1, 1, 12, 0, 0)
-        obj.updated_at = datetime(2026, 1, 1, 12, 0, 0)
-        obj.recipe_ingredients = []
-        obj.cuisine_origin = CuisineOrigin.FRENCH
-        obj.course_type = CourseType.MAIN_COURSE
-        obj.tags = {}
-        obj.free_tags = []
-
-    override_db.refresh.side_effect = mock_refresh
+    _override_service_with_real_search(make_mock_recipe())
 
     async with http_client as client:
         response = await client.post(
@@ -77,6 +78,8 @@ async def test_create_recipe_es_failure_does_not_break_crud(
                 "recipe_ingredients": [],
             },
         )
+
+    app.dependency_overrides.pop(RecipeServiceFactory.inject, None)
 
     assert response.status_code == 201
 
