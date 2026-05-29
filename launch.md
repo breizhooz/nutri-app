@@ -15,3 +15,9 @@ Page Login — Split-screen avec panneau décoratif animé (orbes émeraude, gri
   npm run dev   # http://localhost:5173
   
   Je vais enlever playwright des dépendances de prod (il a été ajouté automatiquement) :
+
+
+####
+Script de nettoyage
+docker compose exec service-recipe python -m scripts.drop_recipe          # avec confirmation
+docker compose exec service-recipe python -m scripts.drop_recipe --yes     # sans prompt
