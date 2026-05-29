@@ -28,7 +28,7 @@ from app.services.search_service import search_service
 from app.services.recipe_service import RecipeService
 from app.services.storage_service import StorageService
 from app.core.config import settings
-from app.core.deps import get_current_user_id
+from app.core.deps import get_current_user_id, require_admin
 
 
 router = APIRouter()
@@ -271,6 +271,15 @@ async def list_recipes(
     return PaginatedRecipeResponse(
         items=items, total=total, page=page, page_size=page_size, pages=pages
     )
+
+
+@router.get("/counts-by-user", response_model=dict[str, int])
+async def counts_by_user(
+    _admin: dict = Depends(require_admin),
+    service: RecipeService = Depends(RecipeServiceFactory.inject),
+) -> dict[str, int]:
+    """Return {user_id: recipe_count} for all authors. Admin-only."""
+    return await service.counts_by_user()
 
 
 @router.get("/{slug}", response_model=RecipeResponse)

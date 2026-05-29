@@ -24,6 +24,7 @@ from app.schemas.auth import (
 from app.schemas.user import TokenResponse
 from app.services.crypto_service import CryptoService
 from app.services.totp_service import TotpService
+from app.services.user_service import UserService
 
 router: APIRouter = APIRouter()
 
@@ -114,7 +115,9 @@ async def confirm_totp(
     session.add(current_user)
     await session.commit()
     return TokenResponse(
-        access_token=create_access_token(str(current_user.id)),
+        access_token=create_access_token(
+            str(current_user.id), UserService.build_token_claims(current_user)
+        ),
         refresh_token=create_refresh_token(str(current_user.id)),
     )
 
@@ -223,7 +226,9 @@ async def verify_mfa(
         await session.commit()
 
     return TokenResponse(
-        access_token=create_access_token(str(user.id)),
+        access_token=create_access_token(
+            str(user.id), UserService.build_token_claims(user)
+        ),
         refresh_token=create_refresh_token(str(user.id)),
     )
 

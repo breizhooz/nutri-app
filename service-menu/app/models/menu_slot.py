@@ -35,6 +35,12 @@ class MenuSlot(AbstractModel):
 
     recipe_id: Mapped[int] = mapped_column(Integer)
 
+<<<<<<< Updated upstream
     nb_persons: Mapped[int] = mapped_column(Integer, default=1)
+=======
+    nb_persons: Mapped[int] = mapped_column(
+        Integer, default=1, server_default="1", nullable=False
+    )
+>>>>>>> Stashed changes
 
     menu: Mapped["WeeklyMenu"] = relationship(back_populates="slots")

@@ -4,15 +4,25 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.deps import get_current_user
+from app.core.deps import get_current_admin, get_current_user
 from app.core.security import hash_password, verify_password
 from app.db.session import get_session
 from app.models.user import User
+from app.repositories.user_repository import UserRepository
 from app.schemas.password import PasswordChangeSchema, PasswordResetMessage
-from app.schemas.user import UserCreate, UserOut
+from app.schemas.user import UserAdminOut, UserCreate, UserOut, UserRightsUpdate
 from app.services.password_reset_service import PasswordResetService
+from app.services.user_service import UserService
 
 router = APIRouter()
+
+
+class UserServiceFactory:
+    """FastAPI dependency factory wiring UserService with its repository."""
+
+    @staticmethod
+    def inject(session: AsyncSession = Depends(get_session)) -> UserService:
+        return UserService(UserRepository(session))
 
 
 @router.post("", response_model=UserOut, status_code=status.HTTP_201_CREATED)
@@ -80,10 +90,29 @@ async def get_user(
     return current_user
 
 
-@router.get("", response_model=list[UserOut])
-async def list_users(session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(User).order_by(User.email))
-    return result.scalars().all()
+@router.get("", response_model=list[UserAdminOut])
+async def list_users(
+    _admin: User = Depends(get_current_admin),
+    service: UserService = Depends(UserServiceFactory.inject),
+) -> list[User]:
+    """List all users with their RBAC rights. Admin-only."""
+    return await service.list_users()
+
+
+@router.patch("/{user_id}/rights", response_model=UserAdminOut)
+async def update_user_rights(
+    user_id: uuid.UUID,
+    payload: UserRightsUpdate,
+    _admin: User = Depends(get_current_admin),
+    service: UserService = Depends(UserServiceFactory.inject),
+) -> User:
+    """Update another user's RBAC rights (admin/crawl). Admin-only."""
+    updated = await service.update_user_rights(user_id, payload)
+    if updated is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    return updated
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)

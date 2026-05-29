@@ -52,11 +52,15 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return False
 
 
-def create_access_token(subject: str | Any) -> str:
+def create_access_token(
+    subject: str | Any, claims: dict[str, Any] | None = None
+) -> str:
     """Create a short-lived JWT access token.
 
     Args:
         subject: The token subject, typically a user UUID string.
+        claims: Optional extra claims (e.g. RBAC: user_admin, user_right) to
+            embed so other services can authorize locally.
 
     Returns:
         A signed HS256 JWT string.
@@ -65,6 +69,8 @@ def create_access_token(subject: str | Any) -> str:
         minutes=settings.JWT_ACCESS_TOKEN_EXPIRES_MINUTES
     )
     payload: dict = {"sub": str(subject), "exp": expire, "type": "access"}
+    if claims:
+        payload.update(claims)
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
 
 

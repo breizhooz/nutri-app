@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -82,6 +82,7 @@ class RecipeRepository:
         assert loaded is not None
         return loaded
 
+<<<<<<< Updated upstream
     async def update_macros(
         self,
         recipe_id: int,
@@ -98,6 +99,16 @@ class RecipeRepository:
         recipe.carbs_per_serving = carbs
         recipe.fats_per_serving = fats
         await self.session.commit()
+=======
+    async def count_by_user(self) -> list[tuple[str, int]]:
+        """Return (created_by_user_id, recipe_count) for every author."""
+        result = await self.session.execute(
+            select(Recipe.created_by_user_id, func.count())
+            .where(Recipe.created_by_user_id.is_not(None))
+            .group_by(Recipe.created_by_user_id)
+        )
+        return [(str(user_id), count) for user_id, count in result.all()]
+>>>>>>> Stashed changes
 
     async def create(
         self, recipe: Recipe, recipe_ingredients: list[RecipeIngredient]

@@ -19,6 +19,7 @@ from app.models.user import User
 from app.schemas.auth import PreAuthTokenResponse
 from app.schemas.user import TokenResponse
 from app.services.oauth_service import OAuthService
+from app.services.user_service import UserService
 
 router: APIRouter = APIRouter()
 
@@ -189,6 +190,8 @@ async def oauth_callback(
         )
 
     return TokenResponse(
-        access_token=create_access_token(str(user.id)),
+        access_token=create_access_token(
+            str(user.id), UserService.build_token_claims(user)
+        ),
         refresh_token=create_refresh_token(str(user.id)),
     )

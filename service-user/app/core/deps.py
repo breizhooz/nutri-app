@@ -61,6 +61,22 @@ async def get_current_user(
     return user
 
 
+async def get_current_admin(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Return the current user only if they hold admin privileges.
+
+    Raises:
+        HTTPException: 403 if the authenticated user is not an admin.
+    """
+    if not current_user.user_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required",
+        )
+    return current_user
+
+
 async def get_mfa_pending_user(
     credentials: HTTPAuthorizationCredentials = Depends(_bearer_mfa),
     session: AsyncSession = Depends(get_session),

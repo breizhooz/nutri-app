@@ -29,6 +29,12 @@ class RecipeService:
         self._search = search
         self._nutrition = nutrition_client or NutritionServiceClient()
 
+    async def counts_by_user(self) -> dict[str, int]:
+        """Return a mapping {user_id: number_of_recipes} for all authors."""
+        return {
+            user_id: count for user_id, count in await self._repository.count_by_user()
+        }
+
     async def create_manual(self, data: RecipeManualCreate, user_id: str) -> Recipe:
         recipe_ingredients = await self._resolve_ingredients(data.ingredients)
         slug = await self._generate_unique_slug(slugify(data.title))
