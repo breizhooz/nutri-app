@@ -1,5 +1,7 @@
+import base64
 import csv
 import io
+<<<<<<< Updated upstream
 from collections import defaultdict
 from fastapi.responses import StreamingResponse
 from app.schemas.shopping_list import ShoppingList
@@ -28,6 +30,25 @@ def _category_label(cat: str | None) -> str:
     if not cat:
         return "Divers"
     return _CATEGORY_LABELS.get(cat, cat.split(".")[-1].replace("_", " ").capitalize())
+=======
+from functools import lru_cache
+from pathlib import Path
+
+from fastapi.responses import StreamingResponse
+from app.schemas.shopping_list import ShoppingList
+
+_EMBLEM_PATH = Path(__file__).resolve().parent.parent / "assets" / "emblem-flame-ink.png"
+
+
+@lru_cache(maxsize=1)
+def _emblem_data_uri() -> str:
+    """Return the watermark emblem as a base64 data URI (cached, read once)."""
+    try:
+        encoded = base64.b64encode(_EMBLEM_PATH.read_bytes()).decode("ascii")
+        return f"data:image/png;base64,{encoded}"
+    except OSError:
+        return ""
+>>>>>>> Stashed changes
 
 
 def export_shopping_list(sl: ShoppingList, format: str) -> StreamingResponse:
@@ -57,6 +78,7 @@ def _to_csv(sl: ShoppingList) -> StreamingResponse:
 def _to_pdf(sl: ShoppingList) -> StreamingResponse:
     from fpdf import FPDF
 
+<<<<<<< Updated upstream
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
@@ -109,6 +131,37 @@ def _to_pdf(sl: ShoppingList) -> StreamingResponse:
         pdf.set_fill_color(200, 200, 200)
         pdf.cell(col_ingredient + col_qty + col_unit, 0.3, "", new_x="LMARGIN", new_y="NEXT", fill=True)
         pdf.ln(5)
+=======
+    rows = "".join(
+        f"<tr><td>{i.ingredient_name}</td><td>{i.total_quantity}</td>"
+        f"<td>{i.unit}</td><td>{i.category or ''}</td></tr>"
+        for i in sl.items
+    )
+    emblem = _emblem_data_uri()
+    watermark = (
+        f'<div class="watermark"><img src="{emblem}" alt="" /></div>' if emblem else ""
+    )
+    html = f"""<html><head><style>
+    @page {{ margin: 2cm; }}
+    body {{ font-family: sans-serif; }}
+    .watermark {{
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60%;
+      opacity: 0.07;
+      z-index: -1;
+    }}
+    .watermark img {{ width: 100%; }}
+    </style></head><body>
+    {watermark}
+    <h1>Liste de courses — semaine du {sl.start_date}</h1>
+    <p>{sl.nb_persons} personne(s)</p>
+    <table border="1" cellpadding="4" style="border-collapse:collapse;width:100%">
+      <thead><tr><th>Ingrédient</th><th>Quantité</th><th>Unité</th><th>Catégorie</th></tr></thead>
+      <tbody>{rows}</tbody>
+    </table></body></html>"""
+>>>>>>> Stashed changes
 
     return StreamingResponse(
         iter([bytes(pdf.output())]),

@@ -24,7 +24,7 @@ os.environ.setdefault("INSTAGRAM_SESSION_FILE", "/tmp/test_instagram_session")
 os.environ.setdefault("GROQ_API_KEY", "test-groq-key")
 os.environ.setdefault("GROQ_MODEL", "llama-3.1-8b-instant")
 
-from app.core.deps import get_current_user_id
+from app.core.deps import get_current_user_id, get_token_payload
 from app.db.base import Base
 from app.db.session import get_session
 from app.main import app
@@ -67,8 +67,18 @@ async def client(db_session: AsyncSession):
     async def override_get_current_user_id() -> uuid.UUID:
         return TEST_USER_ID
 
+    async def override_get_token_payload() -> dict:
+        # Utilisateur de test disposant des droits de crawl (instagram + web).
+        return {
+            "sub": str(TEST_USER_ID),
+            "type": "access",
+            "user_admin": False,
+            "user_right": {"crawl": {"instagram": True, "web": True}},
+        }
+
     app.dependency_overrides[get_session] = override_get_session
     app.dependency_overrides[get_current_user_id] = override_get_current_user_id
+    app.dependency_overrides[get_token_payload] = override_get_token_payload
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",

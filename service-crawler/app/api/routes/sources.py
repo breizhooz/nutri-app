@@ -4,7 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import AnyHttpUrl, BaseModel, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import get_current_user_id
+from app.core.deps import (
+    CrawlPermission,
+    RequireCrawlRight,
+    get_current_user_id,
+    get_token_payload,
+)
 from app.db.session import get_session
 from app.i18n.loader import t
 from app.models.enums import CrawlType
@@ -37,7 +42,7 @@ router = APIRouter()
 @router.post("/oneshot", status_code=status.HTTP_202_ACCEPTED)
 async def oneshot_crawl(
     data: OneshotCrawlRequest,
-    current_user_id: uuid.UUID = Depends(get_current_user_id),
+    current_user_id: uuid.UUID = Depends(RequireCrawlRight("web")),
 ):
     """Crawl one-shot d'une URL web sans créer de source persistante."""
     crawl_url.delay(source_id=None, url=data.url, user_id=str(current_user_id))
@@ -51,7 +56,9 @@ async def create_source(
     data: CrawlSourceCreate,
     session: AsyncSession = Depends(get_session),
     current_user_id: uuid.UUID = Depends(get_current_user_id),
+    payload: dict = Depends(get_token_payload),
 ):
+    CrawlPermission.ensure(payload, data.type.value)
     repo = SourceRepository(session)
     source = await repo.create(user_id=current_user_id, data=data)
     if source.type == CrawlType.INSTAGRAM:
@@ -134,6 +141,7 @@ async def trigger_crawl(
     source_id: uuid.UUID,
     session: AsyncSession = Depends(get_session),
     current_user_id: uuid.UUID = Depends(get_current_user_id),
+    payload: dict = Depends(get_token_payload),
 ):
     repo = SourceRepository(session)
     source = await repo.get_by_id(source_id)
@@ -148,8 +156,10 @@ async def trigger_crawl(
         )
 
     if source.type == CrawlType.WEB:
+        CrawlPermission.ensure(payload, "web")
         task = crawl_url.delay(str(source.id), source.url)
     elif source.type == CrawlType.INSTAGRAM:
+        CrawlPermission.ensure(payload, "instagram")
         task = crawl_instagram.delay(str(source.id), source.url)
     else:
         raise HTTPException(

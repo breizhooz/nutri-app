@@ -145,7 +145,11 @@ async def generate_slots(
                 MenuSlotCreate(
                     day_of_week=day,
                     meal_type=meal_type,
+<<<<<<< Updated upstream
                     recipe_id=pool[i]["id"],
+=======
+                    recipe_id=recipe["id"],
+>>>>>>> Stashed changes
                     nb_persons=nb_persons,
                 )
             )

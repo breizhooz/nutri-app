@@ -2,13 +2,18 @@
 
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
-from sqlalchemy import Boolean, DateTime, String, func
+from sqlalchemy import JSON, Boolean, DateTime, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
+
+
+def default_user_right() -> dict[str, Any]:
+    """Default RBAC rights granted to a freshly created user (nothing allowed)."""
+    return {"crawl": {"instagram": False, "web": False}}
 
 
 class User(Base):
@@ -36,6 +41,17 @@ class User(Base):
         nullable=True,
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    user_admin: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
+    # Type JSON générique (portable SQLite/PG) ; la colonne réelle est JSONB
+    # côté Postgres via la migration. Défaut côté Python ; le server_default
+    # JSONB n'est posé que dans la migration (backfill des lignes existantes).
+    user_right: Mapped[dict[str, Any]] = mapped_column(
+        JSON,
+        default=default_user_right,
+        nullable=False,
+    )
     totp_secret: Mapped[Optional[str]] = mapped_column(
         String(255),
         nullable=True,

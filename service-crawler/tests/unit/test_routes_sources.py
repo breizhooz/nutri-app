@@ -3,9 +3,30 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from unittest.mock import patch
 
+from app.core.deps import get_token_payload
+from app.main import app
 from app.models.crawl_source import CrawlSource
 from app.models.enums import CrawlType
 from tests.unit.conftest import TEST_USER_ID
+
+
+@pytest.mark.asyncio
+async def test_oneshot_forbidden_without_web_right(client: AsyncClient):
+    """Sans droit crawl.web, le one-shot doit être refusé (403)."""
+
+    async def _no_rights() -> dict:
+        return {
+            "sub": str(TEST_USER_ID),
+            "type": "access",
+            "user_admin": False,
+            "user_right": {"crawl": {"instagram": False, "web": False}},
+        }
+
+    app.dependency_overrides[get_token_payload] = _no_rights
+    response = await client.post(
+        "/api/v1/crawler/sources/oneshot", json={"url": "https://example.com"}
+    )
+    assert response.status_code == 403
 
 
 @pytest.mark.asyncio

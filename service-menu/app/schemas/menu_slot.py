@@ -8,6 +8,7 @@ class MenuSlotBase(BaseModel):
     day_of_week: DayOfWeek = DayOfWeek.MONDAY
     meal_type: MealType = MealType.BREAKFAST
     recipe_id: int
+    nb_persons: int = Field(default=1, ge=1)
 
 
 class MenuSlotCreate(MenuSlotBase):

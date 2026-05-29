@@ -1,8 +1,22 @@
 """Pydantic request/response schemas for user resources."""
 
 import uuid
+from typing import Optional
 
 from pydantic import BaseModel, EmailStr, field_validator
+
+
+class CrawlRights(BaseModel):
+    """Per-source crawl permissions."""
+
+    instagram: bool = False
+    web: bool = False
+
+
+class UserRights(BaseModel):
+    """Structured RBAC rights stored on the user."""
+
+    crawl: CrawlRights = CrawlRights()
 
 
 class UserCreate(BaseModel):
@@ -21,14 +35,38 @@ class UserCreate(BaseModel):
 
 
 class UserOut(BaseModel):
-    """Public representation of a user account."""
+    """Public representation of a user account, including RBAC rights."""
 
     id: uuid.UUID
     email: str
     is_active: bool
     two_factor_enabled: bool
+    user_admin: bool = False
+    user_right: dict = {}
 
     model_config = {"from_attributes": True}
+
+
+class UserAdminOut(BaseModel):
+    """User representation exposed in the admin management table."""
+
+    id: uuid.UUID
+    email: str
+    is_active: bool
+    user_admin: bool
+    user_right: dict
+
+    model_config = {"from_attributes": True}
+
+
+class UserRightsUpdate(BaseModel):
+    """Payload for an admin updating another user's RBAC rights.
+
+    Both fields are optional so an admin can update one without the other.
+    """
+
+    user_admin: Optional[bool] = None
+    user_right: Optional[UserRights] = None
 
 
 class UserLogin(BaseModel):

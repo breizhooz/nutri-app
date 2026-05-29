@@ -1,5 +1,6 @@
 """Authentication routes: login (with optional 2FA) and token refresh."""
 
+import uuid
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -20,8 +21,10 @@ from app.models.mfa_pending_code import MfaPendingCode
 from app.models.user import User
 from app.schemas.auth import PreAuthTokenResponse
 from app.schemas.user import RefreshRequest, TokenResponse, UserLogin
+from app.repositories.user_repository import UserRepository
 from app.services.notification_client import NotificationClient
 from app.services.totp_service import CodeGenerator
+from app.services.user_service import UserService
 
 router: APIRouter = APIRouter()
 
@@ -70,7 +73,9 @@ async def login(
 
     if not user.two_factor_enabled:
         return TokenResponse(
-            access_token=create_access_token(str(user.id)),
+            access_token=create_access_token(
+                str(user.id), UserService.build_token_claims(user)
+            ),
             refresh_token=create_refresh_token(str(user.id)),
         )
 
@@ -101,11 +106,18 @@ async def login(
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh(data: RefreshRequest) -> TokenResponse:
+async def refresh(
+    data: RefreshRequest,
+    session: AsyncSession = Depends(get_session),
+) -> TokenResponse:
     """Issue a new token pair from a valid refresh token.
+
+    The freshly minted access token re-embeds the user's current RBAC claims,
+    so any rights change applies from the next refresh onward.
 
     Args:
         data: The refresh token payload.
+        session: Async database session.
 
     Returns:
         A new TokenResponse with fresh access and refresh tokens.
@@ -123,7 +135,17 @@ async def refresh(data: RefreshRequest) -> TokenResponse:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token",
         )
+
+    user = await UserRepository(session).get_by_id(uuid.UUID(user_id))
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+        )
+
     return TokenResponse(
-        access_token=create_access_token(user_id),
+        access_token=create_access_token(
+            user_id, UserService.build_token_claims(user)
+        ),
         refresh_token=create_refresh_token(user_id),
     )
