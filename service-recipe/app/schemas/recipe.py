@@ -5,6 +5,23 @@ from .recipe_ingredient import RecipeIngredientBase, RecipeIngredientResponse
 from app.models.enums import DifficultyLevel, RecipeOrigin, CuisineOrigin, CourseType
 
 
+class ImageSuggestion(BaseModel):
+    unsplash_id: str
+    thumb_url: str
+    full_url: str
+    download_location: str = ""
+    author: Optional[str] = None
+    author_url: Optional[str] = None
+
+
+class ImageSearchRequest(BaseModel):
+    keyword: str = Field(..., min_length=1, max_length=300)
+
+
+class ImageSelectRequest(BaseModel):
+    unsplash_id: str = Field(..., min_length=1)
+
+
 class RecipeBase(BaseModel):
     title: str = Field(..., max_length=300)
     slug: str | None = Field(default=None, max_length=350)
@@ -22,6 +39,9 @@ class RecipeBase(BaseModel):
     book_name: Optional[str] = None
     source_url: Optional[str] = None
     image_url: Optional[str] = None
+    image_thumb_url: Optional[str] = None
+    image_suggestions: List[ImageSuggestion] = []
+    image_search_keyword: Optional[str] = None
     created_by_user_id: Optional[str] = None
     calories_per_serving: Optional[float] = None
     proteins_per_serving: Optional[float] = None

@@ -72,11 +72,7 @@ async def create_menu(
                 day_of_week=slot_data.day_of_week,
                 meal_type=slot_data.meal_type,
                 recipe_id=slot_data.recipe_id,
-<<<<<<< Updated upstream
                 nb_persons=slot_data.nb_persons or menu_data.nb_persons,
-=======
-                nb_persons=slot_data.nb_persons,
->>>>>>> Stashed changes
             )
         )
 

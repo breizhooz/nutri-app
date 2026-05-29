@@ -243,12 +243,13 @@ class RecipeMapper:
         self, crawl_result: CrawlResult, recipe_ingredients: list[dict]
     ) -> dict:
         """Build the RecipeCreate-compatible dict from a CrawlResult."""
+        # Les images Instagram ne sont plus transmises : service-recipe génère les
+        # propositions d'images via Unsplash à partir du titre de la recette.
         return {
             "title": crawl_result.title or "Recette importée",
             "instructions": crawl_result.raw_content or "",
             "description": None,
             "source_url": crawl_result.url_origin,
-            "image_url": crawl_result.images[0] if crawl_result.images else None,
             "recipe_ingredients": recipe_ingredients,
             "tags": {},
         }
@@ -269,7 +270,6 @@ class RecipeMapper:
             "prep_time_minutes": data.prep_time_minutes,
             "cook_time_minutes": data.cook_time_minutes,
             "source_url": crawl_result.url_origin,
-            "image_url": crawl_result.images[0] if crawl_result.images else None,
             "recipe_ingredients": recipe_ingredients,
             "tags": {},
         }

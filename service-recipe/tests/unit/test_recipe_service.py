@@ -26,6 +26,8 @@ def _make_repo(slug_exists: bool = False) -> AsyncMock:
     recipe = _make_recipe()
     repo.create.return_value = recipe
     repo.get_by_id_with_relations.return_value = recipe
+    repo.update_image_suggestions.return_value = recipe
+    repo.select_final_image.return_value = recipe
     return repo
 
 

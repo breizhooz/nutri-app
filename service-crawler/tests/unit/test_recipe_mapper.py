@@ -330,7 +330,9 @@ class TestRecipeMapper:
         payload = mock_client.create_recipe.call_args[0][0]
         assert payload["recipe_ingredients"] == []
 
-    async def test_payload_uses_first_image(self, mapper, mock_client):
+    async def test_payload_never_sends_instagram_image(self, mapper, mock_client):
+        """Les images Instagram ne sont plus transmises : service-recipe gère
+        l'image via Unsplash à partir du titre."""
         mock_client.get_or_create_ingredient.return_value = 1
         mock_client.create_recipe.return_value = {}
         await mapper.map_and_send(
@@ -339,14 +341,7 @@ class TestRecipeMapper:
             )
         )
         payload = mock_client.create_recipe.call_args[0][0]
-        assert payload["image_url"] == "https://img1.com/a.jpg"
-
-    async def test_payload_image_url_none_when_no_images(self, mapper, mock_client):
-        mock_client.get_or_create_ingredient.return_value = 1
-        mock_client.create_recipe.return_value = {}
-        await mapper.map_and_send(self._make_result(images=[]))
-        payload = mock_client.create_recipe.call_args[0][0]
-        assert payload["image_url"] is None
+        assert "image_url" not in payload
 
     async def test_payload_title_fallback_when_empty(self, mapper, mock_client):
         mock_client.create_recipe.return_value = {}

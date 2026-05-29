@@ -60,47 +60,24 @@ class ServicesRecipeClient:
         if self._client:
             await self._client.aclose()
 
-<<<<<<< Updated upstream
     async def get_recipes(self, max_recipes: int = 200) -> list[dict]:
         try:
             all_items: list[dict] = []
             page = 1
             page_size = 50
             while len(all_items) < max_recipes:
-=======
-    async def get_recipes(self, skip: int = 0, limit: int = 200) -> list[dict]:
-        """Récupère jusqu'à `limit` recettes en suivant la pagination de service-recipe.
-
-        service-recipe expose `GET /api/v1/recipe` (singulier) qui renvoie un objet
-        paginé {items, total, page, page_size, pages} avec page_size ≤ 50.
-        """
-        page_size = min(limit, 50) if limit else 50
-        items: list[dict] = []
-        page = 1
-        try:
-            while len(items) < limit:
->>>>>>> Stashed changes
                 response = await self._client.get(
                     "/api/v1/recipe",
                     params={"page": page, "page_size": page_size},
                 )
                 response.raise_for_status()
                 data = response.json()
-<<<<<<< Updated upstream
                 items = data.get("items", [])
                 all_items.extend(items)
                 if len(items) < page_size or len(all_items) >= data.get("total", 0):
                     break
                 page += 1
             return all_items
-=======
-                batch = data.get("items", [])
-                items.extend(batch)
-                if not batch or page >= data.get("pages", page):
-                    break
-                page += 1
-            return items[:limit]
->>>>>>> Stashed changes
         except httpx.HTTPStatusError as e:
             raise ServiceUnavailableError(
                 f"service-recipe responded {e.response.status_code}"
