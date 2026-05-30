@@ -1,16 +1,11 @@
 FROM python:3.12-slim
 
-<<<<<<< Updated upstream
-RUN apt-get update && apt-get install -y curl fonts-dejavu-core && rm -rf /var/lib/apt/lists/*
-=======
-# curl: healthcheck ; libpango/libpangoft2 + fonts: dépendances natives de WeasyPrint (export PDF)
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
         libpango-1.0-0 \
         libpangoft2-1.0-0 \
         fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
->>>>>>> Stashed changes
 
 WORKDIR /app
 

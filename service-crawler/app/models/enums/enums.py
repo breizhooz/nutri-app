@@ -5,6 +5,7 @@ class CrawlType(str, PyEnum):
     WEB = "web"
     INSTAGRAM = "instagram"
     YOUTUBE = "youtube"
+    OCR = "ocr"
 
 
 class CrawlStatus(str, PyEnum):
