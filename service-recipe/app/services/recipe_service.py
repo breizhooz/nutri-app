@@ -170,6 +170,13 @@ class RecipeService:
                 recipe = (
                     await self._repository.get_by_id_with_relations(recipe.id) or recipe
                 )
+                # Ré-indexe pour que le doc ES porte les macros fraîchement calculées.
+                try:
+                    await self._search.index_recipe(recipe)
+                except Exception as exc:
+                    logger.warning(
+                        "ES macro reindex failed for recipe %s: %s", recipe.id, exc
+                    )
 
         return recipe
 

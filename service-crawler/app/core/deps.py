@@ -61,6 +61,18 @@ class CrawlPermission:
             )
 
 
+async def require_admin(
+    payload: dict[str, Any] = Depends(get_token_payload),
+) -> dict[str, Any]:
+    """Exige le claim ``user_admin`` ; lève 403 sinon. Renvoie le payload."""
+    if not payload.get("user_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Réservé aux administrateurs",
+        )
+    return payload
+
+
 class RequireCrawlRight:
     """Dépendance paramétrable : exige le droit de crawl d'un type de source fixe.
 

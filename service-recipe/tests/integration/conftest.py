@@ -91,6 +91,10 @@ def make_mock_recipe(
     recipe.created_by_user_id = "123e4567-e89b-12d3-a456-426614174000"
     recipe.created_at = datetime(2026, 1, 1, 12, 0, 0)
     recipe.updated_at = datetime(2026, 1, 1, 12, 0, 0)
+    recipe.calories_per_serving = 520.0
+    recipe.proteins_per_serving = 42.0
+    recipe.carbs_per_serving = 30.0
+    recipe.fats_per_serving = 18.0
     recipe.recipe_ingredients = recipe_ingredients or []
     return recipe
 

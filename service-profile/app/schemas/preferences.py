@@ -143,6 +143,10 @@ class NutritionPreferencesCreate(BaseModel):
     budget_per_day_eur: float | None = None
     medical_contraindications: str | None = None
     excluded_foods: list[str] = []
+    rules_aggressiveness: float = 1.0
+    rules_variety_pct: float = 0.10
+    rules_override_calories: int | None = None
+    rules_override_proteines: int | None = None
 
 
 class NutritionPreferencesResponse(BaseModel):
@@ -168,6 +172,10 @@ class NutritionPreferencesResponse(BaseModel):
     budget_per_day_eur: float | None
     medical_contraindications: str | None
     excluded_foods: list[str]
+    rules_aggressiveness: float
+    rules_variety_pct: float
+    rules_override_calories: int | None
+    rules_override_proteines: int | None
     updated_at: datetime
 
 

@@ -54,6 +54,11 @@ class RecipeSearchService:
             "free_tags": recipe.free_tags or [],
             "created_by_user_id": recipe.created_by_user_id,
             "created_at": recipe.created_at.isoformat() if recipe.created_at else None,
+            # Macros par portion — noms alignés sur le moteur de cibles (fr).
+            "calories": recipe.calories_per_serving,
+            "proteines": recipe.proteins_per_serving,
+            "glucides": recipe.carbs_per_serving,
+            "lipides": recipe.fats_per_serving,
         }
 
         for category, tags in extracted_tags.items():
@@ -93,8 +98,17 @@ class RecipeSearchService:
         exclude_nutrition: Optional[list[str]] = None,
         limit: int = 10,
         offset: int = 0,
+        extra_must_not: Optional[list[dict]] = None,
+        extra_filter: Optional[list[dict]] = None,
+        scoring_functions: Optional[list[dict]] = None,
     ) -> dict:
-        """Fulltext search scoped to the authenticated user."""
+        """Fulltext search scoped to the authenticated user.
+
+        ``extra_must_not`` / ``extra_filter`` / ``scoring_functions`` permettent au
+        moteur de cibles nutritionnelles (Étape 3) d'injecter ses clauses sans que
+        ce service ne connaisse leur logique. Si ``scoring_functions`` est fourni,
+        la requête bool est enveloppée dans un ``function_score``.
+        """
         must_queries = []
         filter_queries = [{"term": {"created_by_user_id.keyword": user_id}}]
         must_not_queries = []
@@ -155,14 +169,34 @@ class RecipeSearchService:
                 for value in values:
                     must_not_queries.append({"term": {field_name: value}})
 
-        es_query = {
-            "query": {
-                "bool": {
-                    "must": must_queries if must_queries else [{"match_all": {}}],
-                    "filter": filter_queries,
-                    "must_not": must_not_queries,
+        # Clauses injectées par le moteur de cibles nutritionnelles (Étape 3).
+        if extra_must_not:
+            must_not_queries.extend(extra_must_not)
+        if extra_filter:
+            filter_queries.extend(extra_filter)
+
+        bool_query = {
+            "bool": {
+                "must": must_queries if must_queries else [{"match_all": {}}],
+                "filter": filter_queries,
+                "must_not": must_not_queries,
+            }
+        }
+
+        if scoring_functions:
+            inner_query = {
+                "function_score": {
+                    "query": bool_query,
+                    "functions": scoring_functions,
+                    "score_mode": "sum",
+                    "boost_mode": "multiply",
                 }
-            },
+            }
+        else:
+            inner_query = bool_query
+
+        es_query = {
+            "query": inner_query,
             "from": offset,
             "size": limit,
             "sort": ["_score", {"created_at": "desc"}],
