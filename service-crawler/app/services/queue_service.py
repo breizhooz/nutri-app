@@ -5,6 +5,7 @@ Utilise ``celery_app.control.inspect()`` pour interroger les workers en direct
 """
 
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from app.schemas.queue import QueueSnapshot, QueueTask
@@ -12,7 +13,8 @@ from app.schemas.queue import QueueSnapshot, QueueTask
 logger = logging.getLogger(__name__)
 
 # Timeout court : si aucun worker ne répond, inspect renvoie None (file vide).
-_INSPECT_TIMEOUT_S = 1.5
+# Chaque appel inspect() attend toute sa fenêtre → on les lance en parallèle.
+_INSPECT_TIMEOUT_S = 1.0
 
 
 class QueueService:
@@ -25,14 +27,25 @@ class QueueService:
             celery_app = default_app
         self._app = celery_app
 
-    def snapshot(self) -> QueueSnapshot:
-        """Retourne l'état courant de la file (bloquant : à exécuter hors event loop)."""
+    def _inspect(self, method: str):
+        """Un appel inspect isolé (broadcast indépendant, exécutable en parallèle)."""
         inspector = self._app.control.inspect(timeout=_INSPECT_TIMEOUT_S)
+        return getattr(inspector, method)()
 
-        ping = inspector.ping() or {}
-        active = self._flatten(inspector.active())
-        scheduled = self._flatten(inspector.scheduled(), scheduled=True)
-        reserved = self._flatten(inspector.reserved())
+    def snapshot(self) -> QueueSnapshot:
+        """Retourne l'état courant de la file (bloquant : à exécuter hors event loop).
+
+        Les 4 broadcasts inspect sont parallélisés pour rester sous ~1 s au lieu de ~Nx.
+        """
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            f_ping = pool.submit(self._inspect, "ping")
+            f_active = pool.submit(self._inspect, "active")
+            f_scheduled = pool.submit(self._inspect, "scheduled")
+            f_reserved = pool.submit(self._inspect, "reserved")
+            ping = f_ping.result() or {}
+            active = self._flatten(f_active.result())
+            scheduled = self._flatten(f_scheduled.result(), scheduled=True)
+            reserved = self._flatten(f_reserved.result())
 
         workers = sorted(ping.keys())
         return QueueSnapshot(
