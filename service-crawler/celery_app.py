@@ -12,6 +12,7 @@ celery_app = Celery(
         "tasks.web",
         "tasks.instagram",
         "tasks.notifications",
+        "tasks.ocr",
     ],
 )
 
@@ -31,5 +32,6 @@ celery_app.conf.update(
         "tasks.web.*": {"queue": "crawler"},
         "tasks.instagram.*": {"queue": "crawler"},
         "tasks.notifications.*": {"queue": "crawler"},
+        "tasks.ocr.*": {"queue": "crawler"},
     },
 )

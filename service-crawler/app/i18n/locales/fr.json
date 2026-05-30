@@ -23,6 +23,17 @@
     "private_profile": "Ce compte Instagram est privé.",
     "crawl_queued": "Crawl Instagram déclenché."
   },
+  "ocr": {
+    "analyzed": "Texte extrait. Vérifiez avant d'importer.",
+    "queued": "Pré-recette en cours de création.",
+    "errors": {
+      "not_an_image": "Le fichier fourni n'est pas une image.",
+      "empty_file": "Le fichier fourni est vide.",
+      "empty_text": "Aucun texte à importer.",
+      "file_too_large": "L'image dépasse la taille maximale autorisée (10 Mo).",
+      "not_a_recipe": "Le texte extrait ne correspond pas à une recette de cuisine."
+    }
+  },
   "scheduler": {
     "source_added": "Source ajoutée au planning Beat.",
     "source_removed": "Source retirée du planning Beat.",
@@ -38,7 +49,8 @@
     "crawl_type": {
       "web": "Web",
       "instagram": "Instagram",
-      "youtube": "YouTube"
+      "youtube": "YouTube",
+      "ocr": "OCR"
     },
     "crawl_status": {
       "waiting": "En attente",
