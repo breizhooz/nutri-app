@@ -4,7 +4,7 @@ import logging
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Integer, JSON, Numeric, SmallInteger, String, Text
+from sqlalchemy import Boolean, Float, Integer, JSON, Numeric, SmallInteger, String, Text
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -55,3 +55,12 @@ class NutritionPreferences(Base, SlugMixin, UpdatedAtMixin):
     excluded_foods: Mapped[list[str]] = mapped_column(
         JSON, nullable=False, default=list
     )
+    # Réglages d'ajustement des règles (curseurs UI) — défauts persistés.
+    rules_aggressiveness: Mapped[float] = mapped_column(
+        Float, nullable=False, default=1.0, server_default="1.0"
+    )
+    rules_variety_pct: Mapped[float] = mapped_column(
+        Float, nullable=False, default=0.10, server_default="0.1"
+    )
+    rules_override_calories: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    rules_override_proteines: Mapped[int | None] = mapped_column(Integer, nullable=True)

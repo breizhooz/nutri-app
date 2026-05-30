@@ -8,6 +8,7 @@ from app.api.routes import sources as sources_routes
 from app.api.routes import results as results_routes
 from app.api.routes import settings as settings_routes
 from app.api.routes import ocr as ocr_routes
+from app.api.routes import admin as admin_routes
 
 from nutri_shared.core.logger import configure_logging
 from nutri_shared.core.middleware import RequestLoggingMiddleware
@@ -32,6 +33,7 @@ app.include_router(
     settings_routes.router, prefix="/api/v1/crawler/settings", tags=["settings"]
 )
 app.include_router(ocr_routes.router, prefix="/api/v1/crawler/ocr", tags=["ocr"])
+app.include_router(admin_routes.router, prefix="/api/v1/crawler/admin", tags=["admin"])
 
 
 @app.get("/health")

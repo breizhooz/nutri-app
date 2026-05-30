@@ -5,7 +5,7 @@ import uuid
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Date, Numeric
+from sqlalchemy import Boolean, Date, Numeric, false
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -37,4 +37,7 @@ class Profile(Base, SlugMixin, TimestampMixin, UpdatedAtMixin):
     weight_kg: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
     target_weight_kg: Mapped[Decimal | None] = mapped_column(
         Numeric(5, 2), nullable=True
+    )
+    nutrition_rules_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
     )

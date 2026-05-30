@@ -3,6 +3,15 @@ from app.core.config import settings
 
 es_client: AsyncElasticsearch = None  # initialized in lifespan via init_elasticsearch()
 
+# Champs macros (par portion) consommés par le scoring du moteur de cibles.
+# Noms alignés sur la convention française du moteur (proteines/glucides/lipides).
+MACRO_PROPERTIES = {
+    "calories": {"type": "float"},
+    "proteines": {"type": "float"},
+    "glucides": {"type": "float"},
+    "lipides": {"type": "float"},
+}
+
 
 async def init_elasticsearch():
     global es_client
@@ -42,8 +51,14 @@ async def init_elasticsearch():
                     "types": {"type": "keyword"},
                     "created_by_user_id": {"type": "keyword"},
                     "created_at": {"type": "date"},
+                    **MACRO_PROPERTIES,
                 }
             },
+        )
+    else:
+        # Ajout idempotent des champs macros sur un index pré-existant.
+        await es_client.indices.put_mapping(
+            index=index_name, properties=MACRO_PROPERTIES
         )
 
 

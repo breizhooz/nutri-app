@@ -30,6 +30,7 @@ class ProfileUpdate(BaseModel):
     height_cm: float | None = None
     weight_kg: float | None = None
     target_weight_kg: float | None = None
+    nutrition_rules_enabled: bool | None = None
 
 
 class ProfileResponse(BaseModel):
@@ -45,5 +46,6 @@ class ProfileResponse(BaseModel):
     height_cm: float | None
     weight_kg: float | None
     target_weight_kg: float | None
+    nutrition_rules_enabled: bool
     created_at: datetime
     updated_at: datetime

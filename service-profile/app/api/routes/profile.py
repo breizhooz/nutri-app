@@ -12,8 +12,10 @@ from app.i18n import t
 from app.repositories.preferences_repository import PreferencesRepository
 from app.repositories.profile_repository import ProfileRepository
 from app.schemas.calculations import CalculationResponse
+from app.schemas.nutrition_summary import NutritionSummaryResponse
 from app.schemas.profile import ProfileCreate, ProfileResponse, ProfileUpdate
 from app.services.calculation_service import CalculationService
+from app.services.nutrition_summary_service import NutritionSummaryService
 from app.services.profile_service import ProfileService
 
 logger = logging.getLogger(__name__)
@@ -121,3 +123,27 @@ async def get_profile_for_service(
             status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale)
         )
     return ProfileResponse.model_validate(profile)
+
+
+@router.get(
+    "/{user_id}/nutrition-summary",
+    response_model=NutritionSummaryResponse,
+    dependencies=[Depends(verify_service_token)],
+)
+async def get_nutrition_summary_for_service(
+    request: Request,
+    user_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+) -> NutritionSummaryResponse:
+    """Endpoint inter-service : résumé nutritionnel complet par user_id.
+
+    Agrège profil, calcul métabolique, préférences et contraintes médicales.
+    Authentifié par SERVICE_PROFILE_TOKEN.
+    """
+    locale = get_locale(request)
+    summary = await NutritionSummaryService(session).get_summary(user_id, locale)
+    if not summary:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale)
+        )
+    return summary

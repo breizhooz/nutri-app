@@ -16,6 +16,14 @@ class NutritionResult:
     fats_per_serving: float
 
 
+@dataclass
+class NutritionTargetsResult:
+    """Sortie du moteur de cibles : cibles finales (+ warnings) et requête ES prête."""
+
+    targets: dict
+    search_query: dict
+
+
 class NutritionServiceClient:
     """HTTP client for inter-service calls to service-nutrition /api/v1/calculate."""
 
@@ -70,6 +78,51 @@ class NutritionServiceClient:
             )
         except (httpx.HTTPStatusError, httpx.RequestError) as exc:
             logger.warning("Nutrition calculation failed for %r: %s", recipe_slug, exc)
+            return None
+
+    async def compute_targets(
+        self,
+        *,
+        goal: str,
+        diet_type: str,
+        tdee_kcal: float,
+        bmr_kcal: float,
+        weight_kg: float,
+        excluded_foods: list[str],
+        medical_contraindications: list[str],
+        adjustment: dict | None = None,
+    ) -> "NutritionTargetsResult | None":
+        """Appelle le moteur de cibles (POST /api/v1/nutrition-targets).
+
+        ``adjustment`` (optionnel) transporte les curseurs UI : intensité,
+        tolérance variété et overrides manuels.
+
+        Best-effort : retourne None si le service est absent, en erreur, ou si la
+        réponse est malformée — l'appelant retombe alors sur une recherche standard.
+        """
+        if not settings.SERVICE_NUTRITION_URL:
+            return None
+        payload = {
+            "goal": goal,
+            "diet_type": diet_type,
+            "tdee_kcal": tdee_kcal,
+            "bmr_kcal": bmr_kcal,
+            "weight_kg": weight_kg,
+            "excluded_foods": excluded_foods,
+            "medical_contraindications": medical_contraindications,
+        }
+        if adjustment:
+            payload["adjustment"] = adjustment
+        try:
+            async with self._client() as client:
+                resp = await client.post("/api/v1/nutrition-targets", json=payload)
+                resp.raise_for_status()
+            data = resp.json()
+            return NutritionTargetsResult(
+                targets=data["targets"], search_query=data["search_query"]
+            )
+        except (httpx.HTTPStatusError, httpx.RequestError, KeyError, ValueError) as exc:
+            logger.warning("Nutrition targets computation failed: %s", exc)
             return None
 
 

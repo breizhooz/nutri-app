@@ -157,6 +157,21 @@ async def test_indexed_document_contains_user_id(mock_es):
 
 @pytest.mark.asyncio
 @pytest.mark.integration
+async def test_indexed_document_contains_macros(mock_es):
+    """_build_document projette les macros par portion sur les noms du moteur (fr)."""
+    from app.services.search_service import search_service
+
+    recipe = make_mock_recipe()
+    doc = search_service._build_document(recipe)
+
+    assert doc["calories"] == 520.0
+    assert doc["proteines"] == 42.0  # proteins_per_serving
+    assert doc["glucides"] == 30.0  # carbs_per_serving
+    assert doc["lipides"] == 18.0  # fats_per_serving
+
+
+@pytest.mark.asyncio
+@pytest.mark.integration
 async def test_indexed_document_contains_allergens_from_ingredients(mock_es):
     """_build_document extrait les allergens depuis ingredient.tags."""
     from app.services.search_service import search_service
