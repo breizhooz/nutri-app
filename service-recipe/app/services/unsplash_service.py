@@ -40,7 +40,9 @@ class UnsplashService:
         api_url: str | None = None,
         http_client: httpx.AsyncClient | None = None,
     ) -> None:
-        self._access_key = access_key if access_key is not None else settings.UNSPLASH_ACCESS_KEY
+        self._access_key = (
+            access_key if access_key is not None else settings.UNSPLASH_ACCESS_KEY
+        )
         self._api_url = (api_url or settings.UNSPLASH_API_URL).rstrip("/")
         self._injected_client = http_client
 
@@ -84,7 +86,11 @@ class UnsplashService:
                 "GET",
                 f"{self._api_url}/search/photos",
                 headers=self._headers(),
-                params={"query": keyword, "per_page": count, "orientation": "landscape"},
+                params={
+                    "query": keyword,
+                    "per_page": count,
+                    "orientation": "landscape",
+                },
             )
             results = resp.json().get("results", [])
         except (httpx.HTTPError, ValueError) as exc:
@@ -100,7 +106,9 @@ class UnsplashService:
                     unsplash_id=photo.get("id", ""),
                     thumb_url=urls.get("thumb") or urls.get("small", ""),
                     full_url=urls.get("regular") or urls.get("full", ""),
-                    download_location=photo.get("links", {}).get("download_location", ""),
+                    download_location=photo.get("links", {}).get(
+                        "download_location", ""
+                    ),
                     author=user.get("name"),
                     author_url=(user.get("links") or {}).get("html"),
                 )

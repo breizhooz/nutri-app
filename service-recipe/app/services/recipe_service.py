@@ -2,13 +2,23 @@ import logging
 
 from fastapi import HTTPException, status
 
+from app.core.exceptions import (
+    RecipeForbidden,
+    RecipeNotFound,
+    SlugGenerationError,
+)
 from app.core.http_client import NutritionServiceClient
 from app.models.enums import CuisineOrigin, DifficultyLevel, RecipeOrigin
 from app.models.enums import CourseType as CT
 from app.models.recipe import Recipe
 from app.models.recipe_ingredients import RecipeIngredient
 from app.repositories.recipe_repository import RecipeRepository
-from app.schemas.recipe import RecipeCreate, RecipeManualCreate
+from app.schemas.recipe import (
+    PaginatedRecipeResponse,
+    RecipeCreate,
+    RecipeManualCreate,
+    RecipeUpdate,
+)
 from app.schemas.recipe_import import RecipeImportItem
 from app.services.search_service import RecipeSearchService
 from app.services.unsplash_service import UnsplashService
@@ -37,6 +47,59 @@ class RecipeService:
         return {
             user_id: count for user_id, count in await self._repository.count_by_user()
         }
+
+    async def get_by_slug(self, slug: str) -> Recipe:
+        recipe = await self._repository.get_by_slug_with_relations(slug)
+        if recipe is None:
+            raise RecipeNotFound()
+        return recipe
+
+    async def get_by_id(self, recipe_id: int) -> Recipe:
+        recipe = await self._repository.get_by_id_with_relations(recipe_id)
+        if recipe is None:
+            raise RecipeNotFound()
+        return recipe
+
+    async def list_recipes(
+        self, page: int, page_size: int, course_type: str | None = None
+    ) -> PaginatedRecipeResponse:
+        items, total = await self._repository.list_paginated(
+            page, page_size, course_type
+        )
+        pages = max(1, -(-total // page_size))  # ceiling division
+        return PaginatedRecipeResponse(
+            items=items, total=total, page=page, page_size=page_size, pages=pages
+        )
+
+    async def update(self, recipe_id: int, data: RecipeUpdate, user_id: str) -> Recipe:
+        recipe = await self._repository.get_by_id_with_relations(recipe_id)
+        self._ensure_author(recipe, user_id)
+
+        update_fields = data.model_dump(
+            exclude_unset=True, exclude={"recipe_ingredients"}
+        )
+        if "title" in update_fields:
+            update_fields["slug"] = await self._generate_unique_slug(
+                slugify(update_fields["title"]), exclude_id=recipe_id
+            )
+
+        updated = await self._repository.apply_update(
+            recipe, update_fields, data.recipe_ingredients
+        )
+        try:
+            await self._search.index_recipe(updated)
+        except Exception as exc:
+            logger.warning("ES reindex failed for recipe %s: %s", recipe_id, exc)
+        return updated
+
+    async def delete(self, recipe_id: int, user_id: str) -> None:
+        recipe = await self._repository.get_by_id_with_relations(recipe_id)
+        recipe = self._ensure_author(recipe, user_id)
+        await self._repository.delete(recipe)
+        try:
+            await self._search.delete_recipe(recipe_id)
+        except Exception as exc:
+            logger.warning("ES delete failed for recipe %s: %s", recipe_id, exc)
 
     async def create_manual(self, data: RecipeManualCreate, user_id: str) -> Recipe:
         recipe_ingredients = await self._resolve_ingredients(data.ingredients)
@@ -184,19 +247,7 @@ class RecipeService:
         self, recipe_id: int, user_id: str, image_url: str
     ) -> Recipe:
         recipe = await self._repository.get_by_id_with_relations(recipe_id)
-        if recipe is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Recette introuvable.",
-            )
-        if (
-            recipe.created_by_user_id is None
-            or str(recipe.created_by_user_id) != user_id
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Vous n'êtes pas l'auteur de cette recette.",
-            )
+        self._ensure_author(recipe, user_id)
         recipe = await self._repository.update_image_url(recipe_id, image_url)
         try:
             await self._search.index_recipe(recipe)
@@ -218,14 +269,12 @@ class RecipeService:
 
     def _ensure_author(self, recipe: Recipe | None, user_id: str) -> Recipe:
         if recipe is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Recette introuvable."
-            )
-        if recipe.created_by_user_id is None or str(recipe.created_by_user_id) != user_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Vous n'êtes pas l'auteur de cette recette.",
-            )
+            raise RecipeNotFound()
+        if (
+            recipe.created_by_user_id is None
+            or str(recipe.created_by_user_id) != user_id
+        ):
+            raise RecipeForbidden()
         return recipe
 
     async def refresh_suggestions(
@@ -283,7 +332,4 @@ class RecipeService:
             candidate = f"{base_slug}-{i}"
             if not await self._repository.slug_exists(candidate, exclude_id):
                 return candidate
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Impossible de générer un slug unique pour ce titre.",
-        )
+        raise SlugGenerationError()

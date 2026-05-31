@@ -28,7 +28,11 @@ async def test_queue_forbidden_for_non_admin(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_queue_ok_for_admin(client: AsyncClient):
     async def _admin_payload() -> dict:
-        return {"sub": "00000000-0000-0000-0000-000000000001", "type": "access", "user_admin": True}
+        return {
+            "sub": "00000000-0000-0000-0000-000000000001",
+            "type": "access",
+            "user_admin": True,
+        }
 
     app.dependency_overrides[get_token_payload] = _admin_payload
     app.dependency_overrides[QueueServiceFactory.inject] = lambda: _StubQueue()

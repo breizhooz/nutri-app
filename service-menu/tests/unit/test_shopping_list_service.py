@@ -39,7 +39,11 @@ RECIPE_PASTA_EGG = {
     "recipe_ingredients": [
         {
             "ingredient_id": 10,
-            "ingredient": {"id": 10, "name": "Pasta", "tags": ["enums.type.pasta"]},
+            "ingredient": {
+                "id": 10,
+                "name": "Pasta",
+                "tags": ["enums.type_of_ingredient.pasta"],
+            },
             "quantity": 200,
             "unit": "g",
         },
@@ -57,7 +61,11 @@ RECIPE_PASTA_ONLY = {
     "recipe_ingredients": [
         {
             "ingredient_id": 10,
-            "ingredient": {"id": 10, "name": "Pasta", "tags": ["enums.type.pasta"]},
+            "ingredient": {
+                "id": 10,
+                "name": "Pasta",
+                "tags": ["enums.type_of_ingredient.pasta"],
+            },
             "quantity": 100,
             "unit": "g",
         },
@@ -157,13 +165,14 @@ class TestBuildShoppingList:
         keys = [(i.category or "", i.ingredient_name) for i in sl.items]
         assert keys == sorted(keys)
 
-    async def test_category_taken_from_first_tag(self):
+    async def test_category_normalized_to_coarse_rayon(self):
+        # "pasta" est un sous-type de TypeOfIngredient -> rayon « Céréales & féculents ».
         sl = await build_shopping_list(
             _make_menu([_make_slot(1)], nb_persons=1),
             _make_client({1: RECIPE_PASTA_EGG}),
         )
         pasta = next(i for i in sl.items if i.ingredient_id == 10)
-        assert pasta.category == "enums.type.pasta"
+        assert pasta.category == "enums.type_of_ingredient.grain"
 
     async def test_no_tags_gives_none_category(self):
         sl = await build_shopping_list(

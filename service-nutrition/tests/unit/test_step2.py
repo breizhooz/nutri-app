@@ -25,7 +25,9 @@ class TestUserOverrides:
     @pytest.mark.unit
     def test_nominal_no_override(self, service, base) -> None:
         """Sans override ni agressivité : on retombe sur les calories de base."""
-        out = service.apply(base, UserAdjustmentProfile(), "weight_loss", 2500, 1700, 80)
+        out = service.apply(
+            base, UserAdjustmentProfile(), "weight_loss", 2500, 1700, 80
+        )
         assert out.calories == 2000.0  # 2500 - (2500-2000)*1.0
         assert out.proteines == 160.0
         assert out.lipides == 55.6  # repris de la base (pas recalculé)

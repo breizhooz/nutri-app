@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from fastapi import HTTPException
 
+from app.core.exceptions import RecipeForbidden, RecipeNotFound
 from app.services.recipe_service import RecipeService
 from app.services.unsplash_service import ImageSuggestion
 
@@ -33,7 +34,9 @@ def _make_service(recipe, unsplash):
     repo.update_image_suggestions.return_value = recipe
     repo.select_final_image.return_value = recipe
     search = AsyncMock()
-    service = RecipeService(repo, search, nutrition_client=AsyncMock(), unsplash=unsplash)
+    service = RecipeService(
+        repo, search, nutrition_client=AsyncMock(), unsplash=unsplash
+    )
     return service, repo, search
 
 
@@ -84,16 +87,14 @@ class TestRefreshSuggestions:
     async def test_forbidden_for_non_author(self):
         recipe = _make_recipe(user_id="someone-else")
         service, repo, _ = _make_service(recipe, AsyncMock())
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(RecipeForbidden):
             await service.refresh_suggestions(1, "kw", "owner")
-        assert exc.value.status_code == 403
 
     async def test_not_found(self):
         service, repo, _ = _make_service(_make_recipe(), AsyncMock())
         repo.get_by_id_with_relations.return_value = None
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(RecipeNotFound):
             await service.refresh_suggestions(1, "kw", "owner")
-        assert exc.value.status_code == 404
 
 
 # ─── select ───────────────────────────────────────────────────────────────────
@@ -109,7 +110,9 @@ class TestSelectImage:
 
         await service.select_image(1, "b", "owner")
 
-        repo.select_final_image.assert_called_once_with(1, "http://hd/b", "http://thumb/b")
+        repo.select_final_image.assert_called_once_with(
+            1, "http://hd/b", "http://thumb/b"
+        )
         unsplash.track_download.assert_called_once_with("http://dl/b")
         search.index_recipe.assert_called_once()
 
@@ -124,6 +127,5 @@ class TestSelectImage:
     async def test_forbidden_for_non_author(self):
         recipe = _make_recipe(user_id="other", suggestions=[_suggestion("a").to_dict()])
         service, repo, _ = _make_service(recipe, AsyncMock())
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(RecipeForbidden):
             await service.select_image(1, "a", "owner")
-        assert exc.value.status_code == 403

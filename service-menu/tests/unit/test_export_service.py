@@ -1,4 +1,3 @@
-import pytest
 from datetime import date
 
 from app.services.export_service import export_shopping_list, _to_csv, _to_pdf

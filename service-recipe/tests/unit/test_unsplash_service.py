@@ -1,7 +1,6 @@
 from unittest.mock import AsyncMock
 
 import httpx
-import pytest
 
 from app.services.unsplash_service import ImageSuggestion, UnsplashService
 
@@ -46,9 +45,7 @@ class TestUnsplashSearch:
         assert out[0].author == "Jane Doe"
 
     async def test_respects_count_limit(self):
-        client = _client_returning(
-            {"results": [_photo(str(i)) for i in range(10)]}
-        )
+        client = _client_returning({"results": [_photo(str(i)) for i in range(10)]})
         service = UnsplashService(access_key="key", http_client=client)
         out = await service.search("tarte", count=4)
         assert len(out) == 4

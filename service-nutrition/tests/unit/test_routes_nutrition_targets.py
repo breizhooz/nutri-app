@@ -23,9 +23,7 @@ class TestNutritionTargetsRoute:
     @pytest.mark.unit
     async def test_nominal_orchestration(self, service_client: AsyncClient) -> None:
         """Enchaîne les 3 étapes et retourne cibles + requête ES."""
-        resp = await service_client.post(
-            "/api/v1/nutrition-targets", json=_payload()
-        )
+        resp = await service_client.post("/api/v1/nutrition-targets", json=_payload())
         assert resp.status_code == 200
         body = resp.json()
         assert body["targets"]["calories"] == 2000.0
@@ -49,9 +47,7 @@ class TestNutritionTargetsRoute:
         assert len(body["targets"]["warnings"]) >= 1
 
     @pytest.mark.unit
-    async def test_unknown_goal_returns_422(
-        self, service_client: AsyncClient
-    ) -> None:
+    async def test_unknown_goal_returns_422(self, service_client: AsyncClient) -> None:
         resp = await service_client.post(
             "/api/v1/nutrition-targets", json=_payload(goal="cheat_day")
         )

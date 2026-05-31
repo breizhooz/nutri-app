@@ -4,6 +4,7 @@ from sqlalchemy import text
 
 from nutri_shared.errors import register_error_handlers
 
+from app.core.error_handlers import register_domain_handlers
 from app.db.session import get_engine
 from app.core.elasticsearch import init_elasticsearch, close_elasticsearch
 from app.api.routes import recipes as recipes_router
@@ -28,6 +29,7 @@ app = FastAPI(title="service-recipe", version="0.1.0", lifespan=lifespan)
 app.add_middleware(RequestLoggingMiddleware)
 
 register_error_handlers(app)
+register_domain_handlers(app)
 setup_telemetry("service-recipe", app)
 
 app.include_router(recipes_router.router, prefix="/api/v1/recipe", tags=["recipe"])

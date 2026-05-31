@@ -2,6 +2,7 @@ from collections import defaultdict
 from app.models.weekly_menu import WeeklyMenu
 from app.core.http_client import ServicesRecipeClient
 from app.schemas.shopping_list import ShoppingList, ShoppingItem
+from app.services.rayon import category_to_rayon
 
 
 async def build_shopping_list(
@@ -30,8 +31,9 @@ async def build_shopping_list(
             agg["name"] = ingredient.get("name", f"ingredient_{ing_id}")
             agg["unit"] = ri.get("unit", "")
             if not agg["category"]:
-                tags = ingredient.get("tags") or []
-                agg["category"] = tags[0] if tags else None
+                agg["category"] = category_to_rayon(
+                    ingredient.get("tags") or [], agg["name"]
+                )
 
     items = [
         ShoppingItem(

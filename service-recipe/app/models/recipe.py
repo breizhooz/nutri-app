@@ -93,6 +93,19 @@ class Recipe(AbstractModel):
     carbs_per_serving: Mapped[float | None] = mapped_column(Float, nullable=True)
     fats_per_serving: Mapped[float | None] = mapped_column(Float, nullable=True)
 
+    # user feedback on the recipe
+    comment: Mapped[str | None] = mapped_column(Text, nullable=True)
+    rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    @validates("rating")
+    def validate_rating(self, key, val):
+        """Rating is a note out of 5 (1..5) or None when unrated."""
+        if val is None:
+            return val
+        if not isinstance(val, int) or not 1 <= val <= 5:
+            raise ValueError(f"'{val}' n'est pas une note valide pour {key} (1 à 5).")
+        return val
+
     # metadata
     created_by_user_id: Mapped[str | None] = mapped_column(String(36))
     created_at: Mapped[datetime] = mapped_column(default=func.now())

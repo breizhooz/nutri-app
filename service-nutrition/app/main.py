@@ -77,9 +77,7 @@ def create_app() -> FastAPI:
 
     app.include_router(lookup.router, prefix="/api/v1/nutrition-items")
     app.include_router(calculate.router, prefix="/api/v1/calculate")
-    app.include_router(
-        nutrition_targets.router, prefix="/api/v1/nutrition-targets"
-    )
+    app.include_router(nutrition_targets.router, prefix="/api/v1/nutrition-targets")
     app.include_router(nutrition_items.router, prefix="/api/v1/nutrition-items")
     app.include_router(macro_errors.router, prefix="/api/v1")
     app.include_router(stats.router, prefix="/api/v1")

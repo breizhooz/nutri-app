@@ -178,9 +178,7 @@ class TestNutritionSummaryEndpoint:
     ) -> None:
         """Aucun profil pour l'utilisateur : retourne 404."""
         unknown = uuid.uuid4()
-        resp = await service_client.get(
-            f"/api/v1/profiles/{unknown}/nutrition-summary"
-        )
+        resp = await service_client.get(f"/api/v1/profiles/{unknown}/nutrition-summary")
         assert resp.status_code == 404
 
     @pytest.mark.unit
@@ -189,7 +187,5 @@ class TestNutritionSummaryEndpoint:
     ) -> None:
         """Sans token de service : retourne 403."""
         await client.post("/api/v1/profiles", json={"height_cm": 175.0})
-        resp = await client.get(
-            f"/api/v1/profiles/{test_user_id}/nutrition-summary"
-        )
+        resp = await client.get(f"/api/v1/profiles/{test_user_id}/nutrition-summary")
         assert resp.status_code == 403

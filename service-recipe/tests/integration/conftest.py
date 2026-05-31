@@ -95,6 +95,8 @@ def make_mock_recipe(
     recipe.proteins_per_serving = 42.0
     recipe.carbs_per_serving = 30.0
     recipe.fats_per_serving = 18.0
+    recipe.comment = None
+    recipe.rating = None
     recipe.recipe_ingredients = recipe_ingredients or []
     return recipe
 

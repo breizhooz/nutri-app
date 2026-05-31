@@ -13,7 +13,9 @@ from app.services.ocr_service import OcrError
 _STUB_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 
 
-def _extracted(is_recipe: bool = True, title: str = "Tarte aux pommes") -> ExtractedRecipe:
+def _extracted(
+    is_recipe: bool = True, title: str = "Tarte aux pommes"
+) -> ExtractedRecipe:
     return ExtractedRecipe(
         title=title,
         instructions="Mélanger puis cuire.",

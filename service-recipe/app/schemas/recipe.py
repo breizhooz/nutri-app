@@ -47,6 +47,8 @@ class RecipeBase(BaseModel):
     proteins_per_serving: Optional[float] = None
     carbs_per_serving: Optional[float] = None
     fats_per_serving: Optional[float] = None
+    comment: Optional[str] = None
+    rating: Optional[int] = Field(default=None, ge=1, le=5)
 
 
 class RecipeCreate(RecipeBase):
@@ -83,6 +85,8 @@ class RecipeUpdate(BaseModel):
     proteins_per_serving: Optional[float] = None
     carbs_per_serving: Optional[float] = None
     fats_per_serving: Optional[float] = None
+    comment: Optional[str] = None
+    rating: Optional[int] = Field(default=None, ge=1, le=5)
 
     model_config = ConfigDict(from_attributes=True)
 
