@@ -145,16 +145,13 @@ class TestGenerateSlots:
             for i in range(1, 10)
         ]
         snacks = [
-            make_recipe(i, course_type="enums.course_type.snack")
-            for i in range(10, 15)
+            make_recipe(i, course_type="enums.course_type.snack") for i in range(10, 15)
         ]
         mains = [
-            make_recipe(i, course_type="enums.course_type.main")
-            for i in range(20, 40)
+            make_recipe(i, course_type="enums.course_type.main") for i in range(20, 40)
         ]
         sauces = [
-            make_recipe(i, course_type="enums.course_type.sauce")
-            for i in range(40, 44)
+            make_recipe(i, course_type="enums.course_type.sauce") for i in range(40, 44)
         ]
         slots = await generate_slots(
             self._client(breakfast + snacks + mains + sauces),
@@ -167,9 +164,7 @@ class TestGenerateSlots:
         sauce_ids = {r["id"] for r in sauces}
         breakfast_slots = [s for s in slots if s.meal_type == MealType.BREAKFAST]
         lunch_dinner = [
-            s
-            for s in slots
-            if s.meal_type in (MealType.LUNCH, MealType.DINNER)
+            s for s in slots if s.meal_type in (MealType.LUNCH, MealType.DINNER)
         ]
         assert breakfast_slots
         assert all(s.recipe_id in allowed_breakfast_ids for s in breakfast_slots)

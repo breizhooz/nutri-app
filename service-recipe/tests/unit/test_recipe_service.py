@@ -1,11 +1,11 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from fastapi import HTTPException
 
+from app.core.exceptions import RecipeForbidden, RecipeNotFound, SlugGenerationError
 from app.core.http_client import NutritionResult
 from app.models.enums import CourseType, CuisineOrigin, DifficultyLevel, RecipeOrigin
-from app.schemas.recipe import ManualIngredient, RecipeManualCreate
+from app.schemas.recipe import ManualIngredient, RecipeManualCreate, RecipeUpdate
 from app.schemas.recipe_import import RecipeImportItem, RecipeIngredientImport
 from app.services.recipe_service import RecipeService
 
@@ -355,8 +355,147 @@ class TestGenerateUniqueSlug:
         slug = await service._generate_unique_slug("tarte-aux-pommes")
         assert slug == "tarte-aux-pommes-3"
 
-    async def test_raises_422_after_max_attempts(self, service, repo):
+    async def test_raises_after_max_attempts(self, service, repo):
         repo.slug_exists.return_value = True
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(SlugGenerationError):
             await service._generate_unique_slug("tarte-aux-pommes")
-        assert exc.value.status_code == 422
+
+
+# ─── read / list ──────────────────────────────────────────────────────────────
+
+
+def _owned_recipe(user_id: str = "user-1") -> MagicMock:
+    recipe = _make_recipe()
+    recipe.created_by_user_id = user_id
+    return recipe
+
+
+class TestRecipeServiceRead:
+    @pytest.fixture
+    def repo(self):
+        return _make_repo()
+
+    @pytest.fixture
+    def service(self, repo):
+        return RecipeService(
+            repo, _make_search(), nutrition_client=_make_nutrition_client()
+        )
+
+    async def test_get_by_slug_returns_recipe(self, service, repo):
+        recipe = _make_recipe()
+        repo.get_by_slug_with_relations.return_value = recipe
+        assert await service.get_by_slug("tarte") is recipe
+
+    async def test_get_by_slug_raises_when_missing(self, service, repo):
+        repo.get_by_slug_with_relations.return_value = None
+        with pytest.raises(RecipeNotFound):
+            await service.get_by_slug("inconnu")
+
+    async def test_get_by_id_returns_recipe(self, service, repo):
+        recipe = _make_recipe()
+        repo.get_by_id_with_relations.return_value = recipe
+        assert await service.get_by_id(1) is recipe
+
+    async def test_get_by_id_raises_when_missing(self, service, repo):
+        repo.get_by_id_with_relations.return_value = None
+        with pytest.raises(RecipeNotFound):
+            await service.get_by_id(999)
+
+    async def test_list_recipes_computes_pages(self, service, repo):
+        repo.list_paginated.return_value = ([], 45)
+        result = await service.list_recipes(page=1, page_size=20)
+        assert result.total == 45
+        assert result.pages == 3
+        repo.list_paginated.assert_called_once_with(1, 20, None)
+
+    async def test_list_recipes_empty_has_one_page(self, service, repo):
+        repo.list_paginated.return_value = ([], 0)
+        result = await service.list_recipes(page=1, page_size=20, course_type="dessert")
+        assert result.pages == 1
+        repo.list_paginated.assert_called_once_with(1, 20, "dessert")
+
+
+# ─── update / delete ──────────────────────────────────────────────────────────
+
+
+class TestRecipeServiceUpdate:
+    @pytest.fixture
+    def repo(self):
+        repo = _make_repo()
+        repo.get_by_id_with_relations.return_value = _owned_recipe()
+        repo.apply_update.side_effect = lambda recipe, fields, ings: recipe
+        return repo
+
+    @pytest.fixture
+    def search(self):
+        return _make_search()
+
+    @pytest.fixture
+    def service(self, repo, search):
+        return RecipeService(repo, search, nutrition_client=_make_nutrition_client())
+
+    async def test_raises_not_found_when_missing(self, service, repo):
+        repo.get_by_id_with_relations.return_value = None
+        with pytest.raises(RecipeNotFound):
+            await service.update(1, RecipeUpdate(title="X"), "user-1")
+
+    async def test_raises_forbidden_when_not_author(self, service, repo):
+        repo.get_by_id_with_relations.return_value = _owned_recipe("someone-else")
+        with pytest.raises(RecipeForbidden):
+            await service.update(1, RecipeUpdate(title="X"), "user-1")
+
+    async def test_only_sets_provided_fields(self, service, repo):
+        await service.update(1, RecipeUpdate(comment="Excellent"), "user-1")
+        _, fields, _ = repo.apply_update.call_args[0]
+        assert fields == {"comment": "Excellent"}
+
+    async def test_regenerates_slug_when_title_changes(self, service, repo):
+        repo.slug_exists.return_value = False
+        await service.update(1, RecipeUpdate(title="Nouveau Titre"), "user-1")
+        _, fields, _ = repo.apply_update.call_args[0]
+        assert fields["slug"] == "nouveau-titre"
+
+    async def test_indexes_after_update(self, service, repo, search):
+        await service.update(1, RecipeUpdate(comment="ok"), "user-1")
+        search.index_recipe.assert_called_once()
+
+    async def test_es_failure_does_not_raise(self, service, repo, search):
+        search.index_recipe.side_effect = Exception("ES down")
+        result = await service.update(1, RecipeUpdate(comment="ok"), "user-1")
+        assert result is not None
+
+
+class TestRecipeServiceDelete:
+    @pytest.fixture
+    def repo(self):
+        repo = _make_repo()
+        repo.get_by_id_with_relations.return_value = _owned_recipe()
+        return repo
+
+    @pytest.fixture
+    def search(self):
+        return _make_search()
+
+    @pytest.fixture
+    def service(self, repo, search):
+        return RecipeService(repo, search, nutrition_client=_make_nutrition_client())
+
+    async def test_raises_not_found_when_missing(self, service, repo):
+        repo.get_by_id_with_relations.return_value = None
+        with pytest.raises(RecipeNotFound):
+            await service.delete(1, "user-1")
+
+    async def test_raises_forbidden_when_not_author(self, service, repo):
+        repo.get_by_id_with_relations.return_value = _owned_recipe("someone-else")
+        with pytest.raises(RecipeForbidden):
+            await service.delete(1, "user-1")
+
+    async def test_deletes_and_unindexes(self, service, repo, search):
+        await service.delete(1, "user-1")
+        repo.delete.assert_called_once()
+        search.delete_recipe.assert_called_once_with(1)
+
+    async def test_es_failure_does_not_raise(self, service, repo, search):
+        search.delete_recipe.side_effect = Exception("ES down")
+        await service.delete(1, "user-1")
+        repo.delete.assert_called_once()

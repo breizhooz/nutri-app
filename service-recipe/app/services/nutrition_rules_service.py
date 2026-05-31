@@ -136,7 +136,9 @@ class NutritionRulesService:
         """
         agg = _coalesce(aggressiveness, getattr(prefs, "rules_aggressiveness", None))
         var = _coalesce(variety_pct, getattr(prefs, "rules_variety_pct", None))
-        oc = _coalesce(override_calories, getattr(prefs, "rules_override_calories", None))
+        oc = _coalesce(
+            override_calories, getattr(prefs, "rules_override_calories", None)
+        )
         op = _coalesce(
             override_proteines, getattr(prefs, "rules_override_proteines", None)
         )

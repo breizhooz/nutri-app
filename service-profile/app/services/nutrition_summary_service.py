@@ -79,9 +79,7 @@ class NutritionSummaryService:
                 else None
             ),
             allergies=[FoodAllergyResponse.model_validate(a) for a in allergies],
-            excluded_foods=[
-                ExcludedFoodResponse.model_validate(e) for e in excluded
-            ],
+            excluded_foods=[ExcludedFoodResponse.model_validate(e) for e in excluded],
             medical_conditions=[
                 MedicalConditionResponse.model_validate(c) for c in conditions
             ],

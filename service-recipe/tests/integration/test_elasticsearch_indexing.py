@@ -18,6 +18,7 @@ def _override_service_with_real_search(recipe) -> RecipeService:
     repo.slug_exists.return_value = False
     repo.create.return_value = recipe
     repo.get_by_id_with_relations.return_value = recipe
+    repo.apply_update.return_value = recipe
     repo.update_image_suggestions.return_value = recipe
     service = RecipeService(
         repo,
@@ -86,16 +87,16 @@ async def test_create_recipe_es_failure_does_not_break_crud(
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_update_recipe_triggers_es_reindexation(
-    override_db, mock_es, http_client
-):
+async def test_update_recipe_triggers_es_reindexation(mock_es, http_client):
     mock_recipe = make_mock_recipe()
-    override_db.get.return_value = mock_recipe
+    _override_service_with_real_search(mock_recipe)
 
     async with http_client as client:
         response = await client.put(
             f"{BASE}/id/{mock_recipe.id}", json={"title": "Poulet revisité"}
         )
+
+    app.dependency_overrides.pop(RecipeServiceFactory.inject, None)
 
     assert response.status_code == 200
     mock_es.index.assert_called_once()
@@ -115,12 +116,14 @@ async def test_update_nonexistent_recipe_returns_404(override_db, mock_es, http_
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_delete_recipe_triggers_es_deletion(override_db, mock_es, http_client):
+async def test_delete_recipe_triggers_es_deletion(mock_es, http_client):
     mock_recipe = make_mock_recipe()
-    override_db.get.return_value = mock_recipe
+    _override_service_with_real_search(mock_recipe)
 
     async with http_client as client:
         response = await client.delete(f"{BASE}/id/{mock_recipe.id}")
+
+    app.dependency_overrides.pop(RecipeServiceFactory.inject, None)
 
     assert response.status_code == 204
     from app.core.config import settings

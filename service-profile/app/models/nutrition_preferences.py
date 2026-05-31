@@ -4,7 +4,16 @@ import logging
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Float, Integer, JSON, Numeric, SmallInteger, String, Text
+from sqlalchemy import (
+    Boolean,
+    Float,
+    Integer,
+    JSON,
+    Numeric,
+    SmallInteger,
+    String,
+    Text,
+)
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column

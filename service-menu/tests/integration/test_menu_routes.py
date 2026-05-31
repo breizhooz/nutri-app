@@ -106,9 +106,9 @@ class TestGenerateMenu:
         r = await client.post(f"{BASE}/generate", json=menu_payload())
         assert r.status_code == 201
 
-    async def test_generates_14_slots_by_default(self, client: AsyncClient):
+    async def test_generates_35_slots_by_default(self, client: AsyncClient):
         body = (await client.post(f"{BASE}/generate", json=menu_payload())).json()
-        assert len(body["slots"]) == 14  # 7 days × 2 meals
+        assert len(body["slots"]) == 35  # 7 days × 5 meals
 
     async def test_generated_menu_belongs_to_authenticated_user(
         self, client: AsyncClient

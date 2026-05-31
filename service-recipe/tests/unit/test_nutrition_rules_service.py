@@ -120,7 +120,9 @@ class TestNutritionRulesService:
         assert eng_kwargs["tdee_kcal"] == 2500
         assert eng_kwargs["weight_kg"] == 80.0
         assert "sucre" in eng_kwargs["excluded_foods"]  # depuis prefs
-        assert "arachide" in eng_kwargs["excluded_foods"]  # depuis excluded_foods objets
+        assert (
+            "arachide" in eng_kwargs["excluded_foods"]
+        )  # depuis excluded_foods objets
         assert eng_kwargs["medical_contraindications"] == ["gluten"]
 
         # clauses fusionnées dans la recherche

@@ -48,8 +48,8 @@ class TestGetShoppingList:
         for field in ("ingredient_id", "ingredient_name", "total_quantity", "unit"):
             assert field in item
 
-    async def test_quantities_multiplied_by_nb_persons(self, client: AsyncClient):
-        # RICH_RECIPE pasta: 200g/serving × 2 persons = 400g
+    async def test_quantities_scaled_by_nb_persons(self, client: AsyncClient):
+        # RICH_RECIPE pasta: 200g pour 2 servings → 2 personnes = 200g (scale 2/2).
         menu = (
             await client.post(
                 MENUS_BASE,
@@ -61,7 +61,7 @@ class TestGetShoppingList:
             (i for i in body["items"] if i["ingredient_name"] == "Pasta"), None
         )
         assert pasta is not None
-        assert pasta["total_quantity"] == pytest.approx(400.0)
+        assert pasta["total_quantity"] == pytest.approx(200.0)
 
     async def test_empty_slots_returns_empty_items(self, client: AsyncClient):
         menu = (await client.post(MENUS_BASE, json=menu_payload(slots=[]))).json()
@@ -77,7 +77,8 @@ class TestGetShoppingList:
         assert (await client.get(shopping_url(other_user_menu.id))).status_code == 403
 
     async def test_same_ingredient_aggregated_across_slots(self, client: AsyncClient):
-        # Deux slots avec la même recette → quantités doublées (200 × 2 slots × 1 person)
+        # Deux slots, même recette : 200g pour 2 servings → 1 personne = 100g/slot,
+        # agrégés sur 2 slots = 200g.
         slots = [
             slot_payload(day="enums.day.monday", recipe_id=100),
             slot_payload(day="enums.day.tuesday", recipe_id=100),
@@ -90,7 +91,7 @@ class TestGetShoppingList:
             (i for i in body["items"] if i["ingredient_name"] == "Pasta"), None
         )
         assert pasta is not None
-        assert pasta["total_quantity"] == pytest.approx(400.0)
+        assert pasta["total_quantity"] == pytest.approx(200.0)
 
 
 # ---------------------------------------------------------------------------

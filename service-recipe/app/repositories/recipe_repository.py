@@ -1,4 +1,4 @@
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -6,6 +6,7 @@ from app.models.ingredient import Ingredient
 from app.models.recipe import Recipe
 from app.models.recipe_ingredients import RecipeIngredient
 from app.schemas.recipe_import import IngredientImport
+from app.schemas.recipe_ingredient import RecipeIngredientBase
 
 
 class RecipeRepository:
@@ -23,6 +24,76 @@ class RecipeRepository:
             )
         )
         return result.scalar_one_or_none()
+
+    async def get_by_slug_with_relations(self, slug: str) -> Recipe | None:
+        result = await self.session.execute(
+            select(Recipe)
+            .where(Recipe.slug == slug)
+            .options(
+                selectinload(Recipe.recipe_ingredients).selectinload(
+                    RecipeIngredient.ingredient
+                )
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def list_paginated(
+        self, page: int, page_size: int, course_type: str | None = None
+    ) -> tuple[list[Recipe], int]:
+        """Return (items, total) for a page, optionally filtered by course_type."""
+        base_query = select(Recipe)
+        count_query = select(func.count()).select_from(Recipe)
+        if course_type:
+            base_query = base_query.where(Recipe.course_type == course_type)
+            count_query = count_query.where(Recipe.course_type == course_type)
+
+        total = (await self.session.execute(count_query)).scalar_one()
+
+        offset = (page - 1) * page_size
+        result = await self.session.execute(
+            base_query.options(
+                selectinload(Recipe.recipe_ingredients).selectinload(
+                    RecipeIngredient.ingredient
+                )
+            )
+            .order_by(Recipe.created_at.desc())
+            .offset(offset)
+            .limit(page_size)
+        )
+        return list(result.scalars().all()), total
+
+    async def apply_update(
+        self,
+        recipe: Recipe,
+        fields: dict,
+        ingredients: list[RecipeIngredientBase] | None,
+    ) -> Recipe:
+        """Persist scalar field changes and optionally replace the ingredient set."""
+        for field, value in fields.items():
+            setattr(recipe, field, value)
+
+        if ingredients is not None:
+            await self.session.execute(
+                delete(RecipeIngredient).where(RecipeIngredient.recipe_id == recipe.id)
+            )
+            for ing in ingredients:
+                self.session.add(
+                    RecipeIngredient(
+                        recipe_id=recipe.id,
+                        ingredient_id=ing.ingredient_id,
+                        quantity=ing.quantity,
+                        unit=ing.unit,
+                    )
+                )
+
+        await self.session.commit()
+        loaded = await self.get_by_id_with_relations(recipe.id)
+        assert loaded is not None
+        return loaded
+
+    async def delete(self, recipe: Recipe) -> None:
+        await self.session.delete(recipe)
+        await self.session.commit()
 
     async def slug_exists(self, slug: str, exclude_id: int | None = None) -> bool:
         q = select(Recipe.id).where(Recipe.slug == slug)

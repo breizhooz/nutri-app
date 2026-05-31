@@ -63,9 +63,7 @@ class OcrService:
                 longest = max(im.size)
                 if longest > MAX_DIMENSION:
                     scale = MAX_DIMENSION / longest
-                    im = im.resize(
-                        (round(im.width * scale), round(im.height * scale))
-                    )
+                    im = im.resize((round(im.width * scale), round(im.height * scale)))
                 buf = io.BytesIO()
                 im.save(buf, format="JPEG", quality=90)
                 return buf.getvalue()

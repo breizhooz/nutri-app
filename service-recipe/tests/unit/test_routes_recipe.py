@@ -117,6 +117,8 @@ def _make_recipe_response() -> MagicMock:
     r.proteins_per_serving = None
     r.carbs_per_serving = None
     r.fats_per_serving = None
+    r.comment = None
+    r.rating = None
     r.created_at = datetime(2026, 1, 1, 12, 0, 0)
     r.updated_at = datetime(2026, 1, 1, 12, 0, 0)
     r.recipe_ingredients = []

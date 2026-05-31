@@ -45,9 +45,7 @@ class UserOverridesService:
         final_calories = self._resolve_calories(base, profile, tdee_kcal)
         final_proteines = self._resolve_proteines(base, profile)
 
-        final_calories = self._enforce_calorie_floor(
-            final_calories, bmr_kcal, warnings
-        )
+        final_calories = self._enforce_calorie_floor(final_calories, bmr_kcal, warnings)
         final_proteines = self._enforce_proteines_cap(
             final_proteines, weight_kg, warnings
         )
@@ -74,9 +72,7 @@ class UserOverridesService:
         return tdee_kcal - (deficit_base * profile.aggressiveness_factor)
 
     @staticmethod
-    def _resolve_proteines(
-        base: BaseTargets, profile: UserAdjustmentProfile
-    ) -> float:
+    def _resolve_proteines(base: BaseTargets, profile: UserAdjustmentProfile) -> float:
         """Override manuel protéines prioritaire, sinon valeur de base."""
         if profile.manual_proteines_override is not None:
             return float(profile.manual_proteines_override)

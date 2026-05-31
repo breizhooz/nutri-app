@@ -39,10 +39,16 @@ async def search_recipe(
         description="Applique les règles nutritionnelles du user si elles sont activées",
     ),
     aggressiveness: Optional[float] = Query(
-        None, ge=0.5, le=1.5, description="Intensité : 0.5 Doux / 1.0 Modéré / 1.5 Intense"
+        None,
+        ge=0.5,
+        le=1.5,
+        description="Intensité : 0.5 Doux / 1.0 Modéré / 1.5 Intense",
     ),
     variety_pct: Optional[float] = Query(
-        None, ge=0.0, le=0.5, description="Tolérance variété sur les calories (ex: 0.10)"
+        None,
+        ge=0.0,
+        le=0.5,
+        description="Tolérance variété sur les calories (ex: 0.10)",
     ),
     override_calories: Optional[int] = Query(
         None, ge=0, description="Override manuel des calories cibles"

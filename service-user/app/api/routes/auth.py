@@ -144,8 +144,6 @@ async def refresh(
         )
 
     return TokenResponse(
-        access_token=create_access_token(
-            user_id, UserService.build_token_claims(user)
-        ),
+        access_token=create_access_token(user_id, UserService.build_token_claims(user)),
         refresh_token=create_refresh_token(user_id),
     )
