@@ -499,3 +499,31 @@ class TestRecipeServiceDelete:
         search.delete_recipe.side_effect = Exception("ES down")
         await service.delete(1, "user-1")
         repo.delete.assert_called_once()
+
+
+class TestRecipeServiceDeleteByUser:
+    @pytest.fixture
+    def repo(self):
+        repo = AsyncMock()
+        repo.delete_by_user.return_value = 3
+        return repo
+
+    @pytest.fixture
+    def search(self):
+        return _make_search()
+
+    @pytest.fixture
+    def service(self, repo, search):
+        return RecipeService(repo, search, nutrition_client=_make_nutrition_client())
+
+    async def test_deletes_user_recipes_and_unindexes(self, service, repo, search):
+        deleted = await service.delete_by_user("user-1")
+        assert deleted == 3
+        repo.delete_by_user.assert_awaited_once_with("user-1")
+        search.delete_by_user.assert_awaited_once_with("user-1")
+
+    async def test_es_failure_does_not_raise(self, service, repo, search):
+        search.delete_by_user.side_effect = Exception("ES down")
+        deleted = await service.delete_by_user("user-1")
+        assert deleted == 3
+        repo.delete_by_user.assert_awaited_once_with("user-1")

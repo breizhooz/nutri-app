@@ -8,13 +8,16 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
-from app.schemas.queue import QueueSnapshot, QueueTask
+from app.schemas.queue import QueueSnapshot, QueueTask, TaskStatus
 
 logger = logging.getLogger(__name__)
 
 # Timeout court : si aucun worker ne répond, inspect renvoie None (file vide).
 # Chaque appel inspect() attend toute sa fenêtre → on les lance en parallèle.
 _INSPECT_TIMEOUT_S = 1.0
+
+# États où la tâche porte une erreur (échec définitif ou relance programmée).
+_FAILED_STATES = ("FAILURE", "RETRY")
 
 
 class QueueService:
@@ -59,6 +62,31 @@ class QueueService:
             active=active,
             scheduled=scheduled,
             reserved=reserved,
+        )
+
+    def task_status(self, task_id: str) -> TaskStatus:
+        """Interroge le result backend Celery pour l'état d'une tâche.
+
+        Lecture seule (bloquant : à exécuter hors event loop). Pour une tâche
+        plantée (``FAILURE``/``RETRY``), ``error`` porte le message d'exception et
+        ``finished_at`` la date du dernier échec.
+        """
+        res = self._app.AsyncResult(task_id)
+        state = res.state
+        info = res.result
+        error = (
+            str(info) if state in _FAILED_STATES and info is not None else None
+        )
+        ready = res.ready()
+        date_done = res.date_done
+        return TaskStatus(
+            task_id=task_id,
+            state=state,
+            known=state != "PENDING",
+            ready=ready,
+            successful=res.successful() if ready else None,
+            error=error,
+            finished_at=date_done.isoformat() if date_done else None,
         )
 
     @staticmethod
