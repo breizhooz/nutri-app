@@ -101,6 +101,15 @@ class RecipeService:
         except Exception as exc:
             logger.warning("ES delete failed for recipe %s: %s", recipe_id, exc)
 
+    async def delete_by_user(self, user_id: str) -> int:
+        """Delete all recipes authored by ``user_id`` and unindex them."""
+        count = await self._repository.delete_by_user(user_id)
+        try:
+            await self._search.delete_by_user(user_id)
+        except Exception as exc:
+            logger.warning("ES delete-by-user failed for %s: %s", user_id, exc)
+        return count
+
     async def create_manual(self, data: RecipeManualCreate, user_id: str) -> Recipe:
         recipe_ingredients = await self._resolve_ingredients(data.ingredients)
         slug = await self._generate_unique_slug(slugify(data.title))

@@ -167,3 +167,46 @@ async def test_create_recipe_manual_missing_title_returns_422():
     app.dependency_overrides.clear()
 
     assert response.status_code == 422
+
+
+# ─── DELETE (admin) : recettes d'un utilisateur ───────────────────────────────
+
+from app.core.deps import require_admin, get_token_payload  # noqa: E402
+
+
+@pytest.mark.asyncio
+async def test_delete_recipes_by_user_forbidden_for_non_admin():
+    app.dependency_overrides[get_token_payload] = lambda: {
+        "sub": "u1",
+        "type": "access",
+        "user_admin": False,
+    }
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.delete("/api/v1/recipe/by-user/user-9")
+
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_delete_recipes_by_user_as_admin():
+    mock_service = AsyncMock()
+    mock_service.delete_by_user.return_value = 2
+
+    app.dependency_overrides[RecipeServiceFactory.inject] = lambda: mock_service
+    app.dependency_overrides[require_admin] = lambda: {"user_admin": True}
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        response = await client.delete("/api/v1/recipe/by-user/user-9")
+
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json() == {"deleted": 2}
+    mock_service.delete_by_user.assert_awaited_once_with("user-9")

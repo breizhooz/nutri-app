@@ -113,6 +113,17 @@ async def get_recipe_by_id(
     return await service.get_by_id(id)
 
 
+@router.delete("/by-user/{user_id}", status_code=status.HTTP_200_OK)
+async def delete_recipes_by_user(
+    user_id: str,
+    _admin: dict = Depends(require_admin),
+    service: RecipeService = Depends(RecipeServiceFactory.inject),
+) -> dict[str, int]:
+    """Delete every recipe authored by a user and unindex them. Admin-only."""
+    deleted = await service.delete_by_user(user_id)
+    return {"deleted": deleted}
+
+
 @router.delete("/id/{recipe_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_recipe(
     recipe_id: int,

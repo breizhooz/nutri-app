@@ -31,6 +31,11 @@ class UserRepository:
         result = await self.session.execute(select(User).order_by(User.email))
         return list(result.scalars().all())
 
+    async def delete(self, user: User) -> None:
+        """Permanently remove a user account."""
+        await self.session.delete(user)
+        await self.session.commit()
+
     async def update_rights(
         self,
         user: User,

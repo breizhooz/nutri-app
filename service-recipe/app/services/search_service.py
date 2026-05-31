@@ -85,6 +85,15 @@ class RecipeSearchService:
         except Exception as e:
             print(f"ES delete error for recipe {recipe_id}: {e}")
 
+    async def delete_by_user(self, user_id: str) -> None:
+        """Remove all documents authored by ``user_id`` from the index."""
+        await _es_module.es_client.delete_by_query(
+            index=self.index_name,
+            query={"term": {"created_by_user_id.keyword": user_id}},
+            refresh=True,
+            conflicts="proceed",
+        )
+
     async def search_recipes(
         self,
         user_id: str,

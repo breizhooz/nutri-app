@@ -95,6 +95,18 @@ class RecipeRepository:
         await self.session.delete(recipe)
         await self.session.commit()
 
+    async def delete_by_user(self, user_id: str) -> int:
+        """Delete every recipe authored by ``user_id``. Returns rows removed.
+
+        ``recipe_ingredients`` rows are removed by the database (FK
+        ``ondelete=CASCADE``).
+        """
+        result = await self.session.execute(
+            delete(Recipe).where(Recipe.created_by_user_id == user_id)
+        )
+        await self.session.commit()
+        return result.rowcount or 0
+
     async def slug_exists(self, slug: str, exclude_id: int | None = None) -> bool:
         q = select(Recipe.id).where(Recipe.slug == slug)
         if exclude_id is not None:

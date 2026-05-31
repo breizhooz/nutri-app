@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import MagicMock
 
 from app.services.queue_service import QueueService
@@ -71,3 +72,70 @@ class TestQueueService:
         # la tâche planifiée (retry) : id depuis request, eta présent
         assert snap.scheduled[0].id == "s1"
         assert snap.scheduled[0].eta == "2026-05-30T19:00:00+02:00"
+
+
+def _app_with_result(result) -> MagicMock:
+    app = MagicMock()
+    app.AsyncResult.return_value = result
+    return app
+
+
+class TestTaskStatus:
+    def test_retry_reports_error_and_failure_time(self):
+        res = MagicMock()
+        res.state = "RETRY"
+        res.result = Exception("Instagram rate limit")
+        res.ready.return_value = False
+        res.date_done = datetime(2026, 5, 30, 18, 0, 0)
+
+        status = QueueService(celery_app=_app_with_result(res)).task_status("s1")
+
+        assert status.task_id == "s1"
+        assert status.state == "RETRY"
+        assert status.known is True
+        assert status.ready is False
+        assert status.successful is None
+        assert status.error == "Instagram rate limit"
+        assert status.finished_at == "2026-05-30T18:00:00"
+
+    def test_failure_reports_error(self):
+        res = MagicMock()
+        res.state = "FAILURE"
+        res.result = Exception("boom")
+        res.ready.return_value = True
+        res.successful.return_value = False
+        res.date_done = datetime(2026, 5, 30, 18, 0, 0)
+
+        status = QueueService(celery_app=_app_with_result(res)).task_status("f1")
+
+        assert status.state == "FAILURE"
+        assert status.ready is True
+        assert status.successful is False
+        assert status.error == "boom"
+
+    def test_success_has_no_error(self):
+        res = MagicMock()
+        res.state = "SUCCESS"
+        res.result = {"new": 3}
+        res.ready.return_value = True
+        res.successful.return_value = True
+        res.date_done = datetime(2026, 5, 30, 18, 0, 0)
+
+        status = QueueService(celery_app=_app_with_result(res)).task_status("ok1")
+
+        assert status.state == "SUCCESS"
+        assert status.successful is True
+        assert status.error is None
+
+    def test_pending_is_unknown(self):
+        res = MagicMock()
+        res.state = "PENDING"
+        res.result = None
+        res.ready.return_value = False
+        res.date_done = None
+
+        status = QueueService(celery_app=_app_with_result(res)).task_status("nope")
+
+        assert status.known is False
+        assert status.error is None
+        assert status.finished_at is None

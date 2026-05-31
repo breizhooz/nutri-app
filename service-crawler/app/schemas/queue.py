@@ -24,3 +24,20 @@ class QueueSnapshot(BaseModel):
     active: list[QueueTask]
     scheduled: list[QueueTask]
     reserved: list[QueueTask]
+
+
+class TaskStatus(BaseModel):
+    """Diagnostic d'une tâche Celery interrogée par son id (request id).
+
+    ``state == "PENDING"`` (``known is False``) signifie que l'id est inconnu du
+    backend OU que la tâche n'a pas encore démarré (Celery ne distingue pas).
+    """
+
+    task_id: str
+    state: str
+    known: bool
+    ready: bool
+    successful: bool | None = None
+    error: str | None = None
+    # date_done du backend : quand la tâche a terminé ou planté (ISO 8601).
+    finished_at: str | None = None

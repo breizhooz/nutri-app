@@ -119,21 +119,18 @@ async def update_user_rights(
 async def delete_user(
     user_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session),
+    service: UserService = Depends(UserServiceFactory.inject),
 ):
-    if current_user.id != user_id:
+    """Delete a user account. Allowed for the account owner or any admin."""
+    if current_user.id != user_id and not current_user.user_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="forbidden access"
         )
-
-    result = await session.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-    if not user:
+    deleted = await service.delete_user(user_id)
+    if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
-    await session.delete(user)
-    await session.commit()
 
 
 @router.get("/{user_id}/exists")

@@ -196,3 +196,33 @@ class TestCreate:
 
         await repo.create(recipe, [])
         session.commit.assert_called_once()
+
+
+# ─── delete_by_user ───────────────────────────────────────────────────────────
+
+
+def _make_rowcount_result(rowcount: int) -> MagicMock:
+    result = MagicMock()
+    result.rowcount = rowcount
+    return result
+
+
+class TestDeleteByUser:
+    @pytest.fixture
+    def session(self):
+        return _make_session()
+
+    @pytest.fixture
+    def repo(self, session):
+        return RecipeRepository(session)
+
+    async def test_returns_rowcount_and_commits(self, repo, session):
+        session.execute.return_value = _make_rowcount_result(3)
+        deleted = await repo.delete_by_user("user-1")
+        assert deleted == 3
+        session.execute.assert_awaited_once()
+        session.commit.assert_awaited_once()
+
+    async def test_handles_none_rowcount(self, repo, session):
+        session.execute.return_value = _make_rowcount_result(None)
+        assert await repo.delete_by_user("user-1") == 0

@@ -36,6 +36,18 @@ class UserService:
             user, user_admin=payload.user_admin, user_right=user_right
         )
 
+    async def delete_user(self, user_id: uuid.UUID) -> bool:
+        """Delete a user account.
+
+        Returns ``True`` if a user was deleted, ``False`` if none matched
+        ``user_id``.
+        """
+        user = await self.repository.get_by_id(user_id)
+        if user is None:
+            return False
+        await self.repository.delete(user)
+        return True
+
     @staticmethod
     def build_token_claims(user: User) -> dict[str, Any]:
         """Build the RBAC claims embedded in a user's access token.
