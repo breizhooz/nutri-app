@@ -1,4 +1,5 @@
 import logging
+import random
 import re
 import time
 from dataclasses import dataclass, field
@@ -98,15 +99,18 @@ class InstagramService:
         account: str,
         max_posts: int | None = None,
         page_delay: float = 0.0,
-        page_size: int = 50,
+        page_size: int = 20,
+        post_delay: float = 0.0,
+        jitter_ratio: float = 0.0,
     ) -> list[InstagramPost]:
         """Récupère les posts du compte via la pagination GraphQL complète.
 
         ``Profile.get_posts()`` parcourt tout le profil (curseur ``end_cursor`` /
         ``has_next_page``) — il n'y a plus de plafond ~100 de l'ancien endpoint
-        ``feed/user``. ``max_posts`` borne optionnellement la collecte ; ``page_delay``
-        ajoute une tempo toutes les ``page_size`` posts pour lisser les requêtes
-        (anti-blocage).
+        ``feed/user``. ``max_posts`` borne optionnellement la collecte. Anti-blocage :
+        ``post_delay`` ajoute une micro-tempo entre chaque post et ``page_delay`` une
+        tempo plus longue toutes les ``page_size`` posts, toutes deux bruitées par
+        ``jitter_ratio`` (±ratio) pour casser la périodicité.
         """
         profile = self._profile(self.normalize_account(account))
         posts: list[InstagramPost] = []
@@ -114,7 +118,8 @@ class InstagramService:
             if max_posts is not None and len(posts) >= max_posts:
                 break
             posts.append(self._normalize_post(post))
-            self._throttle(len(posts), page_delay, page_size)
+            self._micro_sleep(post_delay, jitter_ratio)
+            self._throttle(len(posts), page_delay, page_size, jitter_ratio)
         return posts
 
     def fetch_new_posts(
@@ -122,7 +127,9 @@ class InstagramService:
         account: str,
         since: datetime,
         page_delay: float = 0.0,
-        page_size: int = 50,
+        page_size: int = 20,
+        post_delay: float = 0.0,
+        jitter_ratio: float = 0.0,
     ) -> list[InstagramPost]:
         """Posts plus récents que ``since`` (les posts sont parcourus du + récent au + ancien)."""
         profile = self._profile(self.normalize_account(account))
@@ -132,14 +139,32 @@ class InstagramService:
             if self._post_timestamp(post) <= since_ts:
                 break
             posts.append(self._normalize_post(post))
-            self._throttle(len(posts), page_delay, page_size)
+            self._micro_sleep(post_delay, jitter_ratio)
+            self._throttle(len(posts), page_delay, page_size, jitter_ratio)
         return posts
 
     @staticmethod
-    def _throttle(collected: int, page_delay: float, page_size: int) -> None:
-        """Tempo anti-blocage toutes les ``page_size`` posts collectés."""
+    def _jitter(base: float, ratio: float) -> float:
+        """Valeur aléatoire dans ``[base*(1-ratio), base*(1+ratio)]`` (bornée à ≥ 0)."""
+        if base <= 0:
+            return 0.0
+        delta = base * max(0.0, ratio)
+        return max(0.0, random.uniform(base - delta, base + delta))
+
+    @staticmethod
+    def _micro_sleep(post_delay: float, jitter_ratio: float) -> None:
+        """Micro-tempo (bruitée) entre chaque post — imite un humain qui scrolle."""
+        delay = InstagramService._jitter(post_delay, jitter_ratio)
+        if delay > 0:
+            time.sleep(delay)
+
+    @staticmethod
+    def _throttle(
+        collected: int, page_delay: float, page_size: int, jitter_ratio: float = 0.0
+    ) -> None:
+        """Tempo anti-blocage (bruitée) toutes les ``page_size`` posts collectés."""
         if page_delay > 0 and page_size > 0 and collected % page_size == 0:
-            time.sleep(page_delay)
+            time.sleep(InstagramService._jitter(page_delay, jitter_ratio))
 
     @staticmethod
     def _post_timestamp(post) -> float:

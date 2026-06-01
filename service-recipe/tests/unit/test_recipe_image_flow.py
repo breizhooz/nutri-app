@@ -18,13 +18,18 @@ def _suggestion(pid: str) -> ImageSuggestion:
     )
 
 
-def _make_recipe(user_id: str = "owner", suggestions: list | None = None) -> MagicMock:
+def _make_recipe(
+    user_id: str = "owner",
+    suggestions: list | None = None,
+    image_url: str | None = None,
+) -> MagicMock:
     r = MagicMock()
     r.id = 1
     r.title = "Tarte aux pommes"
     r.created_by_user_id = user_id
     r.recipe_ingredients = []
     r.image_suggestions = suggestions if suggestions is not None else []
+    r.image_url = image_url
     return r
 
 
@@ -67,6 +72,45 @@ class TestAttachSuggestions:
 
         await service._attach_suggestions(recipe)
         assert repo.update_image_suggestions.call_args[0][2] == []
+
+    async def test_auto_selects_first_image_and_tracks_download(self):
+        recipe = _make_recipe(image_url=None)
+        unsplash = AsyncMock()
+        unsplash.search.return_value = [_suggestion("a"), _suggestion("b")]
+        service, repo, search = _make_service(recipe, unsplash)
+
+        await service._attach_suggestions(recipe)
+
+        # 1ʳᵉ proposition posée comme image finale + tracking Unsplash + réindex ES.
+        repo.select_final_image.assert_called_once_with(
+            1, "http://hd/a", "http://thumb/a"
+        )
+        unsplash.track_download.assert_called_once_with("http://dl/a")
+        search.index_recipe.assert_called_once()
+
+    async def test_no_auto_select_when_no_suggestions(self):
+        recipe = _make_recipe(image_url=None)
+        unsplash = AsyncMock()
+        unsplash.search.return_value = []
+        service, repo, _ = _make_service(recipe, unsplash)
+
+        await service._attach_suggestions(recipe)
+
+        repo.select_final_image.assert_not_called()
+        unsplash.track_download.assert_not_called()
+
+    async def test_does_not_overwrite_existing_image(self):
+        recipe = _make_recipe(image_url="http://existing/img.jpg")
+        unsplash = AsyncMock()
+        unsplash.search.return_value = [_suggestion("a")]
+        service, repo, _ = _make_service(recipe, unsplash)
+
+        await service._attach_suggestions(recipe)
+
+        # Suggestions stockées mais image explicite (import) préservée.
+        repo.update_image_suggestions.assert_called_once()
+        repo.select_final_image.assert_not_called()
+        unsplash.track_download.assert_not_called()
 
 
 # ─── refresh ──────────────────────────────────────────────────────────────────

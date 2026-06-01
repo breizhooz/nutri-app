@@ -77,6 +77,9 @@ class QueueService:
         error = (
             str(info) if state in _FAILED_STATES and info is not None else None
         )
+        # Retour de la tâche (dict d'état) quand elle a réussi : ex. import oneshot
+        # → {"status": "done"|"blocked", "message", ...}.
+        result = info if state == "SUCCESS" and isinstance(info, dict) else None
         ready = res.ready()
         date_done = res.date_done
         return TaskStatus(
@@ -87,6 +90,7 @@ class QueueService:
             successful=res.successful() if ready else None,
             error=error,
             finished_at=date_done.isoformat() if date_done else None,
+            result=result,
         )
 
     @staticmethod
