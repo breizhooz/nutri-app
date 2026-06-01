@@ -336,6 +336,70 @@ def test_fetch_posts_no_throttle_by_default():
     assert sleeps == []
 
 
+# ─── jitter / micro-tempo (anti-blocage) ──────────────────────────────────────
+
+
+def test_jitter_non_positive_base_returns_zero():
+    assert InstagramService._jitter(0.0, 0.4) == 0.0
+    assert InstagramService._jitter(-1.0, 0.4) == 0.0
+
+
+def test_jitter_zero_ratio_returns_base():
+    assert InstagramService._jitter(2.0, 0.0) == 2.0
+
+
+def test_jitter_stays_within_ratio_bounds():
+    for _ in range(200):
+        value = InstagramService._jitter(2.0, 0.4)
+        assert 1.2 <= value <= 2.8  # base ± 40 %
+
+
+def test_fetch_posts_throttle_applies_jitter():
+    service = InstagramService(loader=MagicMock())
+    posts = [_post(shortcode=f"p{i}") for i in range(40)]
+    sleeps: list[float] = []
+    # uniform → borne haute : 2.0 * (1 + 0.4) = 2.8, toutes les 20 sur 40 posts
+    with patch("app.services.instagram_service.random.uniform", lambda lo, hi: hi):
+        with patch(
+            "app.services.instagram_service.time.sleep", lambda d: sleeps.append(d)
+        ):
+            with patch.object(service, "_profile", return_value=_profile_with(posts)):
+                service.fetch_posts(
+                    "account", page_delay=2.0, page_size=20, jitter_ratio=0.4
+                )
+    assert sleeps == [2.8, 2.8]
+
+
+def test_fetch_posts_micro_sleep_between_each_post():
+    service = InstagramService(loader=MagicMock())
+    posts = [_post(shortcode=f"p{i}") for i in range(3)]
+    sleeps: list[float] = []
+    # uniform → borne basse : 0.8 * (1 - 0.5) = 0.4, micro-pause entre chaque post
+    with patch("app.services.instagram_service.random.uniform", lambda lo, hi: lo):
+        with patch(
+            "app.services.instagram_service.time.sleep", lambda d: sleeps.append(d)
+        ):
+            with patch.object(service, "_profile", return_value=_profile_with(posts)):
+                service.fetch_posts("account", post_delay=0.8, jitter_ratio=0.5)
+    assert sleeps == [0.4, 0.4, 0.4]  # 1 micro-pause / post, aucune pause de page
+
+
+def test_fetch_new_posts_micro_sleep_between_each_post():
+    since = datetime(2024, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    service = InstagramService(loader=MagicMock())
+    posts = [_post(shortcode=f"p{i}", date_utc=datetime(2024, 6, 5)) for i in range(3)]
+    sleeps: list[float] = []
+    with patch("app.services.instagram_service.random.uniform", lambda lo, hi: lo):
+        with patch(
+            "app.services.instagram_service.time.sleep", lambda d: sleeps.append(d)
+        ):
+            with patch.object(service, "_profile", return_value=_profile_with(posts)):
+                service.fetch_new_posts(
+                    "account", since, post_delay=0.8, jitter_ratio=0.5
+                )
+    assert sleeps == [0.4, 0.4, 0.4]
+
+
 # ─── fetch_new_posts ──────────────────────────────────────────────────────────
 
 

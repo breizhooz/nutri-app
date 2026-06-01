@@ -21,7 +21,7 @@ from app.schemas.recipe import (
 )
 from app.schemas.recipe_import import RecipeImportItem
 from app.services.search_service import RecipeSearchService
-from app.services.unsplash_service import UnsplashService
+from app.services.unsplash_service import ImageSuggestion, UnsplashService
 from app.core.utils import slugify
 
 logger = logging.getLogger(__name__)
@@ -269,16 +269,41 @@ class RecipeService:
         return recipe
 
     async def _attach_suggestions(self, recipe: Recipe) -> Recipe:
-        """Query Unsplash with the recipe title and persist the proposals.
+        """Query Unsplash with the recipe title, persist the proposals, and set
+        the first result as the recipe image when none was provided.
 
         Best-effort: a failure (or no API key) leaves an empty suggestion set and
-        never breaks recipe creation.
+        never breaks recipe creation. The proposals are kept so the author can
+        still switch image later via ``select_image``. An explicit ``image_url``
+        (e.g. JSON import) is preserved and never overwritten.
         """
         suggestions = await self._unsplash.search(recipe.title)
         updated = await self._repository.update_image_suggestions(
             recipe.id, recipe.title, [s.to_dict() for s in suggestions]
         )
-        return updated or recipe
+        recipe = updated or recipe
+
+        # On pose arbitrairement la 1ʳᵉ proposition comme image finale, sauf si la
+        # recette en a déjà une (import avec image_url explicite).
+        if suggestions and not recipe.image_url:
+            recipe = await self._auto_select_first(recipe, suggestions[0])
+        return recipe
+
+    async def _auto_select_first(
+        self, recipe: Recipe, suggestion: ImageSuggestion
+    ) -> Recipe:
+        """Sélectionne d'office une proposition Unsplash comme image de la recette."""
+        # Guideline Unsplash : signaler l'usage de la photo (best-effort).
+        await self._unsplash.track_download(suggestion.download_location)
+        selected = await self._repository.select_final_image(
+            recipe.id, suggestion.full_url, suggestion.thumb_url
+        )
+        recipe = selected or recipe
+        try:
+            await self._search.index_recipe(recipe)
+        except Exception as exc:
+            logger.warning("ES reindex failed for recipe %s: %s", recipe.id, exc)
+        return recipe
 
     def _ensure_author(self, recipe: Recipe | None, user_id: str) -> Recipe:
         if recipe is None:

@@ -11,7 +11,6 @@ from app.core.config import settings
 from app.i18n.loader import t
 from app.models.enums import NotificationStatus, NotificationType
 from app.repositories.notification_repository import NotificationRepository
-from app.repositories.subscription_repository import SubscriptionRepository
 from app.schemas.notification import NotifyRequest, NotifyResponse
 from app.services.dispatch_service import DispatchService
 from app.services.email_service import EmailService
@@ -109,13 +108,10 @@ async def send_notification(
             failed=0 if email_sent else 1,
         )
 
-    subscriptions = await SubscriptionRepository(session).get_by_user_id(user_id)
-    if not subscriptions:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=t.get("errors.user_not_found"),
-        )
-
+    # Persistance systématique en historique (in-app), même sans abonnement Web
+    # Push : DispatchService crée d'abord la notification puis pousse en
+    # best-effort. On évite ainsi de perdre silencieusement une notif (ex.
+    # blocage de crawl Instagram) quand l'utilisateur n'a pas de device abonné.
     push = PushService(
         vapid_private_key=settings.VAPID_PRIVATE_KEY,
         vapid_claims_email=settings.VAPID_CLAIMS_EMAIL,

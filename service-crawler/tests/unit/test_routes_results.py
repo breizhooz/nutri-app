@@ -129,7 +129,8 @@ class TestListResults:
 
     async def test_page_size_above_max_returns_422(self, results_client):
         client, _ = results_client
-        response = await client.get("/api/v1/crawler/results?page_size=200")
+        # max autorisé = 200 (le=200) → 201 doit être rejeté
+        response = await client.get("/api/v1/crawler/results?page_size=201")
         assert response.status_code == 422
 
     async def test_page_zero_returns_422(self, results_client):

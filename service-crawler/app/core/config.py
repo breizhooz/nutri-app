@@ -34,10 +34,14 @@ class Settings(BaseSettings):
     INSTAGRAM_PASSWORD: str = ""
     INSTAGRAM_SESSION_FILE: str = "/data/instagram_session"
     # Anti-blocage Instagram : plafond de posts par run complet (0 = illimité),
-    # et tempo (s) toutes les INSTAGRAM_PAGE_SIZE posts pour lisser les requêtes.
+    # tempo (s) toutes les INSTAGRAM_PAGE_SIZE posts + micro-tempo entre chaque
+    # post, le tout bruité par INSTAGRAM_JITTER_RATIO (±ratio) pour casser la
+    # périodicité détectable par Instagram et imiter un rythme humain.
     INSTAGRAM_MAX_POSTS_PER_RUN: int = 0
     INSTAGRAM_PAGE_DELAY_SECONDS: float = 2.0
-    INSTAGRAM_PAGE_SIZE: int = 50
+    INSTAGRAM_PAGE_SIZE: int = 20
+    INSTAGRAM_POST_DELAY_SECONDS: float = 0.8
+    INSTAGRAM_JITTER_RATIO: float = 0.4
 
     GROQ_API_KEY: str = ""
     GROQ_API_KEYS: str = ""  # comma-separated list; overrides GROQ_API_KEY when set

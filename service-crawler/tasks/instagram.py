@@ -47,6 +47,29 @@ def _is_block(exc: Exception) -> bool:
     return any(marker in msg for marker in _BLOCK_MARKERS)
 
 
+# Marqueurs « session morte / validation requise » → l'utilisateur doit rafraîchir
+# le token. Sinon on considère le blocage comme un simple rate-limit temporaire.
+_SESSION_MARKERS = ("login_required", "checkpoint", "401", "LoginRequired")
+
+
+def _classify_block(exc: Exception) -> tuple[str, str]:
+    """(code, message lisible) pour un blocage Instagram, à remonter à l'user."""
+    msg = str(exc)
+    if isinstance(exc, LoginRequiredException) or any(
+        m in msg for m in _SESSION_MARKERS
+    ):
+        return (
+            "session_expired",
+            "Ta session Instagram a expiré ou demande une validation. "
+            "Rafraîchis le token Instagram, puis relance l'import.",
+        )
+    return (
+        "rate_limited",
+        "Instagram limite temporairement les imports. Réessaie dans quelques "
+        "heures — inutile de relancer tout de suite.",
+    )
+
+
 def _handle_fetch_error(task, exc: Exception, label: str) -> None:
     """Politique anti-blocage commune.
 
@@ -118,6 +141,8 @@ async def _do_crawl(
                     since,
                     page_delay=settings.INSTAGRAM_PAGE_DELAY_SECONDS,
                     page_size=settings.INSTAGRAM_PAGE_SIZE,
+                    post_delay=settings.INSTAGRAM_POST_DELAY_SECONDS,
+                    jitter_ratio=settings.INSTAGRAM_JITTER_RATIO,
                 )
             else:
                 posts = service.fetch_posts(
@@ -125,6 +150,8 @@ async def _do_crawl(
                     max_posts=settings.INSTAGRAM_MAX_POSTS_PER_RUN or None,
                     page_delay=settings.INSTAGRAM_PAGE_DELAY_SECONDS,
                     page_size=settings.INSTAGRAM_PAGE_SIZE,
+                    post_delay=settings.INSTAGRAM_POST_DELAY_SECONDS,
+                    jitter_ratio=settings.INSTAGRAM_JITTER_RATIO,
                 )
         except Exception as exc:
             _handle_fetch_error(task, exc, account)
@@ -174,11 +201,14 @@ def crawl_instagram_post(self, shortcode: str, user_id: str):
 
     1 requête seulement → risque de blocage quasi nul, contrairement au crawl
     de compte entier. Même politique anti-blocage que ``crawl_instagram``.
+
+    Renvoie un dict d'état (``status`` ∈ done|blocked|error, + ``reason``/``message``)
+    stocké par Celery → consultable par l'utilisateur via le polling de la tâche.
     """
-    asyncio.run(_do_crawl_post(self, shortcode, user_id))
+    return asyncio.run(_do_crawl_post(self, shortcode, user_id))
 
 
-async def _do_crawl_post(task, shortcode: str, user_id_str: str) -> None:
+async def _do_crawl_post(task, shortcode: str, user_id_str: str) -> dict:
     user_id = UUID(user_id_str)
     canonical_url = InstagramService.POST_URL.format(shortcode=shortcode)
 
@@ -195,17 +225,38 @@ async def _do_crawl_post(task, shortcode: str, user_id_str: str) -> None:
                 logger.info(
                     "Post déjà importé → ré-ouvert depuis le cache : %s", canonical_url
                 )
+                # Le post repasse « en attente de validation » → on notifie comme
+                # un import (post renseigné), même sans nouvel appel Instagram.
+                await NotificationClient().notify_crawl_done(
+                    str(user_id), CrawlType.INSTAGRAM.value, 1, "Instagram"
+                )
             else:
                 logger.info(
                     "Post déjà en attente de validation : %s", canonical_url
                 )
-            return
+            return {"status": "done", "detail": "cached", "url": canonical_url}
 
         try:
             post = InstagramService().fetch_post(shortcode)
         except Exception as exc:
+            if _is_block(exc):
+                reason, message = _classify_block(exc)
+                logger.warning(
+                    "Instagram bloqué (post %s : %s) → %s",
+                    shortcode,
+                    type(exc).__name__,
+                    reason,
+                )
+                await NotificationClient().notify_crawl_error(user_id_str, message)
+                return {
+                    "status": "blocked",
+                    "reason": reason,
+                    "message": message,
+                    "url": canonical_url,
+                }
+            # Erreur non bloquante (réseau, autre) → politique de retry existante.
             _handle_fetch_error(task, exc, f"post {shortcode}")
-            return
+            return {"status": "error", "url": canonical_url}
 
         result, _ = await result_repo.get_or_create_result(
             {
@@ -224,5 +275,6 @@ async def _do_crawl_post(task, shortcode: str, user_id_str: str) -> None:
         logger.info("Post Instagram importé : %s", post.url)
 
     await NotificationClient().notify_crawl_done(
-        str(user_id), CrawlType.INSTAGRAM.value, 1, canonical_url
+        str(user_id), CrawlType.INSTAGRAM.value, 1, "Instagram"
     )
+    return {"status": "done", "new_count": 1, "url": canonical_url}

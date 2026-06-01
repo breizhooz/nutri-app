@@ -122,7 +122,8 @@ def _patch_db_post(monkeypatch, existing=None):
     repo.create_user_link = AsyncMock()
     monkeypatch.setattr(ig, "ResultRepository", lambda session: repo)
     monkeypatch.setattr(ig, "NotificationClient", lambda: MagicMock(
-        notify_crawl_done=AsyncMock()
+        notify_crawl_done=AsyncMock(),
+        notify_crawl_error=AsyncMock(),
     ))
     return repo
 

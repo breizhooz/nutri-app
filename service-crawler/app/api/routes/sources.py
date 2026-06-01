@@ -1,6 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.concurrency import run_in_threadpool
 from pydantic import AnyHttpUrl, BaseModel, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,9 +20,15 @@ from app.schemas.crawl_source import (
     CrawlSourceResponse,
     CrawlSourceUpdate,
 )
+from app.schemas.queue import TaskStatus
 from app.services.instagram_service import InstagramService
+from app.services.queue_service import QueueService
 from tasks.instagram import crawl_instagram, crawl_instagram_post
 from tasks.web import crawl_url
+
+
+def _queue_service() -> QueueService:
+    return QueueService()
 
 
 class OneshotCrawlRequest(BaseModel):
@@ -53,12 +60,37 @@ async def oneshot_crawl(
     shortcode = InstagramService.shortcode_from_url(data.url)
     if shortcode is not None:
         UniqLinkPermission.ensure(payload, "instagram")
-        crawl_instagram_post.delay(shortcode, user_id)
-        return {"detail": "Import lancé", "url": data.url, "type": "instagram"}
+        task = crawl_instagram_post.delay(shortcode, user_id)
+        return {
+            "detail": "Import lancé",
+            "url": data.url,
+            "type": "instagram",
+            "task_id": task.id,
+        }
 
     UniqLinkPermission.ensure(payload, "web")
-    crawl_url.delay(source_id=None, url=data.url, user_id=user_id)
-    return {"detail": "Import lancé", "url": data.url, "type": "web"}
+    task = crawl_url.delay(source_id=None, url=data.url, user_id=user_id)
+    return {
+        "detail": "Import lancé",
+        "url": data.url,
+        "type": "web",
+        "task_id": task.id,
+    }
+
+
+@router.get("/oneshot/{task_id}", response_model=TaskStatus)
+async def oneshot_status(
+    task_id: str,
+    _: uuid.UUID = Depends(get_current_user_id),
+    service: QueueService = Depends(_queue_service),
+) -> TaskStatus:
+    """Statut d'un import oneshot lancé par l'utilisateur (polling côté front).
+
+    Sur succès, ``result`` porte l'état métier : ``{"status": "done"}`` ou, en cas
+    de blocage Instagram, ``{"status": "blocked", "message": "…"}`` à afficher.
+    """
+    # Accès au result backend Celery = bloquant → hors event loop.
+    return await run_in_threadpool(service.task_status, task_id)
 
 
 @router.post(
