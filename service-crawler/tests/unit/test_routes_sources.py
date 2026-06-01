@@ -30,6 +30,57 @@ async def test_oneshot_forbidden_without_web_right(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_oneshot_web_routes_to_crawl_url(client: AsyncClient):
+    with patch("app.api.routes.sources.crawl_url") as mock_url, patch(
+        "app.api.routes.sources.crawl_instagram_post"
+    ) as mock_post:
+        resp = await client.post(
+            "/api/v1/crawler/sources/oneshot", json={"url": "https://blog.com/curry"}
+        )
+    assert resp.status_code == 202
+    assert resp.json()["type"] == "web"
+    mock_url.delay.assert_called_once()
+    mock_post.delay.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_oneshot_instagram_link_routes_to_single_post(client: AsyncClient):
+    with patch("app.api.routes.sources.crawl_url") as mock_url, patch(
+        "app.api.routes.sources.crawl_instagram_post"
+    ) as mock_post:
+        resp = await client.post(
+            "/api/v1/crawler/sources/oneshot",
+            json={"url": "https://www.instagram.com/p/Cabc123/"},
+        )
+    assert resp.status_code == 202
+    assert resp.json()["type"] == "instagram"
+    mock_post.delay.assert_called_once()
+    assert mock_post.delay.call_args[0][0] == "Cabc123"
+    mock_url.delay.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_oneshot_instagram_link_forbidden_without_uniq_link_insta(
+    client: AsyncClient,
+):
+    async def _only_web() -> dict:
+        return {
+            "sub": str(TEST_USER_ID),
+            "type": "access",
+            "user_admin": False,
+            "user_right": {"uniq_link": {"instagram": False, "web": True}},
+        }
+
+    app.dependency_overrides[get_token_payload] = _only_web
+    resp = await client.post(
+        "/api/v1/crawler/sources/oneshot",
+        json={"url": "https://www.instagram.com/p/Cabc123/"},
+    )
+    app.dependency_overrides.pop(get_token_payload, None)
+    assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
 async def test_create_source(client: AsyncClient):
     response = await client.post(
         "/api/v1/crawler/sources",

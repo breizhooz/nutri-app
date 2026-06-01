@@ -3,7 +3,7 @@ import uuid
 import pytest
 from fastapi import HTTPException
 
-from app.core.deps import CrawlPermission, RequireCrawlRight
+from app.core.deps import CrawlPermission, RequireCrawlRight, UniqLinkPermission
 
 
 def _payload(admin=False, insta=False, web=False, sub=None):
@@ -57,4 +57,43 @@ async def test_require_crawl_right_forbidden_when_denied():
     dependency = RequireCrawlRight("instagram")
     with pytest.raises(HTTPException) as exc:
         await dependency(_payload(web=True))
+    assert exc.value.status_code == 403
+
+
+# ─── UniqLinkPermission (droit d'import par lien unique) ───────────────────────
+
+
+def _uniq_payload(admin=False, insta=False, web=False):
+    return {
+        "sub": "u1",
+        "type": "access",
+        "user_admin": admin,
+        "user_right": {"uniq_link": {"instagram": insta, "web": web}},
+    }
+
+
+def test_uniq_link_admin_bypasses():
+    assert UniqLinkPermission.allowed(_uniq_payload(admin=True), "instagram") is True
+    assert UniqLinkPermission.allowed(_uniq_payload(admin=True), "web") is True
+
+
+def test_uniq_link_specific_right_only():
+    assert UniqLinkPermission.allowed(_uniq_payload(web=True), "web") is True
+    assert UniqLinkPermission.allowed(_uniq_payload(web=True), "instagram") is False
+
+
+def test_uniq_link_missing_defaults_denied():
+    assert UniqLinkPermission.allowed({"sub": "x"}, "web") is False
+    # un droit crawl ne donne pas le droit uniq_link
+    assert (
+        UniqLinkPermission.allowed(
+            {"sub": "x", "user_right": {"crawl": {"web": True}}}, "web"
+        )
+        is False
+    )
+
+
+def test_uniq_link_ensure_raises_403_when_denied():
+    with pytest.raises(HTTPException) as exc:
+        UniqLinkPermission.ensure(_uniq_payload(), "web")
     assert exc.value.status_code == 403

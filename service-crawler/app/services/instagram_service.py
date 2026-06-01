@@ -1,4 +1,6 @@
 import logging
+import re
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
@@ -8,8 +10,10 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-_IG_APP_ID = "936619743392459"
-_IG_BASE = "https://www.instagram.com"
+# Reconnaît un lien de post/reel/tv Instagram et capture le shortcode.
+_IG_POST_RE = re.compile(
+    r"instagram\.com/(?:p|reel|tv)/([A-Za-z0-9_-]+)", re.IGNORECASE
+)
 
 
 @dataclass
@@ -70,126 +74,113 @@ class InstagramService:
         loader.login(user=username, passwd=password)
         loader.save_session_to_file(session_file)
 
-    def _get(self, path: str, params: dict | None = None) -> dict:
-        """Authenticated GET using the instaloader session (preserves all headers/cookies)."""
-        session = self._loader.context._session
-        resp = session.get(
-            f"{_IG_BASE}{path}",
-            params=params or {},
-            headers={"X-IG-App-ID": _IG_APP_ID},
-            timeout=15,
-        )
-        resp.raise_for_status()
-        return resp.json()
-
-    def _resolve_user_id(self, username: str) -> str:
-        data = self._get(
-            "/web/search/topsearch/",
-            {"context": "user", "query": username, "count": "10"},
-        )
-        for entry in data.get("users", []):
-            user = entry.get("user", {})
-            if user.get("username") == username:
-                return str(user["pk"])
-        raise ValueError(f"Instagram user {username!r} not found in search results")
-
-    def _get_media_count(self, user_id: str) -> int:
-        """Retourne le nombre total de posts pour un user_id Instagram."""
-        data = self._get(f"/api/v1/users/{user_id}/info/")
-        return int(data.get("user", {}).get("media_count", 50))
-
-    def _fetch_page(
-        self, user_id: str, max_id: str | None = None
-    ) -> tuple[list[dict], str | None]:
-        params: dict[str, str] = {"count": "50"}
-        if max_id:
-            params["max_id"] = max_id
-        data = self._get(f"/api/v1/feed/user/{user_id}/", params)
-        return data.get("items", []), data.get("next_max_id")
-
     @staticmethod
     def normalize_account(account: str) -> str:
         return account.lstrip("@")
 
+    @staticmethod
+    def shortcode_from_url(url: str) -> str | None:
+        """Renvoie le shortcode si ``url`` est un lien de post/reel/tv Instagram."""
+        match = _IG_POST_RE.search(url or "")
+        return match.group(1) if match else None
+
+    def _profile(self, username: str) -> instaloader.Profile:
+        """Résout le profil via l'API GraphQL d'instaloader (session authentifiée)."""
+        return instaloader.Profile.from_username(self._loader.context, username)
+
+    def fetch_post(self, shortcode: str) -> InstagramPost:
+        """Récupère UN seul post par son shortcode (import par lien, 1 requête)."""
+        post = instaloader.Post.from_shortcode(self._loader.context, shortcode)
+        return self._normalize_post(post)
+
     def fetch_posts(
-        self, account: str, max_posts: int | None = None
+        self,
+        account: str,
+        max_posts: int | None = None,
+        page_delay: float = 0.0,
+        page_size: int = 50,
     ) -> list[InstagramPost]:
-        """Récupère tous les posts du compte. Si max_posts est None, utilise le media_count réel."""
-        username = self.normalize_account(account)
-        user_id = self._resolve_user_id(username)
-        if max_posts is None:
-            max_posts = self._get_media_count(user_id)
+        """Récupère les posts du compte via la pagination GraphQL complète.
+
+        ``Profile.get_posts()`` parcourt tout le profil (curseur ``end_cursor`` /
+        ``has_next_page``) — il n'y a plus de plafond ~100 de l'ancien endpoint
+        ``feed/user``. ``max_posts`` borne optionnellement la collecte ; ``page_delay``
+        ajoute une tempo toutes les ``page_size`` posts pour lisser les requêtes
+        (anti-blocage).
+        """
+        profile = self._profile(self.normalize_account(account))
         posts: list[InstagramPost] = []
-        next_max_id: str | None = None
-
-        while len(posts) < max_posts:
-            items, next_max_id = self._fetch_page(user_id, next_max_id)
-            for item in items:
-                if len(posts) >= max_posts:
-                    break
-                posts.append(self._normalize_item(item))
-            if not next_max_id:
+        for post in profile.get_posts():
+            if max_posts is not None and len(posts) >= max_posts:
                 break
-
+            posts.append(self._normalize_post(post))
+            self._throttle(len(posts), page_delay, page_size)
         return posts
 
-    def fetch_new_posts(self, account: str, since: datetime) -> list[InstagramPost]:
-        username = self.normalize_account(account)
-        user_id = self._resolve_user_id(username)
-        posts: list[InstagramPost] = []
-        next_max_id: str | None = None
+    def fetch_new_posts(
+        self,
+        account: str,
+        since: datetime,
+        page_delay: float = 0.0,
+        page_size: int = 50,
+    ) -> list[InstagramPost]:
+        """Posts plus récents que ``since`` (les posts sont parcourus du + récent au + ancien)."""
+        profile = self._profile(self.normalize_account(account))
         since_ts = since.timestamp()
-
-        while True:
-            items, next_max_id = self._fetch_page(user_id, next_max_id)
-            done = False
-            for item in items:
-                if item.get("taken_at", 0) <= since_ts:
-                    done = True
-                    break
-                posts.append(self._normalize_item(item))
-            if done or not next_max_id:
+        posts: list[InstagramPost] = []
+        for post in profile.get_posts():
+            if self._post_timestamp(post) <= since_ts:
                 break
-
+            posts.append(self._normalize_post(post))
+            self._throttle(len(posts), page_delay, page_size)
         return posts
+
+    @staticmethod
+    def _throttle(collected: int, page_delay: float, page_size: int) -> None:
+        """Tempo anti-blocage toutes les ``page_size`` posts collectés."""
+        if page_delay > 0 and page_size > 0 and collected % page_size == 0:
+            time.sleep(page_delay)
+
+    @staticmethod
+    def _post_timestamp(post) -> float:
+        dt = post.date_utc
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.timestamp()
 
     @classmethod
-    def _normalize_item(cls, item: dict) -> InstagramPost:
-        media_type = item.get("media_type", 1)  # 1=photo, 2=video, 8=carousel
-        shortcode = item.get("code", "")
-        taken_at = item.get("taken_at", 0)
-        caption_text = (item.get("caption") or {}).get("text") or ""
+    def _normalize_post(cls, post) -> InstagramPost:
+        """Convertit un ``instaloader.Post`` (GraphQL) en :class:`InstagramPost`."""
+        caption_text = post.caption or ""
 
         images: list[str] = []
         video_url: str | None = None
 
-        if media_type == 8:
-            for node in item.get("carousel_media", []):
-                node_imgs = node.get("image_versions2", {}).get("candidates", [])
-                if node_imgs:
-                    images.append(node_imgs[0]["url"])
-                if node.get("media_type") == 2 and video_url is None:
-                    vids = node.get("video_versions", [])
-                    if vids:
-                        video_url = vids[0]["url"]
+        if post.typename == "GraphSidecar":
+            for node in post.get_sidecar_nodes():
+                if node.display_url:
+                    images.append(node.display_url)
+                if node.is_video and video_url is None:
+                    video_url = node.video_url
         else:
-            img_candidates = item.get("image_versions2", {}).get("candidates", [])
-            if img_candidates:
-                images.append(img_candidates[0]["url"])
-            if media_type == 2:
-                vids = item.get("video_versions", [])
-                if vids:
-                    video_url = vids[0]["url"]
+            if post.url:
+                images.append(post.url)
+            if post.is_video:
+                video_url = post.video_url
 
         first_line = caption_text.split("\n")[0][:100]
-        title = first_line if first_line else f"Post {shortcode}"
+        title = first_line if first_line else f"Post {post.shortcode}"
 
         return InstagramPost(
-            shortcode=shortcode,
-            url=cls.POST_URL.format(shortcode=shortcode),
+            shortcode=post.shortcode,
+            url=cls.POST_URL.format(shortcode=post.shortcode),
             title=title,
             caption=caption_text,
             images=images[:20],
             video_url=video_url,
-            timestamp=datetime.fromtimestamp(taken_at, tz=timezone.utc),
+            timestamp=cls._aware_utc(post.date_utc),
         )
+
+    @staticmethod
+    def _aware_utc(dt: datetime) -> datetime:
+        return dt if dt.tzinfo is not None else dt.replace(tzinfo=timezone.utc)

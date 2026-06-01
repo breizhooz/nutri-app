@@ -68,12 +68,15 @@ async def client(db_session: AsyncSession):
         return TEST_USER_ID
 
     async def override_get_token_payload() -> dict:
-        # Utilisateur de test disposant des droits de crawl (instagram + web).
+        # Utilisateur de test disposant de tous les droits (crawl + uniq_link).
         return {
             "sub": str(TEST_USER_ID),
             "type": "access",
             "user_admin": False,
-            "user_right": {"crawl": {"instagram": True, "web": True}},
+            "user_right": {
+                "crawl": {"instagram": True, "web": True},
+                "uniq_link": {"instagram": True, "web": True},
+            },
         }
 
     app.dependency_overrides[get_session] = override_get_session

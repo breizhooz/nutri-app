@@ -1,12 +1,12 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import AnyHttpUrl, BaseModel, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import (
     CrawlPermission,
-    RequireCrawlRight,
+    UniqLinkPermission,
     get_current_user_id,
     get_token_payload,
 )
@@ -19,7 +19,8 @@ from app.schemas.crawl_source import (
     CrawlSourceResponse,
     CrawlSourceUpdate,
 )
-from tasks.instagram import crawl_instagram
+from app.services.instagram_service import InstagramService
+from tasks.instagram import crawl_instagram, crawl_instagram_post
 from tasks.web import crawl_url
 
 
@@ -42,11 +43,22 @@ router = APIRouter()
 @router.post("/oneshot", status_code=status.HTTP_202_ACCEPTED)
 async def oneshot_crawl(
     data: OneshotCrawlRequest,
-    current_user_id: uuid.UUID = Depends(RequireCrawlRight("web")),
+    payload: dict = Depends(get_token_payload),
 ):
-    """Crawl one-shot d'une URL web sans créer de source persistante."""
-    crawl_url.delay(source_id=None, url=data.url, user_id=str(current_user_id))
-    return {"detail": "Crawl lancé", "url": data.url}
+    """Import one-shot d'un lien unique : post Instagram OU page web.
+
+    Le type est déduit de l'URL et soumis au droit ``uniq_link`` correspondant.
+    """
+    user_id = str(payload["sub"])
+    shortcode = InstagramService.shortcode_from_url(data.url)
+    if shortcode is not None:
+        UniqLinkPermission.ensure(payload, "instagram")
+        crawl_instagram_post.delay(shortcode, user_id)
+        return {"detail": "Import lancé", "url": data.url, "type": "instagram"}
+
+    UniqLinkPermission.ensure(payload, "web")
+    crawl_url.delay(source_id=None, url=data.url, user_id=user_id)
+    return {"detail": "Import lancé", "url": data.url, "type": "web"}
 
 
 @router.post(
@@ -139,6 +151,10 @@ async def delete_source(
 @router.post("/{source_id}/crawl", status_code=status.HTTP_202_ACCEPTED)
 async def trigger_crawl(
     source_id: uuid.UUID,
+    full: bool = Query(
+        False,
+        description="Instagram : ignore last_crawl pour re-parcourir tout l'historique.",
+    ),
     session: AsyncSession = Depends(get_session),
     current_user_id: uuid.UUID = Depends(get_current_user_id),
     payload: dict = Depends(get_token_payload),
@@ -160,7 +176,7 @@ async def trigger_crawl(
         task = crawl_url.delay(str(source.id), source.url)
     elif source.type == CrawlType.INSTAGRAM:
         CrawlPermission.ensure(payload, "instagram")
-        task = crawl_instagram.delay(str(source.id), source.url)
+        task = crawl_instagram.delay(str(source.id), source.url, force_full=full)
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

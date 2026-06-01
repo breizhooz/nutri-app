@@ -80,10 +80,13 @@ async def list_recipes(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=200),
     course_type: str | None = Query(None),
+    created_by_user_id: str | None = Query(None),
     service: RecipeService = Depends(RecipeServiceFactory.inject),
 ) -> PaginatedRecipeResponse:
-    """List recipes with optional course_type filter and pagination."""
-    return await service.list_recipes(page, page_size, course_type)
+    """List recipes with optional course_type / author filters and pagination."""
+    return await service.list_recipes(
+        page, page_size, course_type, created_by_user_id
+    )
 
 
 @router.get("/counts-by-user", response_model=dict[str, int])

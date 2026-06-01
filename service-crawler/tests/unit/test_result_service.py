@@ -559,12 +559,11 @@ class TestResultServiceStaticGuards:
         lnk.status = CrawlStatus.REJECTED
         ResultService._assert_resettable(lnk)
 
-    def test_assert_resettable_valid_raises_409(self):
+    def test_assert_resettable_valid_passes(self):
+        # Un résultat VALIDÉ peut être ré-ouvert (ré-import depuis le cache).
         lnk = MagicMock()
         lnk.status = CrawlStatus.VALID
-        with pytest.raises(HTTPException) as exc:
-            ResultService._assert_resettable(lnk)
-        assert exc.value.status_code == 409
+        ResultService._assert_resettable(lnk)
 
     def test_assert_resettable_waiting_raises_409(self):
         lnk = MagicMock()
@@ -601,12 +600,15 @@ class TestResultServiceResetResult:
             await service.reset_result(uuid.uuid4(), _USER_ID)
         assert exc.value.status_code == 404
 
-    async def test_reset_valid_raises_409(self, service, mock_repo):
+    async def test_reset_valid_returns_waiting(self, service, mock_repo):
+        # Ré-import d'un résultat validé (ex. recette supprimée) → repasse en attente.
         lnk = make_link(status=CrawlStatus.VALID)
+        reset = make_link(result_id=lnk.result_id, status=CrawlStatus.WAITING)
         mock_repo.get_user_link.return_value = lnk
-        with pytest.raises(HTTPException) as exc:
-            await service.reset_result(lnk.result_id, _USER_ID)
-        assert exc.value.status_code == 409
+        mock_repo.reset_to_waiting.return_value = reset
+        result = await service.reset_result(lnk.result_id, _USER_ID)
+        assert result.status == CrawlStatus.WAITING
+        mock_repo.reset_to_waiting.assert_called_once_with(lnk)
 
     async def test_reset_already_waiting_raises_409(self, service, mock_repo):
         lnk = make_link(status=CrawlStatus.WAITING)

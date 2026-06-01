@@ -542,7 +542,12 @@ services:
       context: .
       dockerfile: service-crawler/Dockerfile
     container_name: nutriplanner-celery-worker-crawler
-    command: celery -A celery_app worker --loglevel=info -Q crawler --concurrency=2
+    # Dev : watchmedo redémarre le worker à chaque modif *.py (Celery ne recharge pas
+    # le code à chaud). watchdog est dans requirements.txt → `pip install` instantané
+    # après un rebuild, sinon installé au 1er démarrage. --debug-force-polling car les
+    # événements inotify ne traversent pas toujours le bind mount.
+    # NB : commande sur une seule ligne (un bloc YAML `>` casserait le `--` de watchmedo).
+    command: sh -c "pip install --no-cache-dir watchdog==4.0.2 && watchmedo auto-restart --directory=/app --patterns='*.py' --recursive --debug-force-polling --debounce-interval=1 -- celery -A celery_app worker --loglevel=info -Q crawler --concurrency=2"
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres-crawler:5432/${POSTGRES_CRAWLER_DB}
       - CELERY_BROKER_URL=redis://redis:6379/0

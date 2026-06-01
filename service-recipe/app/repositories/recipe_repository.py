@@ -38,14 +38,28 @@ class RecipeRepository:
         return result.scalar_one_or_none()
 
     async def list_paginated(
-        self, page: int, page_size: int, course_type: str | None = None
+        self,
+        page: int,
+        page_size: int,
+        course_type: str | None = None,
+        created_by_user_id: str | None = None,
     ) -> tuple[list[Recipe], int]:
-        """Return (items, total) for a page, optionally filtered by course_type."""
+        """Return (items, total) for a page, optionally filtered.
+
+        ``created_by_user_id`` restricts to a single author (None = all authors).
+        """
         base_query = select(Recipe)
         count_query = select(func.count()).select_from(Recipe)
         if course_type:
             base_query = base_query.where(Recipe.course_type == course_type)
             count_query = count_query.where(Recipe.course_type == course_type)
+        if created_by_user_id:
+            base_query = base_query.where(
+                Recipe.created_by_user_id == created_by_user_id
+            )
+            count_query = count_query.where(
+                Recipe.created_by_user_id == created_by_user_id
+            )
 
         total = (await self.session.execute(count_query)).scalar_one()
 

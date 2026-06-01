@@ -61,10 +61,14 @@ class RecipeService:
         return recipe
 
     async def list_recipes(
-        self, page: int, page_size: int, course_type: str | None = None
+        self,
+        page: int,
+        page_size: int,
+        course_type: str | None = None,
+        created_by_user_id: str | None = None,
     ) -> PaginatedRecipeResponse:
         items, total = await self._repository.list_paginated(
-            page, page_size, course_type
+            page, page_size, course_type, created_by_user_id
         )
         pages = max(1, -(-total // page_size))  # ceiling division
         return PaginatedRecipeResponse(
