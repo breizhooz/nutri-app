@@ -46,7 +46,7 @@ async def list_results(
     crawl_type: CrawlType | None = Query(default=None),
     source_id: uuid.UUID | None = Query(default=None),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
+    page_size: int = Query(default=20, ge=1, le=200),
     sort: str = Query(default="desc", pattern="^(asc|desc)$"),
     service: ResultService = Depends(ResultServiceFactory.inject),
     current_user_id: uuid.UUID = Depends(get_current_user_id),

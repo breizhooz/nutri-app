@@ -31,6 +31,8 @@ coverage.xml
 !.env.example
 !.env.*.example
 .secrets
+#  Dumps Postgres (données + hash de mots de passe) — jamais versionnés
+postgres/dump/
 #  Docker (optionnel si tu en as)
 *.log
 docker-compose.override.yml

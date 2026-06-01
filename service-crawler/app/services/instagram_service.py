@@ -64,6 +64,7 @@ class InstagramService:
     ) -> None:
         try:
             loader.load_session_from_file(username, session_file)
+            InstagramService._ensure_ds_user_id(loader)
             loader.test_login()
             return
         except FileNotFoundError:
@@ -73,6 +74,25 @@ class InstagramService:
 
         loader.login(user=username, passwd=password)
         loader.save_session_to_file(session_file)
+
+    @staticmethod
+    def _ensure_ds_user_id(loader: instaloader.Instaloader) -> None:
+        """Réinjecte le cookie ``ds_user_id`` s'il est absent de la session.
+
+        Les sessions importées depuis un simple ``sessionid`` n'ont pas toujours
+        ``ds_user_id``. Or Instagram renvoie **403 Forbidden** sur ``graphql/query``
+        (récupération des posts) quand ce cookie manque, alors même que le login
+        est valide. L'id utilisateur est le préfixe du ``sessionid``
+        (``<ds_user_id>%3A<token>...``), on le reconstitue donc à la volée.
+        """
+        jar = loader.context._session.cookies
+        cookies = jar.get_dict()
+        if cookies.get("ds_user_id"):
+            return
+        sessionid = cookies.get("sessionid", "")
+        uid = sessionid.split("%3A")[0].split(":")[0]
+        if uid.isdigit():
+            jar.set("ds_user_id", uid, domain=".instagram.com")
 
     @staticmethod
     def normalize_account(account: str) -> str:

@@ -23,22 +23,13 @@ scrape_configs:
     static_configs:
       - targets: ['elasticsearch-exporter:9114']
 
-  # PostgreSQL — une entrée par base, label db pour filtrer dans Grafana
+  # PostgreSQL — moteur unique multi-bases : 1 seul exporter en auto-discover.
+  # Les bases sont distinguées par le label `datname` porté par les métriques
+  # (ex. pg_stat_database_*) ; plus besoin d'un target par base.
   - job_name: postgres
     static_configs:
       - targets:
-          - 'postgres-exporter-user:9187'
-          - 'postgres-exporter-recipe:9187'
-          - 'postgres-exporter-menu:9187'
-          - 'postgres-exporter-crawler:9187'
-          - 'postgres-exporter-notification:9187'
-          - 'postgres-exporter-nutrition:9187'
-          - 'postgres-exporter-profile:9187'
-    relabel_configs:
-      - source_labels: [__address__]
-        regex: 'postgres-exporter-(.+):9187'
-        target_label: db
-        replacement: '$1'
+          - 'postgres-exporter:9187'
 
   # cAdvisor — métriques containers Docker (CPU, mémoire, état)
   - job_name: cadvisor
