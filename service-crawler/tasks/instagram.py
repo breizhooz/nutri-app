@@ -2,14 +2,19 @@ import asyncio
 import logging
 from uuid import UUID
 
-import instaloader
-import requests
+from instaloader.exceptions import (
+    ConnectionException,
+    LoginRequiredException,
+    QueryReturnedBadRequestException,
+    QueryReturnedForbiddenException,
+    TooManyRequestsException,
+)
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.core.config import settings
-from app.models.enums import CrawlType
+from app.models.enums import CrawlStatus, CrawlType
 from app.repositories.result_repository import ResultRepository
 from app.repositories.source_repository import SourceRepository
 from app.services.instagram_service import InstagramService
@@ -18,19 +23,76 @@ from app.services.notification_client import NotificationClient
 
 logger = logging.getLogger(__name__)
 
+# Anti-blocage : ces erreurs traduisent un rate-limit / soft-block / session morte
+# (401/403/429, login requis). Re-essayer ne fait que prolonger le blocage → on
+# n'auto-retry PAS ; l'admin rafraîchit le sessionid puis relance manuellement.
+_BLOCKING_EXCEPTIONS = (
+    TooManyRequestsException,
+    LoginRequiredException,
+    QueryReturnedForbiddenException,
+    QueryReturnedBadRequestException,
+)
+# get_posts() remonte souvent le blocage comme un ConnectionException générique
+# (« … 403 Forbidden … ») → on classe aussi par marqueur dans le message.
+_BLOCK_MARKERS = ("401", "403", "429", "Please wait", "checkpoint", "login_required")
+# Erreur réseau transitoire (timeout, coupure) : un seul retry, backoff long.
+_TRANSIENT_RETRY_DELAY = 6 * 3600  # 6 h
+
+
+def _is_block(exc: Exception) -> bool:
+    """True si l'erreur traduit un rate-limit / soft-block / session morte."""
+    if isinstance(exc, _BLOCKING_EXCEPTIONS):
+        return True
+    msg = str(exc)
+    return any(marker in msg for marker in _BLOCK_MARKERS)
+
+
+def _handle_fetch_error(task, exc: Exception, label: str) -> None:
+    """Politique anti-blocage commune.
+
+    - Blocage (rate-limit/403/401/429/session morte) → log + AUCUN retry (le
+      caller s'arrête en retournant).
+    - Sinon → 1 retry avec backoff long (lève ``Retry``).
+    """
+    if _is_block(exc):
+        logger.warning(
+            "Instagram a bloqué/limité l'accès (%s : %s) — aucun retry automatique. "
+            "Attendez quelques heures, rafraîchissez le sessionid via l'admin, "
+            "puis relancez manuellement.",
+            label,
+            type(exc).__name__,
+        )
+        return
+    if isinstance(exc, ConnectionException):
+        logger.warning(
+            "Erreur réseau Instagram (%s) : %s — 1 retry dans %dh",
+            label,
+            exc,
+            _TRANSIENT_RETRY_DELAY // 3600,
+        )
+    else:
+        logger.error("Échec du crawl Instagram (%s) : %s", label, exc)
+    raise task.retry(exc=exc, countdown=_TRANSIENT_RETRY_DELAY)
+
 
 def _make_session_factory():
     engine = create_async_engine(settings.DATABASE_URL)
     return sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
-@celery_app.task(bind=True, max_retries=3, default_retry_delay=3600)
-def crawl_instagram(self, source_id: str, account: str):
-    """Crawl un compte Instagram et stocke les nouveaux posts EN_ATTENTE."""
-    asyncio.run(_do_crawl(self, source_id, account))
+@celery_app.task(bind=True, max_retries=1, default_retry_delay=_TRANSIENT_RETRY_DELAY)
+def crawl_instagram(self, source_id: str, account: str, force_full: bool = False):
+    """Crawl un compte Instagram et stocke les nouveaux posts EN_ATTENTE.
+
+    ``force_full`` ignore ``last_crawl`` pour re-parcourir tout l'historique
+    (rattrapage des comptes existants).
+    """
+    asyncio.run(_do_crawl(self, source_id, account, force_full))
 
 
-async def _do_crawl(task, source_id: str, account: str) -> None:
+async def _do_crawl(
+    task, source_id: str, account: str, force_full: bool = False
+) -> None:
     new_count = 0
     user_id = None
 
@@ -45,30 +107,28 @@ async def _do_crawl(task, source_id: str, account: str) -> None:
             return
 
         user_id = source.user_id
-        since = source.last_crawl
+        # Crawl complet (force_full) → on repart de zéro ; sinon incrémental.
+        since = None if force_full else source.last_crawl
 
         try:
             service = InstagramService()
-            posts = (
-                service.fetch_new_posts(account, since)
-                if since is not None
-                else service.fetch_posts(account)
-            )
-        except instaloader.exceptions.TooManyRequestsException as exc:
-            logger.warning(
-                "Instagram rate limit atteint pour %s, retry dans 60 min", account
-            )
-            raise task.retry(exc=exc, countdown=3600)
-        except requests.exceptions.HTTPError as exc:
-            logger.warning(
-                "Instagram HTTP %s pour %s, retry dans 60 min",
-                exc.response.status_code if exc.response is not None else "?",
-                account,
-            )
-            raise task.retry(exc=exc, countdown=3600)
+            if since is not None:
+                posts = service.fetch_new_posts(
+                    account,
+                    since,
+                    page_delay=settings.INSTAGRAM_PAGE_DELAY_SECONDS,
+                    page_size=settings.INSTAGRAM_PAGE_SIZE,
+                )
+            else:
+                posts = service.fetch_posts(
+                    account,
+                    max_posts=settings.INSTAGRAM_MAX_POSTS_PER_RUN or None,
+                    page_delay=settings.INSTAGRAM_PAGE_DELAY_SECONDS,
+                    page_size=settings.INSTAGRAM_PAGE_SIZE,
+                )
         except Exception as exc:
-            logger.error("Échec du crawl Instagram pour %s : %s", account, exc)
-            raise task.retry(exc=exc, countdown=3600)
+            _handle_fetch_error(task, exc, account)
+            return
 
         for post in posts:
             if await result_repo.user_link_exists(post.url, user_id):
@@ -106,3 +166,63 @@ async def _do_crawl(task, source_id: str, account: str) -> None:
         await NotificationClient().notify_crawl_done(
             str(user_id), CrawlType.INSTAGRAM.value, new_count, account
         )
+
+
+@celery_app.task(bind=True, max_retries=1, default_retry_delay=_TRANSIENT_RETRY_DELAY)
+def crawl_instagram_post(self, shortcode: str, user_id: str):
+    """Import d'UN seul post Instagram par son shortcode (oneshot par lien).
+
+    1 requête seulement → risque de blocage quasi nul, contrairement au crawl
+    de compte entier. Même politique anti-blocage que ``crawl_instagram``.
+    """
+    asyncio.run(_do_crawl_post(self, shortcode, user_id))
+
+
+async def _do_crawl_post(task, shortcode: str, user_id_str: str) -> None:
+    user_id = UUID(user_id_str)
+    canonical_url = InstagramService.POST_URL.format(shortcode=shortcode)
+
+    factory = _make_session_factory()
+    async with factory() as session:
+        result_repo = ResultRepository(session)
+
+        # Déjà importé pour cet user → on ré-ouvre depuis le CACHE (aucun appel
+        # Instagram) : le post repasse en attente de validation.
+        existing = await result_repo.get_user_link_by_url(canonical_url, user_id)
+        if existing is not None:
+            if existing.status != CrawlStatus.WAITING:
+                await result_repo.reset_to_waiting(existing)
+                logger.info(
+                    "Post déjà importé → ré-ouvert depuis le cache : %s", canonical_url
+                )
+            else:
+                logger.info(
+                    "Post déjà en attente de validation : %s", canonical_url
+                )
+            return
+
+        try:
+            post = InstagramService().fetch_post(shortcode)
+        except Exception as exc:
+            _handle_fetch_error(task, exc, f"post {shortcode}")
+            return
+
+        result, _ = await result_repo.get_or_create_result(
+            {
+                "type": CrawlType.INSTAGRAM,
+                "url_origin": post.url,
+                "title": post.title,
+                "raw_content": post.caption,
+                "images": post.images,
+                "video_url": post.video_url,
+                "published_at": post.timestamp,
+            }
+        )
+        await result_repo.create_user_link(
+            result_id=result.id, user_id=user_id, source_id=None
+        )
+        logger.info("Post Instagram importé : %s", post.url)
+
+    await NotificationClient().notify_crawl_done(
+        str(user_id), CrawlType.INSTAGRAM.value, 1, canonical_url
+    )

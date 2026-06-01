@@ -78,6 +78,19 @@ class ResultRepository:
         await self.session.refresh(link)
         return link
 
+    async def get_user_link_by_url(
+        self, url_origin: str, user_id: uuid.UUID
+    ) -> CrawlResultUser | None:
+        """Récupère le lien user pour une URL donnée (ré-import par lien depuis le cache)."""
+        row = await self.session.execute(
+            select(CrawlResultUser)
+            .join(CrawlResult, CrawlResultUser.result_id == CrawlResult.id)
+            .where(CrawlResult.url_origin == url_origin)
+            .where(CrawlResultUser.user_id == user_id)
+            .options(selectinload(CrawlResultUser.result))
+        )
+        return row.scalar_one_or_none()
+
     async def get_user_link(
         self, result_id: uuid.UUID, user_id: uuid.UUID
     ) -> CrawlResultUser | None:

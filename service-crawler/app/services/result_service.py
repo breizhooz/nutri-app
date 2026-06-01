@@ -279,11 +279,8 @@ class ResultService:
 
     @staticmethod
     def _assert_resettable(link: CrawlResultUser) -> None:
-        if link.status == CrawlStatus.VALID:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=t.get("crawl_result.errors.already_validated"),
-            )
+        # On autorise la ré-ouverture d'un résultat VALIDÉ (ré-import depuis le cache,
+        # ex. recette supprimée) comme d'un REJETÉ ; seul WAITING n'a rien à réinitialiser.
         if link.status == CrawlStatus.WAITING:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,

@@ -45,6 +45,26 @@ async def test_list_users_as_admin_returns_rights(db_session, auth_client):
     bob = next(u for u in data if u["email"] == "bob@test.io")
     assert bob["user_admin"] is False
     assert bob["user_right"]["crawl"] == {"instagram": False, "web": False}
+    assert bob["user_right"]["uniq_link"] == {"instagram": False, "web": False}
+
+
+@pytest.mark.asyncio
+async def test_update_user_uniq_link_rights(db_session, auth_client):
+    await _add_user(db_session, user_id=ADMIN_ID, email="admin@test.io", admin=True)
+    target_id = uuid.uuid4()
+    await _add_user(db_session, user_id=target_id, email="bob@test.io")
+
+    resp = await auth_client.patch(
+        f"/api/v1/users/{target_id}/rights",
+        json={
+            "user_right": {
+                "crawl": {"instagram": False, "web": False},
+                "uniq_link": {"instagram": True, "web": False},
+            }
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["user_right"]["uniq_link"] == {"instagram": True, "web": False}
 
 
 @pytest.mark.asyncio

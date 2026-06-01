@@ -13,7 +13,10 @@ from app.db.base import Base
 
 def default_user_right() -> dict[str, Any]:
     """Default RBAC rights granted to a freshly created user (nothing allowed)."""
-    return {"crawl": {"instagram": False, "web": False}}
+    return {
+        "crawl": {"instagram": False, "web": False},
+        "uniq_link": {"instagram": False, "web": False},
+    }
 
 
 class User(Base):

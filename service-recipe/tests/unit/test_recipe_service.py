@@ -406,13 +406,18 @@ class TestRecipeServiceRead:
         result = await service.list_recipes(page=1, page_size=20)
         assert result.total == 45
         assert result.pages == 3
-        repo.list_paginated.assert_called_once_with(1, 20, None)
+        repo.list_paginated.assert_called_once_with(1, 20, None, None)
 
     async def test_list_recipes_empty_has_one_page(self, service, repo):
         repo.list_paginated.return_value = ([], 0)
         result = await service.list_recipes(page=1, page_size=20, course_type="dessert")
         assert result.pages == 1
-        repo.list_paginated.assert_called_once_with(1, 20, "dessert")
+        repo.list_paginated.assert_called_once_with(1, 20, "dessert", None)
+
+    async def test_list_recipes_passes_author_filter(self, service, repo):
+        repo.list_paginated.return_value = ([], 0)
+        await service.list_recipes(page=1, page_size=20, created_by_user_id="user-1")
+        repo.list_paginated.assert_called_once_with(1, 20, None, "user-1")
 
 
 # ─── update / delete ──────────────────────────────────────────────────────────

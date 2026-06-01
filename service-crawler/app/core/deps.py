@@ -40,16 +40,20 @@ async def get_current_user_id(
     return uuid.UUID(str(payload["sub"]))
 
 
+def _has_right(payload: dict[str, Any], group: str, source: str) -> bool:
+    """True si le token porte le droit ``group.source`` (admin = bypass)."""
+    if payload.get("user_admin"):
+        return True
+    group_rights = (payload.get("user_right") or {}).get(group) or {}
+    return bool(group_rights.get(source))
+
+
 class CrawlPermission:
-    """Règles d'autorisation de crawl basées sur les claims RBAC du token."""
+    """Autorisation de crawl d'un compte entier (``user_right.crawl.{source}``)."""
 
     @staticmethod
     def allowed(payload: dict[str, Any], source: str) -> bool:
-        """True si l'utilisateur peut crawler ce type de source (admin = bypass)."""
-        if payload.get("user_admin"):
-            return True
-        crawl_rights = (payload.get("user_right") or {}).get("crawl") or {}
-        return bool(crawl_rights.get(source))
+        return _has_right(payload, "crawl", source)
 
     @staticmethod
     def ensure(payload: dict[str, Any], source: str) -> None:
@@ -58,6 +62,23 @@ class CrawlPermission:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Crawl '{source}' non autorisé",
+            )
+
+
+class UniqLinkPermission:
+    """Autorisation d'import par lien unique (``user_right.uniq_link.{source}``)."""
+
+    @staticmethod
+    def allowed(payload: dict[str, Any], source: str) -> bool:
+        return _has_right(payload, "uniq_link", source)
+
+    @staticmethod
+    def ensure(payload: dict[str, Any], source: str) -> None:
+        """Lève 403 si l'utilisateur n'a pas le droit d'import par lien ``source``."""
+        if not UniqLinkPermission.allowed(payload, source):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Import par lien '{source}' non autorisé",
             )
 
 

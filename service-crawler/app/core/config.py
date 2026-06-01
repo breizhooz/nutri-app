@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     INSTAGRAM_USERNAME: str = ""
     INSTAGRAM_PASSWORD: str = ""
     INSTAGRAM_SESSION_FILE: str = "/data/instagram_session"
+    # Anti-blocage Instagram : plafond de posts par run complet (0 = illimité),
+    # et tempo (s) toutes les INSTAGRAM_PAGE_SIZE posts pour lisser les requêtes.
+    INSTAGRAM_MAX_POSTS_PER_RUN: int = 0
+    INSTAGRAM_PAGE_DELAY_SECONDS: float = 2.0
+    INSTAGRAM_PAGE_SIZE: int = 50
 
     GROQ_API_KEY: str = ""
     GROQ_API_KEYS: str = ""  # comma-separated list; overrides GROQ_API_KEY when set

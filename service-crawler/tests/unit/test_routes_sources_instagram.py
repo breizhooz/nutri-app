@@ -82,6 +82,36 @@ async def test_trigger_crawl_instagram_returns_202_with_task_id(client):
 
 
 @pytest.mark.anyio
+async def test_trigger_crawl_default_is_incremental(client):
+    with patch("app.api.routes.sources.crawl_instagram") as mock_crawl:
+        mock_crawl.delay.return_value = MagicMock(id="t1")
+        create_resp = await client.post(
+            "/api/v1/crawler/sources",
+            json={"type": "instagram", "account": "@chefalain"},
+        )
+        source_id = create_resp.json()["id"]
+        mock_crawl.delay.reset_mock()
+        await client.post(f"/api/v1/crawler/sources/{source_id}/crawl")
+
+    assert mock_crawl.delay.call_args.kwargs["force_full"] is False
+
+
+@pytest.mark.anyio
+async def test_trigger_crawl_full_forces_complete_crawl(client):
+    with patch("app.api.routes.sources.crawl_instagram") as mock_crawl:
+        mock_crawl.delay.return_value = MagicMock(id="t2")
+        create_resp = await client.post(
+            "/api/v1/crawler/sources",
+            json={"type": "instagram", "account": "@chefalain"},
+        )
+        source_id = create_resp.json()["id"]
+        mock_crawl.delay.reset_mock()
+        await client.post(f"/api/v1/crawler/sources/{source_id}/crawl?full=true")
+
+    assert mock_crawl.delay.call_args.kwargs["force_full"] is True
+
+
+@pytest.mark.anyio
 async def test_create_youtube_source_rejected_by_schema(client):
     resp = await client.post(
         "/api/v1/crawler/sources",

@@ -7,7 +7,14 @@ from pydantic import BaseModel, EmailStr, field_validator
 
 
 class CrawlRights(BaseModel):
-    """Per-source crawl permissions."""
+    """Per-source crawl permissions (compte entier)."""
+
+    instagram: bool = False
+    web: bool = False
+
+
+class UniqLinkRights(BaseModel):
+    """Per-source single-link import permissions (oneshot par lien)."""
 
     instagram: bool = False
     web: bool = False
@@ -17,6 +24,7 @@ class UserRights(BaseModel):
     """Structured RBAC rights stored on the user."""
 
     crawl: CrawlRights = CrawlRights()
+    uniq_link: UniqLinkRights = UniqLinkRights()
 
 
 class UserCreate(BaseModel):
