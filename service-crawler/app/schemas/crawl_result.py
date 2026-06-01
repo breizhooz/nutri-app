@@ -58,7 +58,7 @@ class CrawlResultListParams(BaseModel):
     crawl_type: CrawlType | None = None
     source_id: uuid.UUID | None = None
     page: int = Field(default=1, ge=1)
-    page_size: int = Field(default=20, ge=1, le=100)
+    page_size: int = Field(default=20, ge=1, le=200)
     sort: str = Field(default="desc", pattern="^(asc|desc)$")
 
 

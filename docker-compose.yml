@@ -50,6 +50,10 @@ services:
     container_name: nutriplanner-filebeat
     profiles: [monitoring]
     user: root
+    # filebeat.yml est bind-mounté depuis l'hôte (uid 1000) alors que filebeat
+    # tourne en root → le contrôle de permissions strict refuse de démarrer.
+    # --strict.perms=false le désactive (recommandé Elastic pour configs montées).
+    command: ["--strict.perms=false", "-environment", "container"]
     volumes:
       - ./monitoring/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
@@ -63,133 +67,24 @@ services:
 # ══════════════════════════════════════════════════════════
 # SGBD
 # ══════════════════════════════════════════════════════════
-  postgres-user:
+  # Moteur Postgres UNIQUE multi-bases (consolidation : 1 process, 7 bases).
+  # Les rôles + bases sont créés au 1er boot par postgres/initdb/*.sh.
+  # Chaque base garde son rôle/mot de passe → isolation dure inchangée.
+  postgres:
     image: postgres:16-alpine
+    container_name: nutriplanner-postgres
     env_file: .env
     environment:
-      POSTGRES_DB: ${POSTGRES_USER_DB}
-      POSTGRES_USER: ${POSTGRES_USER_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_USER_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_SUPERUSER}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD}
+      POSTGRES_DB: postgres
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
-      - pgdata-user:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/initdb:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER_USER} -d ${POSTGRES_USER_DB}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    networks:
-      - nutriplanner
-
-  postgres-recipe:
-    image: postgres:16-alpine
-    env_file: .env
-    environment:
-      POSTGRES_DB: ${POSTGRES_RECIPE_DB}
-      POSTGRES_USER: ${POSTGRES_RECIPE_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_RECIPE_PASSWORD}
-    ports:
-      - "5434:5432"
-    volumes:
-      - pgdata-recipe:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_RECIPE_USER} -d ${POSTGRES_RECIPE_DB}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    networks:
-      - nutriplanner
-
-  postgres-menu:
-    image: postgres:16-alpine
-    env_file: .env
-    environment:
-      POSTGRES_DB: ${POSTGRES_MENU_DB}
-      POSTGRES_USER: ${POSTGRES_MENU_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_MENU_PASSWORD}
-    ports:
-      - "5435:5432"
-    volumes:
-      - pgdata-menu:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_MENU_USER} -d ${POSTGRES_MENU_DB}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    networks:
-      - nutriplanner
-
-  postgres-crawler:
-    image: postgres:16-alpine
-    env_file: .env
-    environment:
-      POSTGRES_DB: ${POSTGRES_CRAWLER_DB}
-      POSTGRES_USER: ${POSTGRES_CRAWLER_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_CRAWLER_PASSWORD}
-    ports:
-      - "5436:5432"
-    volumes:
-      - pgdata-crawler:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_CRAWLER_USER} -d ${POSTGRES_CRAWLER_DB}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    networks:
-      - nutriplanner
-
-  postgres-notification:
-    image: postgres:16-alpine
-    env_file: .env
-    environment:
-      POSTGRES_DB: ${POSTGRES_NOTIFICATION_DB}
-      POSTGRES_USER: ${POSTGRES_NOTIFICATION_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_NOTIFICATION_PASSWORD}
-    ports:
-      - "5437:5432"
-    volumes:
-      - pgdata-notification:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_NOTIFICATION_USER} -d ${POSTGRES_NOTIFICATION_DB}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    networks:
-      - nutriplanner
-
-  postgres-nutrition:
-    image: postgres:16-alpine
-    env_file: .env
-    environment:
-      POSTGRES_DB: ${POSTGRES_NUTRITION_DB}
-      POSTGRES_USER: ${POSTGRES_NUTRITION_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_NUTRITION_PASSWORD}
-    ports:
-      - "5438:5432"
-    volumes:
-      - pgdata-nutrition:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_NUTRITION_USER} -d ${POSTGRES_NUTRITION_DB}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-    networks:
-      - nutriplanner
-
-  postgres-profile:
-    image: postgres:16-alpine
-    env_file: .env
-    environment:
-      POSTGRES_DB: ${POSTGRES_PROFILE_DB}
-      POSTGRES_USER: ${POSTGRES_PROFILE_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PROFILE_PASSWORD}
-    ports:
-      - "5439:5432"
-    volumes:
-      - pgdata-profile:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_PROFILE_USER} -d ${POSTGRES_PROFILE_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_SUPERUSER} -d postgres"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -209,7 +104,7 @@ services:
     volumes:
       - ./service-user:/app
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER_USER}:${POSTGRES_USER_PASSWORD}@postgres-user:5432/${POSTGRES_USER_DB}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER_USER}:${POSTGRES_USER_PASSWORD}@postgres:5432/${POSTGRES_USER_DB}
     env_file:
       - .env
       - ./service-user/conf/.env
@@ -221,7 +116,7 @@ services:
       - "traefik.http.routers.svc-user.service=svc-user"
       - "traefik.http.routers.svc-user.middlewares=cors@file"
     depends_on:
-      postgres-user:
+      postgres:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health"]
@@ -245,7 +140,7 @@ services:
     volumes:
       - ./service-recipe:/app
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@postgres-recipe:5432/${POSTGRES_RECIPE_DB}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@postgres:5432/${POSTGRES_RECIPE_DB}
       - SERVICE_USER_URL=http://service-user:8000
     env_file:
       - .env
@@ -258,7 +153,7 @@ services:
       - "traefik.http.routers.svc-recipe.service=svc-recipe"
       - "traefik.http.routers.svc-recipe.middlewares=cors@file"
     depends_on:
-      postgres-recipe:
+      postgres:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
@@ -286,7 +181,7 @@ services:
     volumes:
       - ./service-menu:/app
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_MENU_USER}:${POSTGRES_MENU_PASSWORD}@postgres-menu:5432/${POSTGRES_MENU_DB}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_MENU_USER}:${POSTGRES_MENU_PASSWORD}@postgres:5432/${POSTGRES_MENU_DB}
       - SERVICE_USER_URL=http://service-user:8000
       - SERVICE_RECIPE_URL=http://service-recipe:8000
     env_file:
@@ -300,7 +195,7 @@ services:
       - "traefik.http.routers.svc-menu.service=svc-menu"
       - "traefik.http.routers.svc-menu.middlewares=cors@file"
     depends_on:
-      postgres-menu:
+      postgres:
         condition: service_healthy
       service-user:
         condition: service_healthy
@@ -329,7 +224,7 @@ services:
       - ./service-crawler:/app
       - instagram-session:/data
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres-crawler:5432/${POSTGRES_CRAWLER_DB}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres:5432/${POSTGRES_CRAWLER_DB}
     env_file:
       - .env
       - ./service-crawler/conf/.env
@@ -341,7 +236,7 @@ services:
       - "traefik.http.routers.svc-crawler.service=svc-crawler"
       - "traefik.http.routers.svc-crawler.middlewares=cors@file"
     depends_on:
-      postgres-crawler:
+      postgres:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health"]
@@ -365,7 +260,7 @@ services:
     volumes:
       - ./service-notification:/app
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NOTIFICATION_USER}:${POSTGRES_NOTIFICATION_PASSWORD}@postgres-notification:5432/${POSTGRES_NOTIFICATION_DB}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NOTIFICATION_USER}:${POSTGRES_NOTIFICATION_PASSWORD}@postgres:5432/${POSTGRES_NOTIFICATION_DB}
     env_file:
       - .env
       - ./service-notification/conf/.env
@@ -377,7 +272,7 @@ services:
       - "traefik.http.routers.svc-notif.service=svc-notif"
       - "traefik.http.routers.svc-notif.middlewares=cors@file"
     depends_on:
-      postgres-notification:
+      postgres:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health"]
@@ -401,7 +296,7 @@ services:
     volumes:
       - ./service-nutrition:/app
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NUTRITION_USER}:${POSTGRES_NUTRITION_PASSWORD}@postgres-nutrition:5432/${POSTGRES_NUTRITION_DB}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NUTRITION_USER}:${POSTGRES_NUTRITION_PASSWORD}@postgres:5432/${POSTGRES_NUTRITION_DB}
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
@@ -417,7 +312,7 @@ services:
       - "traefik.http.routers.svc-nutrition.service=svc-nutrition"
       - "traefik.http.routers.svc-nutrition.middlewares=cors@file"
     depends_on:
-      postgres-nutrition:
+      postgres:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
@@ -447,7 +342,7 @@ services:
     volumes:
       - ./service-profile:/app
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_PROFILE_USER}:${POSTGRES_PROFILE_PASSWORD}@postgres-profile:5432/${POSTGRES_PROFILE_DB}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_PROFILE_USER}:${POSTGRES_PROFILE_PASSWORD}@postgres:5432/${POSTGRES_PROFILE_DB}
     env_file:
       - .env
       - ./service-profile/conf/.env
@@ -459,7 +354,7 @@ services:
       - "traefik.http.routers.svc-profile.service=svc-profile"
       - "traefik.http.routers.svc-profile.middlewares=cors@file"
     depends_on:
-      postgres-profile:
+      postgres:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health"]
@@ -519,7 +414,7 @@ services:
     container_name: nutriplanner-celery-beat
     command: celery -A celery_app beat --loglevel=info
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres-crawler:5432/${POSTGRES_CRAWLER_DB}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres:5432/${POSTGRES_CRAWLER_DB}
       - CELERY_BROKER_URL=redis://redis:6379/0
     env_file:
       - .env
@@ -530,7 +425,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      postgres-crawler:
+      postgres:
         condition: service_healthy
       service-crawler:
         condition: service_started
@@ -549,7 +444,7 @@ services:
     # NB : commande sur une seule ligne (un bloc YAML `>` casserait le `--` de watchmedo).
     command: sh -c "pip install --no-cache-dir watchdog==4.0.2 && watchmedo auto-restart --directory=/app --patterns='*.py' --recursive --debug-force-polling --debounce-interval=1 -- celery -A celery_app worker --loglevel=info -Q crawler --concurrency=2"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres-crawler:5432/${POSTGRES_CRAWLER_DB}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres:5432/${POSTGRES_CRAWLER_DB}
       - CELERY_BROKER_URL=redis://redis:6379/0
     env_file:
       - .env
@@ -561,7 +456,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      postgres-crawler:
+      postgres:
         condition: service_healthy
       service-crawler:
         condition: service_started
@@ -575,7 +470,7 @@ services:
     container_name: nutriplanner-celery-beat-nutrition
     command: celery -A celery_app beat --loglevel=info
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NUTRITION_USER}:${POSTGRES_NUTRITION_PASSWORD}@postgres-nutrition:5432/${POSTGRES_NUTRITION_DB}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NUTRITION_USER}:${POSTGRES_NUTRITION_PASSWORD}@postgres:5432/${POSTGRES_NUTRITION_DB}
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
     env_file:
@@ -585,7 +480,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      postgres-nutrition:
+      postgres:
         condition: service_healthy
       service-nutrition:
         condition: service_started
@@ -599,7 +494,7 @@ services:
     container_name: nutriplanner-celery-worker-nutrition
     command: celery -A celery_app worker --loglevel=info -Q celery
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NUTRITION_USER}:${POSTGRES_NUTRITION_PASSWORD}@postgres-nutrition:5432/${POSTGRES_NUTRITION_DB}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NUTRITION_USER}:${POSTGRES_NUTRITION_PASSWORD}@postgres:5432/${POSTGRES_NUTRITION_DB}
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
@@ -610,7 +505,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      postgres-nutrition:
+      postgres:
         condition: service_healthy
       service-nutrition:
         condition: service_started
@@ -822,92 +717,18 @@ services:
       - nutriplanner
     restart: unless-stopped
 
-  postgres-exporter-user:
+  # Exporter Postgres UNIQUE : se connecte en superuser et auto-découvre toutes
+  # les bases du moteur (7 → 1 exporter). Chaque base apparaît via le label
+  # `datname` sur les métriques (au lieu d'un target par base).
+  postgres-exporter:
     image: quay.io/prometheuscommunity/postgres-exporter:latest
-    container_name: nutriplanner-postgres-exporter-user
+    container_name: nutriplanner-postgres-exporter
     profiles: [monitoring]
     environment:
-      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER_USER}:${POSTGRES_USER_PASSWORD}@postgres-user:5432/${POSTGRES_USER_DB}?sslmode=disable"
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_SUPERUSER}:${POSTGRES_SUPERUSER_PASSWORD}@postgres:5432/postgres?sslmode=disable"
+      PG_EXPORTER_AUTO_DISCOVER_DATABASES: "true"
     depends_on:
-      postgres-user:
-        condition: service_healthy
-    networks:
-      - nutriplanner
-    restart: unless-stopped
-
-  postgres-exporter-recipe:
-    image: quay.io/prometheuscommunity/postgres-exporter:latest
-    container_name: nutriplanner-postgres-exporter-recipe
-    profiles: [monitoring]
-    environment:
-      DATA_SOURCE_NAME: "postgresql://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@postgres-recipe:5432/${POSTGRES_RECIPE_DB}?sslmode=disable"
-    depends_on:
-      postgres-recipe:
-        condition: service_healthy
-    networks:
-      - nutriplanner
-    restart: unless-stopped
-
-  postgres-exporter-menu:
-    image: quay.io/prometheuscommunity/postgres-exporter:latest
-    container_name: nutriplanner-postgres-exporter-menu
-    profiles: [monitoring]
-    environment:
-      DATA_SOURCE_NAME: "postgresql://${POSTGRES_MENU_USER}:${POSTGRES_MENU_PASSWORD}@postgres-menu:5432/${POSTGRES_MENU_DB}?sslmode=disable"
-    depends_on:
-      postgres-menu:
-        condition: service_healthy
-    networks:
-      - nutriplanner
-    restart: unless-stopped
-
-  postgres-exporter-crawler:
-    image: quay.io/prometheuscommunity/postgres-exporter:latest
-    container_name: nutriplanner-postgres-exporter-crawler
-    profiles: [monitoring]
-    environment:
-      DATA_SOURCE_NAME: "postgresql://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres-crawler:5432/${POSTGRES_CRAWLER_DB}?sslmode=disable"
-    depends_on:
-      postgres-crawler:
-        condition: service_healthy
-    networks:
-      - nutriplanner
-    restart: unless-stopped
-
-  postgres-exporter-notification:
-    image: quay.io/prometheuscommunity/postgres-exporter:latest
-    container_name: nutriplanner-postgres-exporter-notification
-    profiles: [monitoring]
-    environment:
-      DATA_SOURCE_NAME: "postgresql://${POSTGRES_NOTIFICATION_USER}:${POSTGRES_NOTIFICATION_PASSWORD}@postgres-notification:5432/${POSTGRES_NOTIFICATION_DB}?sslmode=disable"
-    depends_on:
-      postgres-notification:
-        condition: service_healthy
-    networks:
-      - nutriplanner
-    restart: unless-stopped
-
-  postgres-exporter-nutrition:
-    image: quay.io/prometheuscommunity/postgres-exporter:latest
-    container_name: nutriplanner-postgres-exporter-nutrition
-    profiles: [monitoring]
-    environment:
-      DATA_SOURCE_NAME: "postgresql://${POSTGRES_NUTRITION_USER}:${POSTGRES_NUTRITION_PASSWORD}@postgres-nutrition:5432/${POSTGRES_NUTRITION_DB}?sslmode=disable"
-    depends_on:
-      postgres-nutrition:
-        condition: service_healthy
-    networks:
-      - nutriplanner
-    restart: unless-stopped
-
-  postgres-exporter-profile:
-    image: quay.io/prometheuscommunity/postgres-exporter:latest
-    container_name: nutriplanner-postgres-exporter-profile
-    profiles: [monitoring]
-    environment:
-      DATA_SOURCE_NAME: "postgresql://${POSTGRES_PROFILE_USER}:${POSTGRES_PROFILE_PASSWORD}@postgres-profile:5432/${POSTGRES_PROFILE_DB}?sslmode=disable"
-    depends_on:
-      postgres-profile:
+      postgres:
         condition: service_healthy
     networks:
       - nutriplanner
@@ -919,13 +740,7 @@ networks:
 
 volumes:
   instagram-session:
-  pgdata-user:
-  pgdata-recipe:
-  pgdata-menu:
-  pgdata-crawler:
-  pgdata-notification:
-  pgdata-nutrition:
-  pgdata-profile:
+  pgdata:
   es-data:
   redis-data:
   minio-data:
