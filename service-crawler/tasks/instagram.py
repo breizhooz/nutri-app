@@ -48,12 +48,23 @@ def _is_block(exc: Exception) -> bool:
 
 
 # Marqueurs « session morte / validation requise » → l'utilisateur doit rafraîchir
-# le token. Sinon on considère le blocage comme un simple rate-limit temporaire.
-_SESSION_MARKERS = ("login_required", "checkpoint", "401", "LoginRequired")
+# le token.
+_SESSION_MARKERS = ("login_required", "checkpoint", "challenge", "401", "LoginRequired")
+# Marqueurs « vrai rate-limit » (trop de requêtes) → attendre suffit.
+_RATE_LIMIT_MARKERS = ("429", "Too Many Requests", "Please wait", "wait a few minutes")
 
 
 def _classify_block(exc: Exception) -> tuple[str, str]:
-    """(code, message lisible) pour un blocage Instagram, à remonter à l'user."""
+    """(code, message lisible) pour un blocage Instagram, à remonter à l'user.
+
+    Quatre cas distincts pour que le message colle à la réalité — ne pas afficher
+    « réessaie dans quelques heures » sur une erreur qui ne se résout pas en
+    attendant (ex. un 403 d'accès) :
+      - ``session_expired`` : session morte / validation requise → rafraîchir le token ;
+      - ``rate_limited`` : trop de requêtes → attendre ;
+      - ``access_forbidden`` : 403, Instagram refuse l'accès → réessayer / rafraîchir ;
+      - ``blocked`` : repli pour un blocage indéterminé.
+    """
     msg = str(exc)
     if isinstance(exc, LoginRequiredException) or any(
         m in msg for m in _SESSION_MARKERS
@@ -63,10 +74,24 @@ def _classify_block(exc: Exception) -> tuple[str, str]:
             "Ta session Instagram a expiré ou demande une validation. "
             "Rafraîchis le token Instagram, puis relance l'import.",
         )
+    if isinstance(exc, TooManyRequestsException) or any(
+        m in msg for m in _RATE_LIMIT_MARKERS
+    ):
+        return (
+            "rate_limited",
+            "Instagram limite temporairement les imports (trop de requêtes). "
+            "Réessaie dans quelques heures — inutile de relancer tout de suite.",
+        )
+    if isinstance(exc, QueryReturnedForbiddenException) or "403" in msg:
+        return (
+            "access_forbidden",
+            "Instagram a refusé l'accès à ce contenu (403). Réessaie plus tard ; "
+            "si le problème persiste, rafraîchis le token Instagram via l'admin.",
+        )
     return (
-        "rate_limited",
-        "Instagram limite temporairement les imports. Réessaie dans quelques "
-        "heures — inutile de relancer tout de suite.",
+        "blocked",
+        "L'import Instagram a été bloqué pour une raison indéterminée. Réessaie "
+        "plus tard ; si ça persiste, rafraîchis le token Instagram.",
     )
 
 
@@ -231,9 +256,7 @@ async def _do_crawl_post(task, shortcode: str, user_id_str: str) -> dict:
                     str(user_id), CrawlType.INSTAGRAM.value, 1, "Instagram"
                 )
             else:
-                logger.info(
-                    "Post déjà en attente de validation : %s", canonical_url
-                )
+                logger.info("Post déjà en attente de validation : %s", canonical_url)
             return {"status": "done", "detail": "cached", "url": canonical_url}
 
         try:
