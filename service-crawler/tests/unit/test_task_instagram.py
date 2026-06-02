@@ -28,7 +28,7 @@ class _FakeSession:
 
 def _patch_db_and_source(monkeypatch):
     """Mocke la fabrique de session et le SourceRepository (source valide, 1er crawl)."""
-    monkeypatch.setattr(ig, "_make_session_factory", lambda: (lambda: _FakeSession()))
+    monkeypatch.setattr(ig, "_make_session_factory", lambda: lambda: _FakeSession())
 
     source = MagicMock()
     source.user_id = "user-1"
@@ -112,7 +112,7 @@ USER_ID = "00000000-0000-0000-0000-000000000001"
 
 
 def _patch_db_post(monkeypatch, existing=None):
-    monkeypatch.setattr(ig, "_make_session_factory", lambda: (lambda: _FakeSession()))
+    monkeypatch.setattr(ig, "_make_session_factory", lambda: lambda: _FakeSession())
     result = MagicMock()
     result.id = "res-1"
     repo = MagicMock()
@@ -121,10 +121,14 @@ def _patch_db_post(monkeypatch, existing=None):
     repo.get_or_create_result = AsyncMock(return_value=(result, True))
     repo.create_user_link = AsyncMock()
     monkeypatch.setattr(ig, "ResultRepository", lambda session: repo)
-    monkeypatch.setattr(ig, "NotificationClient", lambda: MagicMock(
-        notify_crawl_done=AsyncMock(),
-        notify_crawl_error=AsyncMock(),
-    ))
+    monkeypatch.setattr(
+        ig,
+        "NotificationClient",
+        lambda: MagicMock(
+            notify_crawl_done=AsyncMock(),
+            notify_crawl_error=AsyncMock(),
+        ),
+    )
     return repo
 
 
@@ -195,3 +199,42 @@ def test_single_post_blocking_error_does_not_retry(monkeypatch):
     task.retry.side_effect = RuntimeError("retry")
     asyncio.run(ig._do_crawl_post(task, "Cabc", USER_ID))  # ne lève pas
     task.retry.assert_not_called()
+
+
+# ─── _classify_block : message clair selon le type de blocage ─────────────────
+
+
+def test_classify_session_expired_on_login_required():
+    reason, msg = ig._classify_block(LoginRequiredException("login_required"))
+    assert reason == "session_expired"
+    assert "Rafraîchis le token" in msg
+
+
+def test_classify_session_expired_on_checkpoint_marker():
+    reason, _ = ig._classify_block(ConnectionException("checkpoint required"))
+    assert reason == "session_expired"
+
+
+def test_classify_rate_limited_on_429():
+    reason, msg = ig._classify_block(TooManyRequestsException("429 Too Many Requests"))
+    assert reason == "rate_limited"
+    assert "trop de requêtes" in msg
+
+
+def test_classify_access_forbidden_on_403():
+    # Un 403 ne doit PLUS être étiqueté « rate_limited » (message trompeur).
+    reason, msg = ig._classify_block(
+        ConnectionException("JSON Query to graphql/query: 403 Forbidden")
+    )
+    assert reason == "access_forbidden"
+    assert "403" in msg
+
+
+def test_classify_forbidden_exception_is_access_forbidden():
+    reason, _ = ig._classify_block(QueryReturnedForbiddenException("forbidden"))
+    assert reason == "access_forbidden"
+
+
+def test_classify_unknown_falls_back_to_blocked():
+    reason, _ = ig._classify_block(ConnectionException("something weird"))
+    assert reason == "blocked"
