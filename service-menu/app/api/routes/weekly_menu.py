@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
@@ -52,8 +52,8 @@ async def generate_menu(
         )
     except ServiceUnavailableError:
         raise LocalizedHTTPException.service_recipe_unavailable(request)
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    except ValueError:
+        raise LocalizedHTTPException.no_recipes_available(request)
 
     existing = await menu_service.get_menu_by_user_and_date(
         session, current_user_id, menu_data.start_date

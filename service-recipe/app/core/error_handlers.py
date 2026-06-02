@@ -8,11 +8,14 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.core.exceptions import (
+    ImageNotInSuggestions,
+    ImageTooLarge,
     IngredientAlreadyExists,
     IngredientNotFound,
     RecipeForbidden,
     RecipeNotFound,
     SlugGenerationError,
+    UnsupportedImageType,
 )
 from app.i18n import LocalizedHTTPException
 
@@ -49,4 +52,26 @@ def register_domain_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         return _localized_response(
             LocalizedHTTPException.ingredient_already_exist(request)
+        )
+
+    @app.exception_handler(UnsupportedImageType)
+    async def _unsupported_image_type(
+        request: Request, exc: UnsupportedImageType
+    ) -> JSONResponse:
+        return _localized_response(
+            LocalizedHTTPException.unsupported_image_type(request, exc.content_type)
+        )
+
+    @app.exception_handler(ImageTooLarge)
+    async def _image_too_large(
+        request: Request, exc: ImageTooLarge
+    ) -> JSONResponse:
+        return _localized_response(LocalizedHTTPException.image_too_large(request))
+
+    @app.exception_handler(ImageNotInSuggestions)
+    async def _image_not_in_suggestions(
+        request: Request, exc: ImageNotInSuggestions
+    ) -> JSONResponse:
+        return _localized_response(
+            LocalizedHTTPException.image_not_in_suggestions(request)
         )

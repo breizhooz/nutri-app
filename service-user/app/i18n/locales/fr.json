@@ -1,0 +1,43 @@
+{
+  "auth": {
+    "invalid_credentials": "Email ou mot de passe incorrect",
+    "admin_required": "Privilèges administrateur requis",
+    "forbidden": "Accès interdit"
+  },
+  "token": {
+    "invalid_or_expired": "Token invalide ou expiré",
+    "refresh_invalid_or_expired": "Token de rafraîchissement invalide ou expiré",
+    "mfa_invalid_or_expired": "Token MFA invalide ou expiré"
+  },
+  "user": {
+    "not_found": "Utilisateur introuvable",
+    "inactive": "Utilisateur inactif",
+    "not_found_or_inactive": "Utilisateur introuvable ou inactif",
+    "email_already_registered": "Cet email est déjà enregistré"
+  },
+  "mfa": {
+    "already_enabled": "La double authentification est déjà activée",
+    "not_enabled": "La double authentification n'est pas activée",
+    "no_totp_setup": "Aucune configuration TOTP en cours. Appelez d'abord /auth/2fa/setup/totp.",
+    "invalid_totp": "Code TOTP invalide",
+    "totp_not_configured": "TOTP non configuré",
+    "invalid_email_code": "Code email invalide ou expiré"
+  },
+  "oauth": {
+    "unsupported_provider": "Fournisseur OAuth2 non supporté : {provider}",
+    "invalid_state": "État OAuth2 invalide ou expiré",
+    "userinfo_failed": "Échec de la récupération des informations utilisateur auprès du fournisseur",
+    "no_email": "Le fournisseur n'a pas renvoyé d'adresse email",
+    "account_inactive": "Compte inactif"
+  },
+  "password": {
+    "current_incorrect": "Mot de passe actuel incorrect.",
+    "reuse_forbidden": "Le nouveau mot de passe doit être différent des {count} derniers mots de passe utilisés.",
+    "reset_requested": "Si un compte existe avec cette adresse, un lien de réinitialisation a été envoyé.",
+    "reset_success": "Mot de passe mis à jour avec succès.",
+    "reset_token_invalid": "Jeton de réinitialisation invalide, expiré ou déjà utilisé."
+  },
+  "validation": {
+    "password_too_short": "Le mot de passe doit contenir au moins 8 caractères"
+  }
+}

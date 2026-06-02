@@ -12,6 +12,9 @@
   "errors": {
     "invalid_payload": "Payload de notification invalide.",
     "user_not_found": "Aucun abonnement actif pour cet utilisateur.",
-    "forbidden": "Accès refusé."
+    "forbidden": "Accès refusé.",
+    "token_invalid": "Token invalide ou expiré",
+    "service_token_invalid": "Token de service invalide",
+    "recipient_email_required": "L'adresse email du destinataire est requise pour les notifications {type}."
   }
 }

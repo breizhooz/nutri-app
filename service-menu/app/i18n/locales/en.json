@@ -1,4 +1,7 @@
 {
+  "errors": {
+    "token_invalid": "Invalid or expired token"
+  },
   "enums": {
   },
   "recipe": {
@@ -30,14 +33,16 @@
   "menu": {
     "errors": {
       "not_found": "Menu not found",
-      "unauthorized": "You are not authorized to access this menu"
+      "unauthorized": "You are not authorized to access this menu",
+      "no_recipes_available": "No recipes available after applying exclusions."
     }
   },
   "validation": {
     "errors": {
       "invalid_id": "Invalid ID",
       "negative_quantity": "Quantity must be positive",
-      "invalid_email": "Invalid email"
+      "invalid_email": "Invalid email",
+      "slug_no_spaces": "The slug must not contain spaces."
     }
   },
   "http_client":{

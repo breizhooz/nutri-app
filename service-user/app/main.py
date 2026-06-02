@@ -13,11 +13,15 @@ from app.api.routes import mfa as mfa_routes
 from app.api.routes import oauth as oauth_routes
 from app.api.routes import password as password_routes  # ← nouveau
 from app.api.routes import health as health_routes
+from app.i18n.loader import t
+from app.i18n.middleware import LocaleMiddleware
 
 configure_logging("service-user")
 app: FastAPI = FastAPI(title="service-user", version="0.2.0")
 
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(LocaleMiddleware)
+app.state.translate = t.get
 register_error_handlers(app)
 setup_telemetry("service-user", app)
 

@@ -21,7 +21,7 @@ class WebSourceCreate(BaseModel):
         try:
             AnyHttpUrl(v)
         except PydanticValidationError:
-            raise ValueError("L'URL doit être une URL HTTP ou HTTPS valide.")
+            raise ValueError("i18n:validation.url_invalid")
         return v
 
 
@@ -35,10 +35,10 @@ class InstagramSourceCreate(BaseModel):
     @classmethod
     def normalize_account(cls, v: str) -> str:
         if not isinstance(v, str):
-            raise ValueError("Le compte Instagram doit être une chaîne de caractères.")
+            raise ValueError("i18n:validation.instagram_account_type")
         cleaned = v.lstrip("@").strip()
         if not cleaned:
-            raise ValueError("Le nom de compte Instagram ne peut pas être vide.")
+            raise ValueError("i18n:validation.instagram_account_empty")
         return cleaned
 
     @model_serializer(mode="wrap")

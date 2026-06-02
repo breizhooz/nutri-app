@@ -19,7 +19,7 @@ class PasswordResetConfirmSchema(BaseModel):
     @classmethod
     def validate_length(cls, v: str) -> str:
         if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters long")
+            raise ValueError("i18n:validation.password_too_short")
         return v
 
 
@@ -33,7 +33,7 @@ class PasswordChangeSchema(BaseModel):
     @classmethod
     def validate_length(cls, v: str) -> str:
         if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters long")
+            raise ValueError("i18n:validation.password_too_short")
         return v
 
 

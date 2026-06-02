@@ -60,7 +60,7 @@ class RecipeCreate(RecipeBase):
     def validate_book_name(cls, v, info):
         """book_name require if origin==book"""
         if info.data.get("origin_recipe") == RecipeOrigin.BOOK and v is None:
-            raise ValueError("book_name is require when origin = book")
+            raise ValueError("i18n:recipe.errors.book_name_required")
         return v
 
 

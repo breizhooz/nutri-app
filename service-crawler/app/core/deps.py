@@ -6,6 +6,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt.exceptions import InvalidTokenError
 
 from app.core.security import decode_token
+from app.i18n.loader import t
 
 bearer_scheme = HTTPBearer()
 
@@ -27,7 +28,7 @@ async def get_token_payload(
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token invalide ou expiré",
+            detail=t.get("errors.token_invalid"),
             headers={"WWW-Authenticate": "Bearer"},
         )
     return payload
@@ -61,7 +62,7 @@ class CrawlPermission:
         if not CrawlPermission.allowed(payload, source):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Crawl '{source}' non autorisé",
+                detail=t.get("errors.crawl_not_allowed", source=source),
             )
 
 
@@ -78,7 +79,7 @@ class UniqLinkPermission:
         if not UniqLinkPermission.allowed(payload, source):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Import par lien '{source}' non autorisé",
+                detail=t.get("errors.uniq_link_not_allowed", source=source),
             )
 
 
@@ -89,7 +90,7 @@ async def require_admin(
     if not payload.get("user_admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Réservé aux administrateurs",
+            detail=t.get("errors.admin_only"),
         )
     return payload
 

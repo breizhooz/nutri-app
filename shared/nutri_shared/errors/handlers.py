@@ -1,4 +1,5 @@
 import logging
+import re
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -7,6 +8,31 @@ from fastapi.responses import JSONResponse
 from .exceptions import AppException
 
 logger = logging.getLogger(__name__)
+
+_I18N_KEY = re.compile(r"i18n:([\w.]+)")
+
+
+def _localize_validation_errors(request: Request, exc: RequestValidationError) -> list:
+    """Translate any ``i18n:<key>`` markers carried by validation messages.
+
+    Validators may raise ``ValueError("i18n:some.key")``; the message is
+    resolved here using the per-app translator (``app.state.translate``) and
+    the request locale set by ``LocaleMiddleware``. Falls back to the raw
+    message when no marker, translator, or locale is available.
+    """
+    locale = getattr(getattr(request, "state", None), "locale", "fr")
+    translate = getattr(getattr(request.app, "state", None), "translate", None)
+    errors = exc.errors()
+    if translate is None:
+        return errors
+    for err in errors:
+        msg = err.get("msg")
+        if not isinstance(msg, str):
+            continue
+        match = _I18N_KEY.search(msg)
+        if match:
+            err["msg"] = translate(match.group(1), locale=locale)
+    return errors
 
 
 def register_error_handlers(app: FastAPI) -> None:
@@ -30,11 +56,10 @@ def register_error_handlers(app: FastAPI) -> None:
     async def _validation_exc(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
+        errors = _localize_validation_errors(request, exc)
         return JSONResponse(
             status_code=422,
-            content={
-                "error": {"code": "VALIDATION_ERROR", "message": str(exc.errors())}
-            },
+            content={"error": {"code": "VALIDATION_ERROR", "message": str(errors)}},
         )
 
     @app.exception_handler(Exception)

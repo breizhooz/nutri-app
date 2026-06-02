@@ -12,6 +12,7 @@ from nutri_shared.errors import register_error_handlers
 
 from app.api.routes import medical, preferences, profile, tracker
 from app.db.session import get_engine
+from app.i18n.loader import t
 
 from nutri_shared.core.logger import configure_logging
 from nutri_shared.core.middleware import RequestLoggingMiddleware
@@ -32,6 +33,7 @@ class LocaleMiddleware(BaseHTTPMiddleware):
 app = FastAPI(title="service-profile", version="0.1.0")
 app.add_middleware(LocaleMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
+app.state.translate = t.get
 
 register_error_handlers(app)
 setup_telemetry("service-profile", app)

@@ -2,12 +2,13 @@
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, get_locale
+from app.i18n.loader import t
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -31,6 +32,7 @@ router: APIRouter = APIRouter()
 
 @router.post("/setup/totp", response_model=TotpSetupResponse)
 async def setup_totp(
+    request: Request,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> TotpSetupResponse:
@@ -52,7 +54,7 @@ async def setup_totp(
     if current_user.two_factor_enabled:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="2FA is already enabled",
+            detail=t.get("mfa.already_enabled", get_locale(request)),
         )
     secret = TotpService.generate_secret()
     current_user.totp_secret = CryptoService.encrypt(
@@ -72,6 +74,7 @@ async def setup_totp(
 
 @router.post("/confirm/totp", response_model=TokenResponse)
 async def confirm_totp(
+    request: Request,
     data: TotpConfirmRequest,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
@@ -95,12 +98,12 @@ async def confirm_totp(
     if current_user.two_factor_enabled:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="2FA is already enabled",
+            detail=t.get("mfa.already_enabled", get_locale(request)),
         )
     if not current_user.totp_secret:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No TOTP setup in progress. Call /auth/2fa/setup/totp first.",
+            detail=t.get("mfa.no_totp_setup", get_locale(request)),
         )
     secret = CryptoService.decrypt(
         current_user.totp_secret, settings.MFA_TOTP_ENCRYPTION_KEY
@@ -108,7 +111,7 @@ async def confirm_totp(
     if not TotpService.verify_code(secret, data.code):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid TOTP code",
+            detail=t.get("mfa.invalid_totp", get_locale(request)),
         )
     current_user.two_factor_enabled = True
     current_user.two_factor_method = "totp"
@@ -124,6 +127,7 @@ async def confirm_totp(
 
 @router.post("/setup/email", status_code=status.HTTP_204_NO_CONTENT)
 async def setup_email_2fa(
+    request: Request,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> None:
@@ -139,7 +143,7 @@ async def setup_email_2fa(
     if current_user.two_factor_enabled:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="2FA is already enabled",
+            detail=t.get("mfa.already_enabled", get_locale(request)),
         )
     current_user.two_factor_enabled = True
     current_user.two_factor_method = "email"
@@ -149,6 +153,7 @@ async def setup_email_2fa(
 
 @router.post("/verify", response_model=TokenResponse)
 async def verify_mfa(
+    request: Request,
     data: MfaVerifyRequest,
     session: AsyncSession = Depends(get_session),
 ) -> TokenResponse:
@@ -175,7 +180,7 @@ async def verify_mfa(
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired MFA token",
+            detail=t.get("token.mfa_invalid_or_expired", get_locale(request)),
         )
 
     import uuid as _uuid
@@ -187,14 +192,14 @@ async def verify_mfa(
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found or inactive",
+            detail=t.get("user.not_found_or_inactive", get_locale(request)),
         )
 
     if user.two_factor_method == "totp":
         if not user.totp_secret:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="TOTP not configured",
+                detail=t.get("mfa.totp_not_configured", get_locale(request)),
             )
         secret = CryptoService.decrypt(
             user.totp_secret, settings.MFA_TOTP_ENCRYPTION_KEY
@@ -202,7 +207,7 @@ async def verify_mfa(
         if not TotpService.verify_code(secret, data.code):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid TOTP code",
+                detail=t.get("mfa.invalid_totp", get_locale(request)),
             )
 
     elif user.two_factor_method == "email":
@@ -219,7 +224,7 @@ async def verify_mfa(
         if not pending or not verify_password(data.code, pending.code_hash):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or expired email code",
+                detail=t.get("mfa.invalid_email_code", get_locale(request)),
             )
         pending.used_at = now
         session.add(pending)
@@ -235,6 +240,7 @@ async def verify_mfa(
 
 @router.delete("/disable", status_code=status.HTTP_204_NO_CONTENT)
 async def disable_mfa(
+    request: Request,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> None:
@@ -250,7 +256,7 @@ async def disable_mfa(
     if not current_user.two_factor_enabled:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="2FA is not enabled",
+            detail=t.get("mfa.not_enabled", get_locale(request)),
         )
     current_user.two_factor_enabled = False
     current_user.two_factor_method = None

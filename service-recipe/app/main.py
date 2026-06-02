@@ -6,6 +6,8 @@ from nutri_shared.errors import register_error_handlers
 
 from app.core.error_handlers import register_domain_handlers
 from app.db.session import get_engine
+from app.i18n.loader import t
+from app.i18n.middleware import LocaleMiddleware
 from app.core.elasticsearch import init_elasticsearch, close_elasticsearch
 from app.api.routes import recipes as recipes_router
 from app.api.routes import ingredient as ingredient_router
@@ -27,6 +29,8 @@ configure_logging("service-recipe")
 app = FastAPI(title="service-recipe", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(LocaleMiddleware)
+app.state.translate = t.get
 
 register_error_handlers(app)
 register_domain_handlers(app)

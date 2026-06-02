@@ -28,3 +28,19 @@ class IngredientNotFound(DomainError):
 
 class IngredientAlreadyExists(DomainError):
     pass
+
+
+class UnsupportedImageType(DomainError):
+    """The uploaded image has a content type that is not allowed."""
+
+    def __init__(self, content_type: str) -> None:
+        self.content_type = content_type
+        super().__init__(content_type)
+
+
+class ImageTooLarge(DomainError):
+    """The uploaded image exceeds the maximum allowed size."""
+
+
+class ImageNotInSuggestions(DomainError):
+    """The selected image is not part of the recipe's proposed suggestions."""

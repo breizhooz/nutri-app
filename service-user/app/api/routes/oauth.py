@@ -1,11 +1,13 @@
 """OAuth2 social login routes for Google and Facebook."""
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.deps import get_locale
+from app.i18n.loader import t
 from app.core.security import (
     create_access_token,
     create_mfa_token,
@@ -46,7 +48,7 @@ def _redirect_uri(provider: str) -> str:
 
 
 @router.get("/{provider}/authorize")
-async def oauth_authorize(provider: str) -> RedirectResponse:
+async def oauth_authorize(request: Request, provider: str) -> RedirectResponse:
     """Redirect the user to the OAuth2 provider authorization page.
 
     Args:
@@ -61,7 +63,9 @@ async def oauth_authorize(provider: str) -> RedirectResponse:
     if not OAuthService.is_valid_provider(provider):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported OAuth2 provider: {provider}",
+            detail=t.get(
+                "oauth.unsupported_provider", get_locale(request), provider=provider
+            ),
         )
     state = create_oauth_state(provider)
     url = OAuthService.build_authorization_url(
@@ -78,6 +82,7 @@ async def oauth_authorize(provider: str) -> RedirectResponse:
     response_model=TokenResponse | PreAuthTokenResponse,
 )
 async def oauth_callback(
+    request: Request,
     provider: str,
     code: str = Query(...),
     state: str = Query(...),
@@ -101,10 +106,11 @@ async def oauth_callback(
         HTTPException: 400 for invalid state, unsupported provider, or
             if the provider does not return an email address.
     """
+    locale = get_locale(request)
     if not OAuthService.is_valid_provider(provider):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported provider: {provider}",
+            detail=t.get("oauth.unsupported_provider", locale, provider=provider),
         )
     try:
         state_provider = verify_oauth_state(state)
@@ -113,7 +119,7 @@ async def oauth_callback(
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired OAuth2 state",
+            detail=t.get("oauth.invalid_state", locale),
         )
 
     try:
@@ -131,7 +137,7 @@ async def oauth_callback(
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to retrieve user info from provider",
+            detail=t.get("oauth.userinfo_failed", locale),
         )
 
     provider_user_id, provider_email = OAuthService.extract_user_info(
@@ -140,7 +146,7 @@ async def oauth_callback(
     if not provider_email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Provider did not return an email address",
+            detail=t.get("oauth.no_email", locale),
         )
 
     # Look for existing OAuth account link
@@ -180,7 +186,7 @@ async def oauth_callback(
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Account is inactive",
+            detail=t.get("oauth.account_inactive", locale),
         )
 
     if user.two_factor_enabled:

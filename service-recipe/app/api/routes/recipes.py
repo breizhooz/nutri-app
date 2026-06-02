@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+import json
+
+from fastapi import APIRouter, Depends, File, Query, UploadFile, status
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
@@ -19,8 +22,10 @@ from app.schemas.recipe import (
     ImageSelectRequest,
 )
 from app.i18n import LocalizedHTTPException
+from app.schemas.recipe_import import RecipeImportPayload
 from app.services.search_service import search_service
 from app.services.recipe_service import RecipeService
+from app.services.recipe_import_service import RecipeImportService
 from app.services.storage_service import StorageService
 from app.core.config import settings
 from app.core.deps import get_current_user_id, require_admin
@@ -33,6 +38,16 @@ class RecipeServiceFactory:
     @staticmethod
     def inject(session: AsyncSession = Depends(get_session)) -> RecipeService:
         return RecipeService(RecipeRepository(session), search_service)
+
+
+class RecipeImportServiceFactory:
+    @staticmethod
+    def inject(
+        session: AsyncSession = Depends(get_session),
+    ) -> RecipeImportService:
+        repository = RecipeRepository(session)
+        recipe_service = RecipeService(repository, search_service)
+        return RecipeImportService(repository, recipe_service)
 
 
 class StorageServiceFactory:
@@ -98,6 +113,37 @@ async def counts_by_user(
     return await service.counts_by_user()
 
 
+@router.post("/import", status_code=status.HTTP_201_CREATED)
+async def import_recipes(
+    request: Request,
+    file: UploadFile = File(...),
+    _admin: dict = Depends(require_admin),
+    import_service: RecipeImportService = Depends(RecipeImportServiceFactory.inject),
+) -> dict[str, object]:
+    """Bulk import recipes (+ ingredient catalog) from a JSON file. Admin-only.
+
+    Same payload format as scripts/import_recipes.py: the recipes are attributed
+    to the ``created_by_user_id`` carried by the file.
+    """
+    raw_bytes = await file.read()
+    try:
+        raw = json.loads(raw_bytes)
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise LocalizedHTTPException.import_invalid_json(request, str(exc))
+
+    try:
+        payload = RecipeImportPayload.model_validate(raw)
+    except ValidationError as exc:
+        raise LocalizedHTTPException.import_validation_failed(request, str(exc))
+
+    report = await import_service.import_payload(payload)
+    return {
+        "ingredients_upserted": report.ingredients_upserted,
+        "recipes_created": report.recipes_created,
+        "recipe_slugs": report.recipe_slugs,
+    }
+
+
 @router.get("/{slug}", response_model=RecipeResponse)
 async def get_recipe_by_slug(
     slug: str,
@@ -157,10 +203,7 @@ async def upload_recipe_image(
 ) -> RecipeResponse:
     data = await file.read()
     content_type = file.content_type or "application/octet-stream"
-    try:
-        image_url = await storage.upload_image(data, content_type)
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    image_url = await storage.upload_image(data, content_type)
     return await service.update_image_url(
         recipe_id, user_id=current_user_id, image_url=image_url
     )

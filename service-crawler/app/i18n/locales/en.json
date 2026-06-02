@@ -57,8 +57,18 @@
   "errors": {
     "internal": "Internal server error.",
     "service_recipe_unavailable": "Recipe service is unavailable. Please try again.",
+    "service_recipe_rejected": "service-recipe rejected the recipe.",
     "url_already_crawled": "This URL has already been processed.",
     "crawl_type_not_supported": "This source type is not yet supported.",
-    "forbidden": "Access to this resource is forbidden."
+    "forbidden": "Access to this resource is forbidden.",
+    "token_invalid": "Invalid or expired token",
+    "admin_only": "Admin only",
+    "crawl_not_allowed": "Crawling '{source}' is not allowed",
+    "uniq_link_not_allowed": "Single-link import for '{source}' is not allowed"
+  },
+  "validation": {
+    "url_invalid": "The URL must be a valid HTTP or HTTPS URL.",
+    "instagram_account_type": "The Instagram account must be a string.",
+    "instagram_account_empty": "The Instagram account name cannot be empty."
   }
 }

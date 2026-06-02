@@ -2,12 +2,14 @@
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.deps import get_locale
 from app.db.session import get_session
+from app.i18n.loader import t
 from app.models.user import User
 from app.schemas.password import (
     PasswordResetConfirmSchema,
@@ -28,6 +30,7 @@ router: APIRouter = APIRouter()
     status_code=status.HTTP_202_ACCEPTED,
 )
 async def request_password_reset(
+    request: Request,
     data: PasswordResetRequestSchema,
     session: AsyncSession = Depends(get_session),
 ) -> PasswordResetMessage:
@@ -55,7 +58,7 @@ async def request_password_reset(
             logger.warning("Password reset email failed for user %s", user.id)
 
     return PasswordResetMessage(
-        message="Si un compte existe avec cette adresse, un lien de réinitialisation a été envoyé."
+        message=t.get("password.reset_requested", get_locale(request))
     )
 
 
@@ -65,6 +68,7 @@ async def request_password_reset(
     status_code=status.HTTP_200_OK,
 )
 async def confirm_password_reset(
+    request: Request,
     data: PasswordResetConfirmSchema,
     session: AsyncSession = Depends(get_session),
 ) -> PasswordResetMessage:
@@ -74,20 +78,28 @@ async def confirm_password_reset(
         HTTPException 400: token invalid / expired / already used.
         HTTPException 409: new password matches one of the last 5.
     """
+    locale = get_locale(request)
     service = PasswordResetService(session)
 
     try:
         user = await service.validate_and_consume_token(data.token)
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=t.get("password.reset_token_invalid", locale),
+        )
 
     if await service.is_password_reused(
         user, data.new_password, settings.PASSWORD_HISTORY_COUNT
     ):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Le nouveau mot de passe doit être différent des 5 derniers mots de passe utilisés.",
+            detail=t.get(
+                "password.reuse_forbidden",
+                locale,
+                count=settings.PASSWORD_HISTORY_COUNT,
+            ),
         )
 
     await service.update_password(user, data.new_password)
-    return PasswordResetMessage(message="Mot de passe mis à jour avec succès.")
+    return PasswordResetMessage(message=t.get("password.reset_success", locale))

@@ -1,4 +1,8 @@
 {
+  "auth": {
+    "token_invalid": "Token invalide ou expiré",
+    "admin_required": "Privilèges administrateur requis"
+  },
   "enums": {
     "difficulty": {
       "easy": "Facile",
@@ -9,43 +13,50 @@
       "web": "Web",
       "book": "Livre",
       "tv": "Télévision",
-      "personal": "Personnel"
-    },
-    "cuisine_origine": {
-      "europe": "europe",
-      "french": "française",
-      "italian": "italienne",
-      "spanish": "espagnole",
-      "greek": "grecque",
-      "german": "allemande",
-      "asia": "asie",
-      "chinese": "chinoise",
-      "japanese": "japonaise",
-      "thai": "thaïlandaise",
-      "indian": "indienne",
-      "korean": "coréenne",
-      "vietnamese": "vietnamienne",
-      "africa": "afrique",
-      "moroccan": "marocaine",
-      "ethiopian": "éthiopienne",
-      "senegalese": "sénégalaise",
-      "south_america": "amérique du sud",
-      "mexican": "mexicaine",
-      "american": "américaine",
-      "brazilian": "brésilienne",
-      "peruvian": "péruvienne",
-      "middle_east": "moyen orient",
-      "lebanese": "libanaise",
-      "turkish": "turque",
-      "iranian": "iranienne",
-      "oceania": "oceanie",
-      "australian": "australienne",
-      "polynesian": "polynésienne"
+      "personal": "Personnel",
+      "cuisine_origine": {
+        "europe": "européenne",
+        "french": "française",
+        "italian": "italienne",
+        "spanish": "espagnole",
+        "greek": "grecque",
+        "german": "allemande",
+        "asia": "asiatique",
+        "chinese": "chinoise",
+        "japanese": "japonaise",
+        "thai": "thaïlandaise",
+        "indian": "indienne",
+        "korean": "coréenne",
+        "vietnamese": "vietnamienne",
+        "africa": "africaine",
+        "moroccan": "marocaine",
+        "ethiopian": "éthiopienne",
+        "senegalese": "sénégalaise",
+        "south_america": "amérique du sud",
+        "mexican": "mexicaine",
+        "american": "américaine",
+        "brazilian": "brésilienne",
+        "peruvian": "péruvienne",
+        "middle_east": "moyen orient",
+        "lebanese": "libanaise",
+        "turkish": "turque",
+        "iranian": "iranienne",
+        "oceania": "océanienne",
+        "australian": "australienne",
+        "polynesian": "polynésienne"
+      }
     },
     "course_type":{
       "starter": "entrée",
       "main": "plat",
-      "dessert": "dessert"
+      "dessert": "dessert",
+      "sauce": "sauce",
+      "drink": "boisson",
+      "snack": "en-cas",
+      "side_dish": "accompagnement",
+      "breakfast": "petit-déjeuner",
+      "soup": "soupe",
+      "salad": "salade"
     },
     "seasonality":{
       "spring": "printemps",
@@ -236,7 +247,13 @@
       "user_not_found": "Utilisateur introuvable",
       "unauthorized": "Vous n'êtes pas autorisé à modifier cette recette",
       "user_not_exists": "L'utilisateur n'existe pas",
-      "slug_too_big": "nombre de slug trop important"
+      "slug_too_big": "nombre de slug trop important",
+      "unsupported_image_type": "Type de fichier non supporté : {content_type}",
+      "image_too_large": "L'image ne doit pas dépasser 5 Mo.",
+      "image_not_in_suggestions": "Cette image ne fait pas partie des propositions de la recette.",
+      "book_name_required": "Le nom du livre est requis lorsque l'origine est « livre ».",
+      "import_invalid_json": "Fichier JSON invalide",
+      "import_validation_failed": "Validation du fichier d'import échouée"
     },
     "success": {
       "created": "Recette créée avec succès",

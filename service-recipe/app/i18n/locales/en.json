@@ -1,51 +1,62 @@
 {
+  "auth": {
+    "token_invalid": "Invalid or expired token",
+    "admin_required": "Admin privileges required"
+  },
   "enums": {
     "difficulty": {
       "easy": "Easy",
       "medium": "Medium",
       "hard": "Hard"
     },
-    "origin": {
+    "origin_recipe": {
       "web": "Web",
       "book": "Book",
       "tv": "TV",
-      "personal": "Personnal"
-    },
-    "cuisine_origin": {
-      "europe": "europe",
-      "french": "french",
-      "italian": "italian",
-      "spanish": "spanish",
-      "greek": "greek",
-      "german": "german",
-      "asia": "asia",
-      "chinese": "chinese",
-      "japanese": "japanese",
-      "thai": "thai",
-      "indian": "indian",
-      "korean": "korean",
-      "vietnamese": "vietnamese",
-      "africa": "africa",
-      "moroccan": "moroccan",
-      "ethiopian": "ethiopian",
-      "senegalese": "senegalese",
-      "south_america": "south america",
-      "mexican": "mexican",
-      "american": "american",
-      "brazilian": "brazilian",
-      "peruvian": "peruvian",
-      "middle_east": "middle east",
-      "lebanese": "lebanese",
-      "turkish": "turkish",
-      "iranian": "iranian",
-      "oceania": "oceania",
-      "australian": "australian",
-      "polynesian": "polynesian"
+      "personal": "Personal",
+      "cuisine_origine": {
+        "europe": "European",
+        "french": "French",
+        "italian": "Italian",
+        "spanish": "Spanish",
+        "greek": "Greek",
+        "german": "German",
+        "asia": "Asian",
+        "chinese": "Chinese",
+        "japanese": "Japanese",
+        "thai": "Thai",
+        "indian": "Indian",
+        "korean": "Korean",
+        "vietnamese": "Vietnamese",
+        "africa": "African",
+        "moroccan": "Moroccan",
+        "ethiopian": "Ethiopian",
+        "senegalese": "Senegalese",
+        "south_america": "South American",
+        "mexican": "Mexican",
+        "american": "American",
+        "brazilian": "Brazilian",
+        "peruvian": "Peruvian",
+        "middle_east": "Middle Eastern",
+        "lebanese": "Lebanese",
+        "turkish": "Turkish",
+        "iranian": "Iranian",
+        "oceania": "Oceanian",
+        "australian": "Australian",
+        "polynesian": "Polynesian"
+      }
     },
     "course_type":{
       "starter": "starter",
       "main": "main course",
-      "dessert": "dessert"
+      "dessert": "dessert",
+      "sauce": "sauce",
+      "drink": "drink",
+      "snack": "snack",
+      "side_dish": "side dish",
+      "breakfast": "breakfast",
+      "soup": "soup",
+      "salad": "salad"
     },
     "seasonality":{
       "spring": "spring",
@@ -235,8 +246,13 @@
       "user_not_found": "User not found",
       "unauthorized": "You are not authorized to modify this recipe",
       "user_not_exists": "User doesn't exist",
-      "slug_too_big": "too many trying for a new slug"
-
+      "slug_too_big": "too many trying for a new slug",
+      "unsupported_image_type": "Unsupported file type: {content_type}",
+      "image_too_large": "The image must not exceed 5 MB.",
+      "image_not_in_suggestions": "This image is not among the recipe's suggestions.",
+      "book_name_required": "book_name is required when origin = book",
+      "import_invalid_json": "Invalid JSON file",
+      "import_validation_failed": "Import file validation failed"
     },
     "success": {
       "created": "Recipe created successfully",

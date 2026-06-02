@@ -36,7 +36,7 @@ class SportsProfileCreate(BaseModel):
     def rpe_range(cls, v: int) -> int:
         """Valide que le RPE est compris entre 1 et 10."""
         if not 1 <= v <= 10:
-            raise ValueError("Le RPE doit être compris entre 1 et 10")
+            raise ValueError("i18n:validation.rpe_range")
         return v
 
 

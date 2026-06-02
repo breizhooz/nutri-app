@@ -2,26 +2,34 @@
 
 import uuid
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_token
 from app.db.session import get_session
+from app.i18n.loader import t
 from app.models.user import User
 
 _bearer_scheme: HTTPBearer = HTTPBearer()
 _bearer_mfa: HTTPBearer = HTTPBearer()
 
 
+def get_locale(request: Request) -> str:
+    """Extrait la locale depuis le state injecté par LocaleMiddleware."""
+    return getattr(getattr(request, "state", None), "locale", "fr")
+
+
 async def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(_bearer_scheme),
     session: AsyncSession = Depends(get_session),
 ) -> User:
     """Validate an access JWT and return the corresponding active user.
 
     Args:
+        request: Incoming request (used to resolve the locale).
         credentials: Bearer credentials from the Authorization header.
         session: Async database session.
 
@@ -32,6 +40,7 @@ async def get_current_user(
         HTTPException: 401 if the token is invalid, 404 if the user is not
             found, 400 if the user account is inactive.
     """
+    locale = get_locale(request)
     try:
         payload = decode_token(credentials.credentials)
         user_id: str | None = payload.get("sub")
@@ -42,7 +51,7 @@ async def get_current_user(
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
+            detail=t.get("token.invalid_or_expired", locale),
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -51,17 +60,20 @@ async def get_current_user(
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=t.get("user.not_found", locale),
         )
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=t.get("user.inactive", locale),
         )
 
     return user
 
 
 async def get_current_admin(
+    request: Request,
     current_user: User = Depends(get_current_user),
 ) -> User:
     """Return the current user only if they hold admin privileges.
@@ -72,12 +84,13 @@ async def get_current_admin(
     if not current_user.user_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin privileges required",
+            detail=t.get("auth.admin_required", get_locale(request)),
         )
     return current_user
 
 
 async def get_mfa_pending_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(_bearer_mfa),
     session: AsyncSession = Depends(get_session),
 ) -> User:
@@ -86,6 +99,7 @@ async def get_mfa_pending_user(
     This dependency is used exclusively by the /auth/2fa/verify endpoint.
 
     Args:
+        request: Incoming request (used to resolve the locale).
         credentials: Bearer credentials containing the mfa_pending token.
         session: Async database session.
 
@@ -95,6 +109,7 @@ async def get_mfa_pending_user(
     Raises:
         HTTPException: 401 if the token is invalid or not of type mfa_pending.
     """
+    locale = get_locale(request)
     try:
         payload = decode_token(credentials.credentials)
         if payload.get("type") != "mfa_pending":
@@ -105,7 +120,7 @@ async def get_mfa_pending_user(
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired MFA token",
+            detail=t.get("token.mfa_invalid_or_expired", locale),
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -114,22 +129,26 @@ async def get_mfa_pending_user(
 
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=t.get("user.not_found", locale),
         )
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=t.get("user.inactive", locale),
         )
 
     return user
 
 
 async def get_mfa_user_id_from_token(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(_bearer_mfa),
 ) -> uuid.UUID:
     """Extract the user UUID from an mfa_pending JWT without a DB query.
 
     Args:
+        request: Incoming request (used to resolve the locale).
         credentials: Bearer credentials containing the mfa_pending token.
 
     Returns:
@@ -149,6 +168,6 @@ async def get_mfa_user_id_from_token(
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired MFA token",
+            detail=t.get("token.mfa_invalid_or_expired", get_locale(request)),
             headers={"WWW-Authenticate": "Bearer"},
         )

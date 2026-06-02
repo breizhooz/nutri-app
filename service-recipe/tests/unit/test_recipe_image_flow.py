@@ -1,9 +1,12 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from fastapi import HTTPException
 
-from app.core.exceptions import RecipeForbidden, RecipeNotFound
+from app.core.exceptions import (
+    ImageNotInSuggestions,
+    RecipeForbidden,
+    RecipeNotFound,
+)
 from app.services.recipe_service import RecipeService
 from app.services.unsplash_service import ImageSuggestion
 
@@ -163,9 +166,8 @@ class TestSelectImage:
     async def test_rejects_unknown_id(self):
         recipe = _make_recipe(suggestions=[_suggestion("a").to_dict()])
         service, repo, _ = _make_service(recipe, AsyncMock())
-        with pytest.raises(HTTPException) as exc:
+        with pytest.raises(ImageNotInSuggestions):
             await service.select_image(1, "zzz", "owner")
-        assert exc.value.status_code == 400
         repo.select_final_image.assert_not_called()
 
     async def test_forbidden_for_non_author(self):

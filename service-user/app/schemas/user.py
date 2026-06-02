@@ -38,7 +38,7 @@ class UserCreate(BaseModel):
     def password_min_length(cls, v: str) -> str:
         """Enforce a minimum password length of 8 characters."""
         if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters long")
+            raise ValueError("i18n:validation.password_too_short")
         return v
 
 

@@ -1,4 +1,11 @@
 {
+  "errors": {
+    "token_invalid": "Invalid or expired token",
+    "service_token_invalid": "Invalid service token"
+  },
+  "validation": {
+    "rpe_range": "RPE must be between 1 and 10"
+  },
   "profile": {
     "not_found": "Profile not found",
     "already_exists": "A profile already exists for this user",

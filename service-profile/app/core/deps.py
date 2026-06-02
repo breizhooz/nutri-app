@@ -9,13 +9,20 @@ import jwt
 from jwt.exceptions import InvalidTokenError
 
 from app.core.config import settings
+from app.i18n.loader import t
 
 logger = logging.getLogger(__name__)
 
 _bearer = HTTPBearer(auto_error=True)
 
 
+def get_locale(request: Request) -> str:
+    """Extrait la locale depuis le state injecté par LocaleMiddleware."""
+    return getattr(getattr(request, "state", None), "locale", "fr")
+
+
 async def get_current_user_id(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(_bearer),
 ) -> uuid.UUID:
     """Extrait et valide l'UUID utilisateur depuis le JWT Bearer.
@@ -38,12 +45,13 @@ async def get_current_user_id(
         logger.warning("Échec de validation du token : %s", exc)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token invalide ou expiré",
+            detail=t.get("errors.token_invalid", get_locale(request)),
             headers={"WWW-Authenticate": "Bearer"},
         )
 
 
 async def verify_service_token(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(_bearer),
 ) -> None:
     """Vérifie le token inter-service pour les endpoints réservés aux autres MS.
@@ -54,10 +62,5 @@ async def verify_service_token(
         logger.warning("Tentative d'accès inter-service avec token invalide")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Token de service invalide",
+            detail=t.get("errors.service_token_invalid", get_locale(request)),
         )
-
-
-def get_locale(request: Request) -> str:
-    """Extrait la locale depuis le state injecté par LocaleMiddleware."""
-    return getattr(getattr(request, "state", None), "locale", "fr")
