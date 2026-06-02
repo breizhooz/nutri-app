@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass
 import httpx
 
 from app.core.config import settings
+from app.core.exceptions import ImageServiceUnavailable
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +72,11 @@ class UnsplashService:
         """
         Return up to ``count`` image suggestions for ``keyword``.
 
-        Best-effort: on any error (no key, network, bad response) an empty list is
-        returned so the caller (recipe creation) never fails because of Unsplash.
+        Renvoie une liste vide si Unsplash est désactivé (pas de clé) ou si le
+        mot-clé est vide. En cas de **rate-limit / 403** (quota dépassé), lève
+        ``ImageServiceUnavailable`` pour que l'appelant puisse l'afficher comme une
+        indisponibilité (et non comme un « 0 résultat » trompeur). Les autres
+        erreurs (réseau, réponse malformée) restent best-effort → liste vide.
         """
         if not self.enabled:
             logger.info("Unsplash disabled (no access key) — skipping image search")
@@ -93,6 +97,14 @@ class UnsplashService:
                 },
             )
             results = resp.json().get("results", [])
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code in (403, 429):
+                logger.warning(
+                    "Unsplash indisponible (quota/clé) pour %r : %s", keyword, exc
+                )
+                raise ImageServiceUnavailable() from exc
+            logger.warning("Unsplash search failed for %r: %s", keyword, exc)
+            return []
         except (httpx.HTTPError, ValueError) as exc:
             logger.warning("Unsplash search failed for %r: %s", keyword, exc)
             return []

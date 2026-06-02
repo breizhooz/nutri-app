@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from app.core.config import settings
 from app.core.exceptions import (
     ImageNotInSuggestions,
+    ImageServiceUnavailable,
     RecipeForbidden,
     RecipeNotFound,
     SlugGenerationError,
@@ -203,7 +204,13 @@ class RecipeService:
 
         recipe = await self._repository.create(recipe, recipe_ingredients)
         recipe = await self._index_and_enrich(recipe, data.ingredients, user_id)
-        return await self._attach_suggestions(recipe)
+        # Import en masse : on NE lance PAS de recherche d'image Unsplash par
+        # recette. Sinon un import de N recettes = N appels Unsplash, ce qui crame
+        # le quota (50 req/h en clé "demo") et casse la recherche d'image pour
+        # tout le monde pendant une heure. L'image explicite du fichier
+        # (``image_url``) est conservée ; les recettes sans image en restent
+        # dépourvues et l'auteur peut lancer une recherche à la demande ensuite.
+        return recipe
 
     async def _resolve_ingredients(self, ingredients) -> list[RecipeIngredient]:
         rows: list[RecipeIngredient] = []
@@ -278,7 +285,13 @@ class RecipeService:
         still switch image later via ``select_image``. An explicit ``image_url``
         (e.g. JSON import) is preserved and never overwritten.
         """
-        suggestions = await self._search_images(recipe.title)
+        # Création (manuelle) : best-effort. Une indisponibilité Unsplash ne doit
+        # jamais casser la création — on retombe sur 0 proposition. _search_images
+        # propage ImageServiceUnavailable (levée par l'appel Unsplash sous-jacent).
+        try:
+            suggestions = await self._search_images(recipe.title)
+        except ImageServiceUnavailable:
+            suggestions = []
         updated = await self._repository.update_image_suggestions(
             recipe.id, recipe.title, [s.to_dict() for s in suggestions]
         )

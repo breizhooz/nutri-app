@@ -21,4 +21,7 @@ http:
           - "Content-Type"
           - "Authorization"
           - "Accept-Language"
+        accessControlExposeHeaders:
+          - "X-Trace-Id"
+          - "X-Request-ID"
         accessControlMaxAge: 3600

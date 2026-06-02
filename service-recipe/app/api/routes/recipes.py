@@ -1,6 +1,7 @@
 import json
 
 from fastapi import APIRouter, Depends, File, Query, UploadFile, status
+from fastapi.concurrency import run_in_threadpool
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
@@ -22,13 +23,18 @@ from app.schemas.recipe import (
     ImageSelectRequest,
 )
 from app.i18n import LocalizedHTTPException
-from app.schemas.recipe_import import RecipeImportPayload
+from app.schemas.recipe_import import (
+    RecipeImportPayload,
+    ImportEnqueueResponse,
+    ImportTaskStatus,
+)
 from app.services.search_service import search_service
 from app.services.recipe_service import RecipeService
-from app.services.recipe_import_service import RecipeImportService
+from app.services.import_task_service import ImportTaskService
 from app.services.storage_service import StorageService
 from app.core.config import settings
 from app.core.deps import get_current_user_id, require_admin
+from celery_app import celery_app
 
 
 router = APIRouter()
@@ -40,14 +46,10 @@ class RecipeServiceFactory:
         return RecipeService(RecipeRepository(session), search_service)
 
 
-class RecipeImportServiceFactory:
+class ImportTaskServiceFactory:
     @staticmethod
-    def inject(
-        session: AsyncSession = Depends(get_session),
-    ) -> RecipeImportService:
-        repository = RecipeRepository(session)
-        recipe_service = RecipeService(repository, search_service)
-        return RecipeImportService(repository, recipe_service)
+    def inject() -> ImportTaskService:
+        return ImportTaskService(celery_app)
 
 
 class StorageServiceFactory:
@@ -99,9 +101,7 @@ async def list_recipes(
     service: RecipeService = Depends(RecipeServiceFactory.inject),
 ) -> PaginatedRecipeResponse:
     """List recipes with optional course_type / author filters and pagination."""
-    return await service.list_recipes(
-        page, page_size, course_type, created_by_user_id
-    )
+    return await service.list_recipes(page, page_size, course_type, created_by_user_id)
 
 
 @router.get("/counts-by-user", response_model=dict[str, int])
@@ -113,17 +113,26 @@ async def counts_by_user(
     return await service.counts_by_user()
 
 
-@router.post("/import", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/import",
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=ImportEnqueueResponse,
+)
 async def import_recipes(
     request: Request,
     file: UploadFile = File(...),
-    _admin: dict = Depends(require_admin),
-    import_service: RecipeImportService = Depends(RecipeImportServiceFactory.inject),
-) -> dict[str, object]:
+    admin: dict = Depends(require_admin),
+    import_task_service: ImportTaskService = Depends(ImportTaskServiceFactory.inject),
+    user_client: ServicesUserClient = Depends(get_user_client),
+) -> ImportEnqueueResponse:
     """Bulk import recipes (+ ingredient catalog) from a JSON file. Admin-only.
 
-    Same payload format as scripts/import_recipes.py: the recipes are attributed
-    to the ``created_by_user_id`` carried by the file.
+    Le fichier est validé immédiatement (JSON + schéma + existence du
+    ``created_by_user_id`` auprès de service-user) puis l'import — long car il
+    appelle service-nutrition pour chaque recette — est délégué à une tâche Celery.
+    Renvoie un ``task_id`` à suivre via ``GET /import/{task_id}``. Même format que
+    scripts/import_recipes.py : les recettes sont attribuées au
+    ``created_by_user_id`` porté par le fichier.
     """
     raw_bytes = await file.read()
     try:
@@ -136,12 +145,38 @@ async def import_recipes(
     except ValidationError as exc:
         raise LocalizedHTTPException.import_validation_failed(request, str(exc))
 
-    report = await import_service.import_payload(payload)
-    return {
-        "ingredients_upserted": report.ingredients_upserted,
-        "recipes_created": report.recipes_created,
-        "recipe_slugs": report.recipe_slugs,
-    }
+    # Refuse d'attribuer les recettes à un user fantôme : on vérifie que le
+    # created_by_user_id du fichier correspond à un compte réel (évite les
+    # recettes orphelines qui n'apparaissent chez personne).
+    try:
+        exists = await user_client.user_exist(payload.created_by_user_id)
+    except ServiceUnavailableError:
+        raise LocalizedHTTPException.service_user_unavailable(request)
+    if not exists:
+        raise LocalizedHTTPException.user_id_not_exists(request)
+
+    # On transmet le payload re-sérialisé (JSON-safe : enums → valeurs) au worker,
+    # ainsi que l'id de l'admin déclencheur (notifié en fin/échec d'import).
+    task_id = await run_in_threadpool(
+        import_task_service.enqueue,
+        payload.model_dump(mode="json"),
+        str(admin["sub"]),
+    )
+    return ImportEnqueueResponse(task_id=task_id)
+
+
+@router.get("/import/{task_id}", response_model=ImportTaskStatus)
+async def import_status(
+    task_id: str,
+    _admin: dict = Depends(require_admin),
+    import_task_service: ImportTaskService = Depends(ImportTaskServiceFactory.inject),
+) -> ImportTaskStatus:
+    """État d'une tâche d'import (polling du front). Admin-only.
+
+    Sur succès, ``result`` porte le rapport
+    ({ingredients_upserted, recipes_created, recipe_slugs}).
+    """
+    return await run_in_threadpool(import_task_service.task_status, task_id)
 
 
 @router.get("/{slug}", response_model=RecipeResponse)

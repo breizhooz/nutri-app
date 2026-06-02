@@ -44,3 +44,7 @@ class ImageTooLarge(DomainError):
 
 class ImageNotInSuggestions(DomainError):
     """The selected image is not part of the recipe's proposed suggestions."""
+
+
+class ImageServiceUnavailable(DomainError):
+    """The image provider (Unsplash) is unreachable or rate-limited."""

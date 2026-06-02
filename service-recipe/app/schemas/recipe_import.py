@@ -70,6 +70,33 @@ class RecipeImportItem(BaseModel):
     ingredients: list[RecipeIngredientImport] = []
 
 
+class ImportEnqueueResponse(BaseModel):
+    """Réponse immédiate de la route d'import : la tâche est enfilée, pas exécutée."""
+
+    task_id: str
+    status: str = "queued"
+
+
+class ImportTaskStatus(BaseModel):
+    """Diagnostic d'une tâche d'import interrogée par son id (request id).
+
+    ``state == "PENDING"`` (``known is False``) signifie que l'id est inconnu du
+    backend OU que la tâche n'a pas encore démarré (Celery ne distingue pas).
+    """
+
+    task_id: str
+    state: str
+    known: bool
+    ready: bool
+    successful: bool | None = None
+    error: str | None = None
+    # date_done du backend : quand la tâche a terminé ou planté (ISO 8601).
+    finished_at: str | None = None
+    # Valeur de retour de la tâche quand elle a réussi : le rapport d'import
+    # ({"ingredients_upserted", "recipes_created", "recipe_slugs"}).
+    result: dict | None = None
+
+
 class RecipeImportPayload(BaseModel):
     created_by_user_id: str
     ingredients: list[IngredientImport] = []
