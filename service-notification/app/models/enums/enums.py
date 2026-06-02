@@ -7,6 +7,7 @@ class NotificationType(str, PyEnum):
     SYSTEM = "system"
     MFA_CODE = "mfa_code"
     PASSWORD_RESET = "password_reset"  # ← nouveau
+    RECIPE_IMPORT_DONE = "recipe_import_done"  # fin d'import en masse (succès)
 
 
 class NotificationStatus(str, PyEnum):

@@ -15,3 +15,5 @@ python-jose[cryptography]==3.3.0
 aiosqlite==0.20.0
 minio==7.2.15
 python-multipart==0.0.20
+celery==5.3.6
+redis==5.0.1

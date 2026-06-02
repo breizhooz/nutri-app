@@ -63,6 +63,29 @@ class TestUnsplashSearch:
         service = UnsplashService(access_key="key", http_client=client)
         assert await service.search("tarte") == []
 
+    async def test_rate_limit_raises_unavailable(self):
+        import pytest
+        from app.core.exceptions import ImageServiceUnavailable
+
+        req = httpx.Request("GET", "http://x")
+        for code in (403, 429):
+            client = AsyncMock()
+            client.request.side_effect = httpx.HTTPStatusError(
+                "limit", request=req, response=httpx.Response(code, request=req)
+            )
+            service = UnsplashService(access_key="key", http_client=client)
+            with pytest.raises(ImageServiceUnavailable):
+                await service.search("saumon")
+
+    async def test_other_http_status_returns_empty(self):
+        req = httpx.Request("GET", "http://x")
+        client = AsyncMock()
+        client.request.side_effect = httpx.HTTPStatusError(
+            "boom", request=req, response=httpx.Response(500, request=req)
+        )
+        service = UnsplashService(access_key="key", http_client=client)
+        assert await service.search("saumon") == []
+
 
 class TestUnsplashTrackDownload:
     async def test_noop_when_disabled(self):

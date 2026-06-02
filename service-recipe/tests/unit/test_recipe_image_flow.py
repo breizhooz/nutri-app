@@ -4,6 +4,7 @@ import pytest
 
 from app.core.exceptions import (
     ImageNotInSuggestions,
+    ImageServiceUnavailable,
     RecipeForbidden,
     RecipeNotFound,
 )
@@ -113,6 +114,17 @@ class TestAttachSuggestions:
         # Suggestions stockées mais image explicite (import) préservée.
         repo.update_image_suggestions.assert_called_once()
         repo.select_final_image.assert_not_called()
+
+    async def test_swallows_unsplash_unavailable_on_creation(self):
+        # Une indisponibilité Unsplash (quota) ne doit jamais casser la création :
+        # on retombe sur 0 proposition.
+        recipe = _make_recipe()
+        unsplash = AsyncMock()
+        unsplash.search.side_effect = ImageServiceUnavailable()
+        service, repo, _ = _make_service(recipe, unsplash)
+
+        await service._attach_suggestions(recipe)  # ne doit pas lever
+        assert repo.update_image_suggestions.call_args[0][2] == []
         unsplash.track_download.assert_not_called()
 
 
@@ -142,6 +154,16 @@ class TestRefreshSuggestions:
         repo.get_by_id_with_relations.return_value = None
         with pytest.raises(RecipeNotFound):
             await service.refresh_suggestions(1, "kw", "owner")
+
+    async def test_propagates_unsplash_unavailable(self):
+        # Recherche d'image explicite (déclenchée par l'utilisateur) : l'erreur
+        # remonte pour être affichée comme indisponibilité, pas comme « 0 résultat ».
+        recipe = _make_recipe()
+        unsplash = AsyncMock()
+        unsplash.search.side_effect = ImageServiceUnavailable()
+        service, repo, _ = _make_service(recipe, unsplash)
+        with pytest.raises(ImageServiceUnavailable):
+            await service.refresh_suggestions(1, "saumon", "owner")
 
 
 # ─── select ───────────────────────────────────────────────────────────────────

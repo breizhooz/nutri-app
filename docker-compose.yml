@@ -142,6 +142,8 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@postgres:5432/${POSTGRES_RECIPE_DB}
       - SERVICE_USER_URL=http://service-user:8000
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
     env_file:
       - .env
       - ./service-recipe/conf/.env
@@ -165,6 +167,39 @@ services:
       timeout: 3s
       retries: 5
       start_period: 20s
+    networks:
+      - nutriplanner
+
+# ──────────────────────────────────────────────────────────
+# WORKER — recipe (import asynchrone des recettes)  ·  queue "recipe"
+# ──────────────────────────────────────────────────────────
+  celery-worker-recipe:
+    build:
+      context: .
+      dockerfile: service-recipe/Dockerfile
+    container_name: nutriplanner-celery-worker-recipe
+    # Dev : watchmedo redémarre le worker à chaque modif *.py (Celery ne recharge
+    # pas le code tout seul). En prod, remplacer par la commande celery directe.
+    command: sh -c "pip install --no-cache-dir watchdog==4.0.2 && watchmedo auto-restart --directory=/app --patterns='*.py' --recursive --debug-force-polling --debounce-interval=1 -- celery -A celery_app worker --loglevel=info -Q recipe --concurrency=2"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@postgres:5432/${POSTGRES_RECIPE_DB}
+      - SERVICE_USER_URL=http://service-user:8000
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    env_file:
+      - .env
+      - ./service-recipe/conf/.env
+    volumes:
+      - ./service-recipe:/app
+    mem_limit: 1g
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-recipe:
+        condition: service_started
     networks:
       - nutriplanner
 
