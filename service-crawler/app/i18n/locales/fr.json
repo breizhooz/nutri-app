@@ -41,10 +41,6 @@
     "sync_complete": "Planning Beat synchronisé depuis la base de données.",
     "db_error": "Erreur lors de la synchronisation du planning depuis la base de données."
   },
-  "notifications": {
-    "subscribed": "Push notification subscription registered.",
-    "unsubscribed": "Subscription removed."
-  },
   "enums": {
     "crawl_type": {
       "web": "Web",
@@ -56,17 +52,23 @@
       "waiting": "En attente",
       "valid": "Validé",
       "rejected": "Rejeté"
-    },
-    "push_channel": {
-      "web_push": "Browser (Web Push)",
-      "expo": "Mobile app (Expo)"
     }
   },
   "errors": {
     "internal": "Erreur interne du serveur.",
     "service_recipe_unavailable": "Le service de recettes est indisponible. Veuillez réessayer.",
+    "service_recipe_rejected": "service-recipe a refusé la recette.",
     "url_already_crawled": "Cette URL a déjà été traitée.",
     "crawl_type_not_supported": "Ce type de source n'est pas encore pris en charge.",
-    "forbidden": "Accès interdit à cette ressource."
+    "forbidden": "Accès interdit à cette ressource.",
+    "token_invalid": "Token invalide ou expiré",
+    "admin_only": "Réservé aux administrateurs",
+    "crawl_not_allowed": "Crawl '{source}' non autorisé",
+    "uniq_link_not_allowed": "Import par lien '{source}' non autorisé"
+  },
+  "validation": {
+    "url_invalid": "L'URL doit être une URL HTTP ou HTTPS valide.",
+    "instagram_account_type": "Le compte Instagram doit être une chaîne de caractères.",
+    "instagram_account_empty": "Le nom de compte Instagram ne peut pas être vide."
   }
 }

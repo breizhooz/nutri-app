@@ -1,0 +1,43 @@
+{
+  "auth": {
+    "invalid_credentials": "Incorrect email or password",
+    "admin_required": "Admin privileges required",
+    "forbidden": "Forbidden access"
+  },
+  "token": {
+    "invalid_or_expired": "Invalid or expired token",
+    "refresh_invalid_or_expired": "Invalid or expired refresh token",
+    "mfa_invalid_or_expired": "Invalid or expired MFA token"
+  },
+  "user": {
+    "not_found": "User not found",
+    "inactive": "Inactive user",
+    "not_found_or_inactive": "User not found or inactive",
+    "email_already_registered": "Email already registered"
+  },
+  "mfa": {
+    "already_enabled": "2FA is already enabled",
+    "not_enabled": "2FA is not enabled",
+    "no_totp_setup": "No TOTP setup in progress. Call /auth/2fa/setup/totp first.",
+    "invalid_totp": "Invalid TOTP code",
+    "totp_not_configured": "TOTP not configured",
+    "invalid_email_code": "Invalid or expired email code"
+  },
+  "oauth": {
+    "unsupported_provider": "Unsupported OAuth2 provider: {provider}",
+    "invalid_state": "Invalid or expired OAuth2 state",
+    "userinfo_failed": "Failed to retrieve user info from provider",
+    "no_email": "Provider did not return an email address",
+    "account_inactive": "Account is inactive"
+  },
+  "password": {
+    "current_incorrect": "Current password is incorrect.",
+    "reuse_forbidden": "The new password must differ from your last {count} passwords.",
+    "reset_requested": "If an account exists for this address, a reset link has been sent.",
+    "reset_success": "Password updated successfully.",
+    "reset_token_invalid": "Invalid, expired, or already used reset token."
+  },
+  "validation": {
+    "password_too_short": "Password must be at least 8 characters long"
+  }
+}

@@ -53,7 +53,7 @@ async def send_notification(
         if not payload.recipient_email:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="recipient_email is required for password_reset notifications",
+                detail=t.get("errors.recipient_email_required", type="password_reset"),
             )
         reset_url = (payload.data or {}).get("reset_url", "")
         email_sent = await EmailService.send_password_reset_email(
@@ -82,7 +82,7 @@ async def send_notification(
         if not payload.recipient_email:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="recipient_email is required for mfa_code notifications",
+                detail=t.get("errors.recipient_email_required", type="mfa_code"),
             )
         code = (payload.data or {}).get("code", "")
         email_sent = await EmailService.send_mfa_code(

@@ -40,7 +40,7 @@ class OneshotCrawlRequest(BaseModel):
         try:
             AnyHttpUrl(v)
         except Exception:
-            raise ValueError("URL HTTP/HTTPS invalide")
+            raise ValueError("i18n:validation.url_invalid")
         return v
 
 

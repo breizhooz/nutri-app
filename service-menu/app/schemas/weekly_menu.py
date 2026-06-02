@@ -25,7 +25,7 @@ class WeeklyMenuCreate(WeeklyMenuBase):
     @classmethod
     def slug_no_spaces(cls, v: Optional[str]) -> Optional[str]:
         if v is not None and " " in v:
-            raise ValueError("Le slug ne doit pas contenir d'espaces.")
+            raise ValueError("i18n:validation.errors.slug_no_spaces")
         return v
 
 

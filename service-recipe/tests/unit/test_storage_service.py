@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from app.core.exceptions import ImageTooLarge, UnsupportedImageType
 from app.services.storage_service import StorageService
 
 
@@ -52,7 +53,7 @@ async def test_upload_creates_bucket_when_missing():
 @pytest.mark.asyncio
 async def test_invalid_content_type_raises():
     svc = _make_service()
-    with pytest.raises(ValueError, match="non supporté"):
+    with pytest.raises(UnsupportedImageType):
         await svc.upload_image(b"data", "application/pdf")
 
 
@@ -61,7 +62,7 @@ async def test_invalid_content_type_raises():
 async def test_oversized_file_raises():
     svc = _make_service()
     big = b"x" * (5 * 1024 * 1024 + 1)
-    with pytest.raises(ValueError, match="5 Mo"):
+    with pytest.raises(ImageTooLarge):
         await svc.upload_image(big, "image/jpeg")
 
 

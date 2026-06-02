@@ -26,6 +26,9 @@
   "errors": {
     "invalid_payload": "Invalid payload.",
     "forbidden": "Access denied.",
-    "service_notification_unavailable": "The notification service is unavailable."
+    "service_notification_unavailable": "The notification service is unavailable.",
+    "unauthenticated": "Not authenticated",
+    "token_invalid": "Invalid or expired token",
+    "service_token_invalid": "Invalid service token"
   }
 }

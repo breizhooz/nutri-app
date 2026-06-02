@@ -3,11 +3,13 @@
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.deps import get_locale
+from app.i18n.loader import t
 from app.core.security import (
     create_access_token,
     create_mfa_token,
@@ -34,6 +36,7 @@ router: APIRouter = APIRouter()
     response_model=TokenResponse | PreAuthTokenResponse,
 )
 async def login(
+    request: Request,
     data: UserLogin,
     session: AsyncSession = Depends(get_session),
 ) -> TokenResponse | PreAuthTokenResponse:
@@ -53,22 +56,24 @@ async def login(
     Raises:
         HTTPException: 401 if credentials are invalid, 400 if user is inactive.
     """
+    locale = get_locale(request)
     result = await session.execute(select(User).where(User.email == data.email))
     user: User | None = result.scalar_one_or_none()
 
     if not user or not user.hashed_password:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail=t.get("auth.invalid_credentials", locale),
         )
     if not verify_password(data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail=t.get("auth.invalid_credentials", locale),
         )
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=t.get("user.inactive", locale),
         )
 
     if not user.two_factor_enabled:
@@ -107,6 +112,7 @@ async def login(
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh(
+    request: Request,
     data: RefreshRequest,
     session: AsyncSession = Depends(get_session),
 ) -> TokenResponse:
@@ -125,6 +131,7 @@ async def refresh(
     Raises:
         HTTPException: 401 if the token is invalid or not a refresh token.
     """
+    locale = get_locale(request)
     try:
         payload = decode_token(data.refresh_token)
         if payload.get("type") != "refresh":
@@ -133,14 +140,14 @@ async def refresh(
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired refresh token",
+            detail=t.get("token.refresh_invalid_or_expired", locale),
         )
 
     user = await UserRepository(session).get_by_id(uuid.UUID(user_id))
     if user is None or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired refresh token",
+            detail=t.get("token.refresh_invalid_or_expired", locale),
         )
 
     return TokenResponse(

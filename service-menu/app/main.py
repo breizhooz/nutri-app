@@ -5,6 +5,7 @@ from sqlalchemy import text
 from nutri_shared.errors import register_error_handlers
 
 from app.db.session import get_engine
+from app.i18n.loader import t
 from app.i18n.middleware import LocaleMiddleware
 from app.api.routes import shopping_list as shopping_list_router
 from app.api.routes import weekly_menu as weekly_menu_router
@@ -24,6 +25,7 @@ configure_logging("service-menu")
 app = FastAPI(title="service-menu", version="0.1.0", lifespan=lifespan)
 app.add_middleware(LocaleMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
+app.state.translate = t.get
 
 register_error_handlers(app)
 setup_telemetry("service-menu", app)

@@ -216,7 +216,7 @@ class ResultService:
             )
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="service-recipe indisponible",
+                detail=t.get("errors.service_recipe_unavailable"),
             ) from exc
         except httpx.HTTPStatusError as exc:
             logger.warning(
@@ -227,7 +227,7 @@ class ResultService:
             )
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="service-recipe a refusé la recette",
+                detail=t.get("errors.service_recipe_rejected"),
             ) from exc
 
     @staticmethod

@@ -4,6 +4,8 @@ from sqlalchemy import text
 from nutri_shared.errors import register_error_handlers
 
 from app.db.session import get_engine
+from app.i18n.loader import t
+from app.i18n.middleware import LocaleMiddleware
 from app.api.routes import sources as sources_routes
 from app.api.routes import results as results_routes
 from app.api.routes import settings as settings_routes
@@ -19,6 +21,8 @@ configure_logging("service-crawler")
 app = FastAPI(title="service-crawler", version="0.1.0")
 
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(LocaleMiddleware)
+app.state.translate = t.get
 setup_telemetry("service-crawler", app)
 
 register_error_handlers(app)

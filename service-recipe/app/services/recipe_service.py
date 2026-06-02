@@ -1,8 +1,7 @@
 import logging
 
-from fastapi import HTTPException, status
-
 from app.core.exceptions import (
+    ImageNotInSuggestions,
     RecipeForbidden,
     RecipeNotFound,
     SlugGenerationError,
@@ -343,10 +342,7 @@ class RecipeService:
             None,
         )
         if chosen is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cette image ne fait pas partie des propositions de la recette.",
-            )
+            raise ImageNotInSuggestions()
 
         # Unsplash API guideline: notify the download endpoint when a photo is used.
         await self._unsplash.track_download(chosen.get("download_location", ""))

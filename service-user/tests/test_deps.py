@@ -1,6 +1,7 @@
 """Tests for app/core/deps.py — get_current_user, get_mfa_pending_user, get_mfa_user_id_from_token."""
 
 import uuid
+from types import SimpleNamespace
 
 import pytest
 from fastapi import HTTPException
@@ -14,6 +15,9 @@ from app.core.deps import (
 )
 from app.core.security import create_mfa_token, hash_password
 from app.models.user import User
+
+# Minimal stand-in for a Request when deps are called directly (locale only).
+_FAKE_REQUEST = SimpleNamespace(state=SimpleNamespace(locale="fr"))
 
 
 # ── get_current_user (via /api/v1/users/me) ────────────────────────────────────
@@ -137,7 +141,9 @@ async def test_get_mfa_pending_user_valid_token_returns_user(
     credentials = HTTPAuthorizationCredentials(
         scheme="Bearer", credentials=make_mfa_token()
     )
-    result = await get_mfa_pending_user(credentials=credentials, session=db_session)
+    result = await get_mfa_pending_user(
+        request=_FAKE_REQUEST, credentials=credentials, session=db_session
+    )
     assert result.id == TEST_USER_ID
 
 
@@ -151,7 +157,9 @@ async def test_get_mfa_pending_user_access_token_type_raises_401(
         scheme="Bearer", credentials=make_test_token()
     )
     with pytest.raises(HTTPException) as exc_info:
-        await get_mfa_pending_user(credentials=credentials, session=db_session)
+        await get_mfa_pending_user(
+            request=_FAKE_REQUEST, credentials=credentials, session=db_session
+        )
     assert exc_info.value.status_code == 401
 
 
@@ -163,7 +171,9 @@ async def test_get_mfa_pending_user_bad_token_raises_401(
         scheme="Bearer", credentials="garbage.token"
     )
     with pytest.raises(HTTPException) as exc_info:
-        await get_mfa_pending_user(credentials=credentials, session=db_session)
+        await get_mfa_pending_user(
+            request=_FAKE_REQUEST, credentials=credentials, session=db_session
+        )
     assert exc_info.value.status_code == 401
 
 
@@ -178,7 +188,9 @@ async def test_get_mfa_pending_user_unknown_user_raises_404(
         scheme="Bearer", credentials=make_mfa_token(unknown_id)
     )
     with pytest.raises(HTTPException) as exc_info:
-        await get_mfa_pending_user(credentials=credentials, session=db_session)
+        await get_mfa_pending_user(
+            request=_FAKE_REQUEST, credentials=credentials, session=db_session
+        )
     assert exc_info.value.status_code == 404
 
 
@@ -192,7 +204,9 @@ async def test_get_mfa_user_id_from_token_returns_uuid() -> None:
     credentials = HTTPAuthorizationCredentials(
         scheme="Bearer", credentials=make_mfa_token()
     )
-    result = await get_mfa_user_id_from_token(credentials=credentials)
+    result = await get_mfa_user_id_from_token(
+        request=_FAKE_REQUEST, credentials=credentials
+    )
     assert result == TEST_USER_ID
 
 
@@ -204,7 +218,9 @@ async def test_get_mfa_user_id_from_token_access_type_raises_401() -> None:
         scheme="Bearer", credentials=make_test_token()
     )
     with pytest.raises(HTTPException) as exc_info:
-        await get_mfa_user_id_from_token(credentials=credentials)
+        await get_mfa_user_id_from_token(
+            request=_FAKE_REQUEST, credentials=credentials
+        )
     assert exc_info.value.status_code == 401
 
 
@@ -212,5 +228,7 @@ async def test_get_mfa_user_id_from_token_access_type_raises_401() -> None:
 async def test_get_mfa_user_id_from_token_bad_token_raises_401() -> None:
     credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="not-a-jwt")
     with pytest.raises(HTTPException) as exc_info:
-        await get_mfa_user_id_from_token(credentials=credentials)
+        await get_mfa_user_id_from_token(
+            request=_FAKE_REQUEST, credentials=credentials
+        )
     assert exc_info.value.status_code == 401

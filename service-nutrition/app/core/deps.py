@@ -6,6 +6,7 @@ import jwt
 from jwt.exceptions import InvalidTokenError
 
 from app.core.config import settings
+from app.i18n.loader import t
 
 _bearer = HTTPBearer(auto_error=False)
 _bearer_service = HTTPBearer()
@@ -17,7 +18,7 @@ async def get_current_user_id(
     if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Non authentifié",
+            detail=t.get("errors.unauthenticated"),
             headers={"WWW-Authenticate": "Bearer"},
         )
     try:
@@ -33,7 +34,7 @@ async def get_current_user_id(
     except (InvalidTokenError, ValueError, Exception):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token invalide ou expiré",
+            detail=t.get("errors.token_invalid"),
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -46,5 +47,5 @@ async def verify_service_token(
     if credentials.credentials != settings.SERVICE_NUTRITION_TOKEN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Token de service invalide",
+            detail=t.get("errors.service_token_invalid"),
         )

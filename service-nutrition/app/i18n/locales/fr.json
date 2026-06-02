@@ -26,6 +26,9 @@
   "errors": {
     "invalid_payload": "Payload invalide.",
     "forbidden": "Accès refusé.",
-    "service_notification_unavailable": "Le service de notification est indisponible."
+    "service_notification_unavailable": "Le service de notification est indisponible.",
+    "unauthenticated": "Non authentifié",
+    "token_invalid": "Token invalide ou expiré",
+    "service_token_invalid": "Token de service invalide"
   }
 }

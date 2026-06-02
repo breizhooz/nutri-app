@@ -12,6 +12,9 @@
   "errors": {
     "invalid_payload": "Invalid notification payload.",
     "user_not_found": "No active subscription found for this user.",
-    "forbidden": "Access denied."
+    "forbidden": "Access denied.",
+    "token_invalid": "Invalid or expired token",
+    "service_token_invalid": "Invalid service token",
+    "recipient_email_required": "recipient_email is required for {type} notifications."
   }
 }

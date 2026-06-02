@@ -4,6 +4,8 @@ import io
 import json
 import uuid
 
+from app.core.exceptions import ImageTooLarge, UnsupportedImageType
+
 try:
     from minio import Minio
 except ImportError:
@@ -64,9 +66,9 @@ class StorageService:
 
     async def upload_image(self, data: bytes, content_type: str) -> str:
         if content_type not in self.ALLOWED_TYPES:
-            raise ValueError(f"Type de fichier non supporté : {content_type}")
+            raise UnsupportedImageType(content_type)
         if len(data) > self.MAX_SIZE_BYTES:
-            raise ValueError("L'image ne doit pas dépasser 5 Mo.")
+            raise ImageTooLarge()
 
         await self.ensure_bucket()
 

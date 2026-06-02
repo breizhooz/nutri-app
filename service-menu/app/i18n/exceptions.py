@@ -32,6 +32,15 @@ class LocalizedHTTPException(AppException):
         )
 
     @staticmethod
+    def no_recipes_available(request: Request) -> "LocalizedHTTPException":
+        return LocalizedHTTPException(
+            422,
+            "menu.errors.no_recipes_available",
+            request,
+            code="MENU_NO_RECIPES_AVAILABLE",
+        )
+
+    @staticmethod
     def service_recipe_unavailable(request: Request) -> "LocalizedHTTPException":
         return LocalizedHTTPException(
             503,
