@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 
 from app.core.exceptions import (
     ImageNotInSuggestions,
+    ImageServiceUnavailable,
     ImageTooLarge,
     IngredientAlreadyExists,
     IngredientNotFound,
@@ -74,4 +75,12 @@ def register_domain_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         return _localized_response(
             LocalizedHTTPException.image_not_in_suggestions(request)
+        )
+
+    @app.exception_handler(ImageServiceUnavailable)
+    async def _image_service_unavailable(
+        request: Request, exc: ImageServiceUnavailable
+    ) -> JSONResponse:
+        return _localized_response(
+            LocalizedHTTPException.image_service_unavailable(request)
         )

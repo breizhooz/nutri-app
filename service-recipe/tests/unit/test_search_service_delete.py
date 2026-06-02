@@ -17,6 +17,6 @@ async def test_delete_by_user_filters_on_author(mock_es):
     await search_service.delete_by_user("user-42")
     mock_es.delete_by_query.assert_awaited_once()
     kwargs = mock_es.delete_by_query.call_args.kwargs
-    assert kwargs["query"] == {"term": {"created_by_user_id.keyword": "user-42"}}
+    assert kwargs["query"] == {"term": {"created_by_user_id": "user-42"}}
     assert kwargs["index"] == search_service.index_name
     assert kwargs["conflicts"] == "proceed"

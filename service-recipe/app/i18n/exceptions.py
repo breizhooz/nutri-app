@@ -32,6 +32,15 @@ class LocalizedHTTPException(AppException):
         )
 
     @staticmethod
+    def image_service_unavailable(request: Request) -> "LocalizedHTTPException":
+        return LocalizedHTTPException(
+            503,
+            "recipe.errors.image_service_unavailable",
+            request,
+            code="IMAGE_SERVICE_UNAVAILABLE",
+        )
+
+    @staticmethod
     def ingredient_not_found(request: Request) -> "LocalizedHTTPException":
         return LocalizedHTTPException(
             404, "ingredient.errors.not_found", request, code="INGREDIENT_NOT_FOUND"

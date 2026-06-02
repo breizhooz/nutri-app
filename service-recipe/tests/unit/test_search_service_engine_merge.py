@@ -27,7 +27,7 @@ class TestSearchEngineMerge:
         )
         bool_q = _query(mock_es)["bool"]
         # scoping user toujours présent
-        assert {"term": {"created_by_user_id.keyword": "u1"}} in bool_q["filter"]
+        assert {"term": {"created_by_user_id": "u1"}} in bool_q["filter"]
         # clauses moteur fusionnées
         assert {"terms": {"ingredient_names": ["porc"]}} in bool_q["must_not"]
         assert {"exists": {"field": "course_type"}} in bool_q["filter"]
@@ -46,7 +46,7 @@ class TestSearchEngineMerge:
             {"gauss": {"calories": {"origin": 2000, "scale": 200}}}
         ]
         # le bool reste à l'intérieur, avec le scoping user
-        assert {"term": {"created_by_user_id.keyword": "u1"}} in fs["query"]["bool"][
+        assert {"term": {"created_by_user_id": "u1"}} in fs["query"]["bool"][
             "filter"
         ]
 

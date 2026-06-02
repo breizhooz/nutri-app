@@ -288,6 +288,16 @@ class TestRecipeServiceCreateFull:
         await service.create_full(_make_import_item(), user_id="u")
         search.index_recipe.assert_called_once_with(recipe)
 
+    async def test_does_not_call_unsplash_on_bulk_import(self, repo, search, nutrition):
+        # L'import en masse ne doit JAMAIS interroger Unsplash (sinon N appels →
+        # quota demo 50/h cramé). La recherche d'image reste à la demande.
+        unsplash = AsyncMock()
+        service = RecipeService(
+            repo, search, nutrition_client=nutrition, unsplash=unsplash
+        )
+        await service.create_full(_make_import_item(image_url="http://img"), user_id="u")
+        unsplash.search.assert_not_called()
+
     async def test_nutrition_called_when_ingredients_present(
         self, repo, search, nutrition
     ):

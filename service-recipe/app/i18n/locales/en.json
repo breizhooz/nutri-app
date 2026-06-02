@@ -252,7 +252,8 @@
       "image_not_in_suggestions": "This image is not among the recipe's suggestions.",
       "book_name_required": "book_name is required when origin = book",
       "import_invalid_json": "Invalid JSON file",
-      "import_validation_failed": "Import file validation failed"
+      "import_validation_failed": "Import file validation failed",
+      "image_service_unavailable": "Image search service temporarily unavailable (rate limit reached). Try again in a few minutes."
     },
     "success": {
       "created": "Recipe created successfully",

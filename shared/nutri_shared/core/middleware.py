@@ -29,11 +29,13 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             "path": request.url.path,
         }
 
+        trace_id: str | None = None
         if _OTEL_AVAILABLE:
             span = otel_trace.get_current_span()
             span_ctx = span.get_span_context()
             if span_ctx.is_valid:
-                ctx["trace_id"] = format(span_ctx.trace_id, "032x")
+                trace_id = format(span_ctx.trace_id, "032x")
+                ctx["trace_id"] = trace_id
                 ctx["span_id"] = format(span_ctx.span_id, "016x")
 
         if request.url.path not in _SKIP_PATHS:
@@ -56,4 +58,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         _log.info("request", status_code=response.status_code)
         response.headers["X-Request-ID"] = request_id
+        # Exposé au front (admin) pour proposer une recherche Loki ciblée
+        # `{trace_id="…"}` quand une requête plante. `trace_id` est un label
+        # Loki (extrait par promtail), donc directement requêtable dans Grafana.
+        if trace_id is not None:
+            response.headers["X-Trace-Id"] = trace_id
         return response

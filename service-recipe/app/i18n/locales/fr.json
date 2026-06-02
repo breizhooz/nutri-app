@@ -253,7 +253,8 @@
       "image_not_in_suggestions": "Cette image ne fait pas partie des propositions de la recette.",
       "book_name_required": "Le nom du livre est requis lorsque l'origine est « livre ».",
       "import_invalid_json": "Fichier JSON invalide",
-      "import_validation_failed": "Validation du fichier d'import échouée"
+      "import_validation_failed": "Validation du fichier d'import échouée",
+      "image_service_unavailable": "Service de recherche d'images temporairement indisponible (quota dépassé). Réessaie dans quelques minutes."
     },
     "success": {
       "created": "Recette créée avec succès",
