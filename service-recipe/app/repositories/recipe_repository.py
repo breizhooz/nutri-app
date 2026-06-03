@@ -1,7 +1,10 @@
+from datetime import datetime
+
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.models.image_cache import ImageSearchCache
 from app.models.ingredient import Ingredient
 from app.models.recipe import Recipe
 from app.models.recipe_ingredients import RecipeIngredient
@@ -189,6 +192,49 @@ class RecipeRepository:
         recipe.image_suggestions = suggestions
         await self.session.commit()
         return await self.get_by_id_with_relations(recipe_id)
+
+    async def get_cached_image_suggestions(
+        self, keyword: str, fresh_after: datetime | None = None
+    ) -> list[dict] | None:
+        """Return cached Unsplash suggestions for a keyword matching ``keyword``,
+        or ``None`` on a cache miss.
+
+        Matching is **Postgres fulltext** (``to_tsvector('french', keyword) @@
+        plainto_tsquery``) : stemming, stopwords and word order are ignored, but the
+        meaningful lexemes must all be present. This deliberately excludes fuzzy
+        cross-dish matches (e.g. two titles sharing only a boilerplate suffix like
+        « version gourmande au beurre » must NOT collide). The best ``ts_rank`` wins;
+        ``fresh_after`` excludes stale rows so the caller refetches.
+        """
+        tsv = func.to_tsvector("french", ImageSearchCache.keyword)
+        tsq = func.plainto_tsquery("french", keyword)
+
+        stmt = (
+            select(ImageSearchCache.suggestions)
+            .where(tsv.bool_op("@@")(tsq))
+            .order_by(func.ts_rank(tsv, tsq).desc())
+            .limit(1)
+        )
+        if fresh_after is not None:
+            stmt = stmt.where(ImageSearchCache.updated_at >= fresh_after)
+
+        suggestions = await self.session.scalar(stmt)
+        return list(suggestions) if suggestions is not None else None
+
+    async def upsert_cached_image_suggestions(
+        self, keyword: str, suggestions: list[dict]
+    ) -> None:
+        """Insert or refresh the cached suggestions for ``keyword`` (normalized)."""
+        row = await self.session.scalar(
+            select(ImageSearchCache).where(ImageSearchCache.keyword == keyword)
+        )
+        if row is None:
+            self.session.add(
+                ImageSearchCache(keyword=keyword, suggestions=suggestions)
+            )
+        else:
+            row.suggestions = suggestions
+        await self.session.commit()
 
     async def select_final_image(
         self, recipe_id: int, image_url: str, thumb_url: str | None

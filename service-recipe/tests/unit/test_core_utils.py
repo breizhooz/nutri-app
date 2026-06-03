@@ -1,5 +1,5 @@
 import pytest
-from app.core.utils import slugify
+from app.core.utils import normalize_keyword, slugify
 
 
 class TestCoreUtils:
@@ -17,3 +17,16 @@ class TestCoreUtils:
     )
     def test_slugify(self, input_text, expected_slug):
         assert slugify(input_text) == expected_slug
+
+    @pytest.mark.parametrize(
+        "input_text, expected",
+        [
+            ("Tarte aux Pommes", "tarte aux pommes"),
+            ("  tarte   aux  pommes ", "tarte aux pommes"),
+            ("GÂTEAU", "gâteau"),
+            ("", ""),
+            ("   ", ""),
+        ],
+    )
+    def test_normalize_keyword(self, input_text, expected):
+        assert normalize_keyword(input_text) == expected

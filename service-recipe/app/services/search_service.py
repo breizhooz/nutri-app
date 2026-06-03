@@ -89,7 +89,7 @@ class RecipeSearchService:
         """Remove all documents authored by ``user_id`` from the index."""
         await _es_module.es_client.delete_by_query(
             index=self.index_name,
-            query={"term": {"created_by_user_id.keyword": user_id}},
+            query={"term": {"created_by_user_id": user_id}},
             refresh=True,
             conflicts="proceed",
         )
@@ -119,7 +119,10 @@ class RecipeSearchService:
         la requête bool est enveloppée dans un ``function_score``.
         """
         must_queries = []
-        filter_queries = [{"term": {"created_by_user_id.keyword": user_id}}]
+        # ``created_by_user_id`` est mappé en keyword (cf. core/elasticsearch.py) :
+        # on filtre sur le champ directement, surtout pas sur un sous-champ
+        # ``.keyword`` inexistant (sinon le term ne matche aucun document).
+        filter_queries = [{"term": {"created_by_user_id": user_id}}]
         must_not_queries = []
 
         if query:

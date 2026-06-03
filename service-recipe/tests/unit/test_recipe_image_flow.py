@@ -41,6 +41,8 @@ def _make_service(recipe, unsplash):
     repo.get_by_id_with_relations.return_value = recipe
     repo.update_image_suggestions.return_value = recipe
     repo.select_final_image.return_value = recipe
+    # Par défaut : cache vide (miss) → on retombe sur un appel Unsplash réel.
+    repo.get_cached_image_suggestions.return_value = None
     search = AsyncMock()
     service = RecipeService(
         repo, search, nutrition_client=AsyncMock(), unsplash=unsplash
@@ -60,7 +62,7 @@ class TestAttachSuggestions:
 
         await service._attach_suggestions(recipe)
 
-        unsplash.search.assert_called_once_with("Tarte aux pommes")
+        assert unsplash.search.call_args[0][0] == "Tarte aux pommes"
         repo.update_image_suggestions.assert_called_once()
         args = repo.update_image_suggestions.call_args[0]
         assert args[0] == 1
@@ -128,7 +130,7 @@ class TestRefreshSuggestions:
 
         await service.refresh_suggestions(1, "gateau chocolat", "owner")
 
-        unsplash.search.assert_called_once_with("gateau chocolat")
+        assert unsplash.search.call_args[0][0] == "gateau chocolat"
         assert repo.update_image_suggestions.call_args[0][1] == "gateau chocolat"
 
     async def test_forbidden_for_non_author(self):
@@ -175,3 +177,61 @@ class TestSelectImage:
         service, repo, _ = _make_service(recipe, AsyncMock())
         with pytest.raises(RecipeForbidden):
             await service.select_image(1, "a", "owner")
+
+
+# ─── cache d'images Unsplash ────────────────────────────────────────────────────
+
+
+class TestImageCache:
+    async def test_cache_hit_skips_unsplash_call(self):
+        recipe = _make_recipe()
+        unsplash = AsyncMock()
+        service, repo, _ = _make_service(recipe, unsplash)
+        repo.get_cached_image_suggestions.return_value = [_suggestion("c").to_dict()]
+
+        out = await service._search_images("Tarte aux pommes")
+
+        unsplash.search.assert_not_called()
+        repo.upsert_cached_image_suggestions.assert_not_called()
+        assert [s.unsplash_id for s in out] == ["c"]
+
+    async def test_cache_miss_queries_unsplash_and_stores(self):
+        recipe = _make_recipe()
+        unsplash = AsyncMock()
+        unsplash.search.return_value = [_suggestion("a"), _suggestion("b")]
+        service, repo, _ = _make_service(recipe, unsplash)
+        repo.get_cached_image_suggestions.return_value = None
+
+        out = await service._search_images("Tarte aux Pommes")
+
+        unsplash.search.assert_called_once()
+        # La clé de cache est normalisée (minuscule, espaces compactés).
+        assert repo.get_cached_image_suggestions.call_args[0][0] == "tarte aux pommes"
+        stored_key, stored = repo.upsert_cached_image_suggestions.call_args[0]
+        assert stored_key == "tarte aux pommes"
+        assert [s["unsplash_id"] for s in stored] == ["a", "b"]
+        assert [s.unsplash_id for s in out] == ["a", "b"]
+
+    async def test_empty_unsplash_result_is_not_cached(self):
+        recipe = _make_recipe()
+        unsplash = AsyncMock()
+        unsplash.search.return_value = []
+        service, repo, _ = _make_service(recipe, unsplash)
+        repo.get_cached_image_suggestions.return_value = None
+
+        out = await service._search_images("introuvable")
+
+        assert out == []
+        repo.upsert_cached_image_suggestions.assert_not_called()
+
+    async def test_blank_keyword_touches_nothing(self):
+        recipe = _make_recipe()
+        unsplash = AsyncMock()
+        service, repo, _ = _make_service(recipe, unsplash)
+
+        out = await service._search_images("   ")
+
+        assert out == []
+        unsplash.search.assert_not_called()
+        repo.get_cached_image_suggestions.assert_not_called()
+        repo.upsert_cached_image_suggestions.assert_not_called()

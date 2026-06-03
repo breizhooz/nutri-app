@@ -1,5 +1,7 @@
 import logging
+from datetime import datetime, timedelta, timezone
 
+from app.core.config import settings
 from app.core.exceptions import (
     ImageNotInSuggestions,
     RecipeForbidden,
@@ -21,7 +23,7 @@ from app.schemas.recipe import (
 from app.schemas.recipe_import import RecipeImportItem
 from app.services.search_service import RecipeSearchService
 from app.services.unsplash_service import ImageSuggestion, UnsplashService
-from app.core.utils import slugify
+from app.core.utils import normalize_keyword, slugify
 
 logger = logging.getLogger(__name__)
 
@@ -276,7 +278,7 @@ class RecipeService:
         still switch image later via ``select_image``. An explicit ``image_url``
         (e.g. JSON import) is preserved and never overwritten.
         """
-        suggestions = await self._unsplash.search(recipe.title)
+        suggestions = await self._search_images(recipe.title)
         updated = await self._repository.update_image_suggestions(
             recipe.id, recipe.title, [s.to_dict() for s in suggestions]
         )
@@ -320,11 +322,44 @@ class RecipeService:
         """Re-run an Unsplash search with a free keyword and store new proposals."""
         recipe = await self._repository.get_by_id_with_relations(recipe_id)
         self._ensure_author(recipe, user_id)
-        suggestions = await self._unsplash.search(keyword)
+        suggestions = await self._search_images(keyword)
         updated = await self._repository.update_image_suggestions(
             recipe_id, keyword, [s.to_dict() for s in suggestions]
         )
         return updated or recipe
+
+    async def _search_images(self, keyword: str) -> list[ImageSuggestion]:
+        """Search Unsplash for ``keyword``, backed by a persistent cache.
+
+        The cache (table ``image_search_cache``) is keyed by the normalized
+        keyword, so several recipes sharing a title hit Unsplash only once. A fresh
+        entry is reused as-is; otherwise we query Unsplash — asking for more results
+        than we display, since the cost is now amortized — and store them for next
+        time. Empty results are never cached so a transient failure (or a missing
+        API key) doesn't poison the entry.
+        """
+        cache_key = normalize_keyword(keyword)
+        if not cache_key:
+            return []
+
+        # Naïf (sans tzinfo) pour rester comparable aux timestamps stockés par
+        # ``func.now()`` (colonne ``timestamp without time zone``).
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        fresh_after = now - timedelta(days=settings.UNSPLASH_CACHE_TTL_DAYS)
+        cached = await self._repository.get_cached_image_suggestions(
+            cache_key, fresh_after=fresh_after
+        )
+        if cached is not None:
+            return [ImageSuggestion(**s) for s in cached]
+
+        suggestions = await self._unsplash.search(
+            keyword, count=settings.UNSPLASH_SUGGESTION_COUNT
+        )
+        if suggestions:
+            await self._repository.upsert_cached_image_suggestions(
+                cache_key, [s.to_dict() for s in suggestions]
+            )
+        return suggestions
 
     async def select_image(
         self, recipe_id: int, unsplash_id: str, user_id: str

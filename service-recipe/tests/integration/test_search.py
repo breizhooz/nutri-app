@@ -144,7 +144,7 @@ async def test_search_always_filters_by_user_id(mock_es, http_client):
     async with http_client as client:
         await client.get(SEARCH_BASE)
     filters = mock_es.search.call_args.kwargs["query"]["bool"]["filter"]
-    assert {"term": {"created_by_user_id.keyword": TEST_USER_ID}} in filters
+    assert {"term": {"created_by_user_id": TEST_USER_ID}} in filters
 
 
 @pytest.mark.asyncio

@@ -39,5 +39,14 @@ class Settings(BaseSettings):
     UNSPLASH_SECRET_KEY: str = ""
     UNSPLASH_API_URL: str = "https://api.unsplash.com"
 
+    # Nombre de propositions demandées à Unsplash par recherche. On en demande plus
+    # que les 4 affichées par défaut : comme les résultats sont mis en cache
+    # (table image_search_cache), le surcoût est amorti et l'utilisateur dispose de
+    # davantage de choix lors d'un rafraîchissement.
+    UNSPLASH_SUGGESTION_COUNT: int = 12
+    # Durée de validité d'une entrée du cache d'images (jours). Passé ce délai, on
+    # interroge à nouveau Unsplash pour rafraîchir les urls CDN.
+    UNSPLASH_CACHE_TTL_DAYS: int = 30
+
 
 settings = Settings()
