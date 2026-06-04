@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import crontab
 
 from app.core.config import settings
 from nutri_shared.core.logger import configure_logging
@@ -9,7 +10,7 @@ celery_app = Celery(
     "service-recipe",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
-    include=["app.tasks.import_task"],
+    include=["app.tasks.import_task", "app.tasks.spoonacular_task"],
 )
 
 # Queue dédiée "recipe" : le broker Redis est partagé entre services, on évite
@@ -25,5 +26,16 @@ celery_app.conf.update(
     task_acks_late=True,
     worker_prefetch_multiplier=1,
     task_default_queue="recipe",
-    task_routes={"app.tasks.import_task.*": {"queue": "recipe"}},
+    task_routes={
+        "app.tasks.import_task.*": {"queue": "recipe"},
+        "app.tasks.spoonacular_task.*": {"queue": "recipe"},
+    },
+    # Planification quotidienne (Celery beat) : récupération de recettes Spoonacular.
+    # Nécessite un beat actif — en dev le worker est lancé avec `-B` (cf. compose).
+    beat_schedule={
+        "spoonacular-daily-fetch": {
+            "task": "app.tasks.spoonacular_task.fetch_daily_recipes",
+            "schedule": crontab(hour=settings.SPOONACULAR_FETCH_HOUR, minute=0),
+        }
+    },
 )

@@ -180,7 +180,9 @@ services:
     container_name: nutriplanner-celery-worker-recipe
     # Dev : watchmedo redémarre le worker à chaque modif *.py (Celery ne recharge
     # pas le code tout seul). En prod, remplacer par la commande celery directe.
-    command: sh -c "pip install --no-cache-dir watchdog==4.0.2 && watchmedo auto-restart --directory=/app --patterns='*.py' --recursive --debug-force-polling --debounce-interval=1 -- celery -A celery_app worker --loglevel=info -Q recipe --concurrency=2"
+    # `-B` embarque le scheduler beat (fetch Spoonacular quotidien) dans ce worker
+    # unique. En prod multi-worker, lancer un process `celery beat` séparé à la place.
+    command: sh -c "pip install --no-cache-dir watchdog==4.0.2 && watchmedo auto-restart --directory=/app --patterns='*.py' --recursive --debug-force-polling --debounce-interval=1 -- celery -A celery_app worker -B --loglevel=info -Q recipe --concurrency=2"
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@postgres:5432/${POSTGRES_RECIPE_DB}
       - SERVICE_USER_URL=http://service-user:8000

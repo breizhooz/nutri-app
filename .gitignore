@@ -54,3 +54,6 @@ bandit*
 
 #front
 frontend/
+
+#data to import
+*.json

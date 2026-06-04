@@ -58,5 +58,18 @@ class Settings(BaseSettings):
     # interroge à nouveau Unsplash pour rafraîchir les urls CDN.
     UNSPLASH_CACHE_TTL_DAYS: int = 30
 
+    # Spoonacular (https://spoonacular.com/food-api) : récupération quotidienne de
+    # recettes mises en cache. Auth par header "x-api-key". Vide → fetch désactivé
+    # (no-op silencieux, pratique en tests / sans clé).
+    SPOONACULAR_API_KEY: str = ""
+    SPOONACULAR_API_URL: str = "https://api.spoonacular.com"
+    # Nombre de recettes récupérées à chaque exécution (borné à 1..5 côté client).
+    SPOONACULAR_DAILY_COUNT: int = 3
+    # Heure (timezone Celery = Europe/Paris) du fetch quotidien via Celery beat.
+    SPOONACULAR_FETCH_HOUR: int = 4
+    # Traduction EN→FR des recettes au fetch (deep-translator/Google, sans clé).
+    # Spoonacular ne renvoie que de l'anglais ; à False on garde l'anglais brut.
+    SPOONACULAR_TRANSLATE: bool = True
+
 
 settings = Settings()
