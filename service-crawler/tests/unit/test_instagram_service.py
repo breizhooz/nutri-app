@@ -125,6 +125,64 @@ def test_ensure_session_saves_after_login():
     assert mock_loader.save_session_to_file.call_count == 1
 
 
+# ─── _ensure_csrf_and_headers (débloque le 403 graphql/query) ──────────────────
+
+
+class _FakeJar:
+    """Jar minimal : ``get_dict`` + ``set`` comme un RequestsCookieJar."""
+
+    def __init__(self, cookies: dict | None = None):
+        self._d = dict(cookies or {})
+
+    def get_dict(self) -> dict:
+        return dict(self._d)
+
+    def set(self, key: str, value: str, domain: str | None = None) -> None:
+        self._d[key] = value
+
+
+def _loader_with_cookies(cookies: dict):
+    loader = MagicMock()
+    session = MagicMock()
+    session.cookies = _FakeJar(cookies)
+    session.headers = {}
+    loader.context._session = session
+    return loader, session
+
+
+def test_ensure_csrf_generates_token_and_sets_headers_when_absent():
+    loader, session = _loader_with_cookies(
+        {"sessionid": "123%3Atoken", "ds_user_id": "123"}
+    )
+    InstagramService._ensure_csrf_and_headers(loader)
+
+    csrf = session.cookies.get_dict()["csrftoken"]
+    assert csrf  # un token a été généré
+    # X-CSRFToken DOIT correspondre au cookie (sinon 403 côté Instagram).
+    assert session.headers["X-CSRFToken"] == csrf
+    assert session.headers["X-IG-App-ID"] == "936619743392459"
+    assert session.headers["X-ASBD-ID"] == "129477"
+
+
+def test_ensure_csrf_reuses_existing_token():
+    loader, session = _loader_with_cookies({"csrftoken": "existing-token"})
+    InstagramService._ensure_csrf_and_headers(loader)
+
+    assert session.cookies.get_dict()["csrftoken"] == "existing-token"
+    assert session.headers["X-CSRFToken"] == "existing-token"
+
+
+def test_ensure_session_sets_csrf_and_headers_on_load():
+    loader = MagicMock()
+    loader.context._session.cookies = _FakeJar(
+        {"sessionid": "9%3At", "ds_user_id": "9"}
+    )
+    loader.context._session.headers = {}
+    InstagramService._ensure_session(loader, "user", "pass", "/tmp/session")
+    assert loader.context._session.headers["X-IG-App-ID"] == "936619743392459"
+    assert loader.context._session.cookies.get_dict().get("csrftoken")
+
+
 # ─── _make_authenticated_loader ───────────────────────────────────────────────
 
 
@@ -316,9 +374,7 @@ def test_fetch_posts_throttles_every_page_size():
     service = InstagramService(loader=MagicMock())
     posts = [_post(shortcode=f"p{i}") for i in range(100)]
     sleeps: list[float] = []
-    with patch(
-        "app.services.instagram_service.time.sleep", lambda d: sleeps.append(d)
-    ):
+    with patch("app.services.instagram_service.time.sleep", lambda d: sleeps.append(d)):
         with patch.object(service, "_profile", return_value=_profile_with(posts)):
             service.fetch_posts("account", page_delay=2.0, page_size=50)
     assert sleeps == [2.0, 2.0]  # toutes les 50 sur 100 posts
@@ -328,9 +384,7 @@ def test_fetch_posts_no_throttle_by_default():
     service = InstagramService(loader=MagicMock())
     posts = [_post(shortcode=f"p{i}") for i in range(60)]
     sleeps: list[float] = []
-    with patch(
-        "app.services.instagram_service.time.sleep", lambda d: sleeps.append(d)
-    ):
+    with patch("app.services.instagram_service.time.sleep", lambda d: sleeps.append(d)):
         with patch.object(service, "_profile", return_value=_profile_with(posts)):
             service.fetch_posts("account")  # page_delay=0 par défaut
     assert sleeps == []

@@ -1,6 +1,7 @@
 import logging
 import random
 import re
+import secrets
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -10,6 +11,11 @@ import instaloader
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+# App-id de la web app Instagram + ASBD-id : sans ces headers, l'endpoint
+# ``graphql/query`` (doc_id) renvoie 403 même avec une session valide.
+_IG_WEB_APP_ID = "936619743392459"
+_IG_ASBD_ID = "129477"
 
 # Reconnaît un lien de post/reel/tv Instagram et capture le shortcode.
 _IG_POST_RE = re.compile(
@@ -66,6 +72,7 @@ class InstagramService:
         try:
             loader.load_session_from_file(username, session_file)
             InstagramService._ensure_ds_user_id(loader)
+            InstagramService._ensure_csrf_and_headers(loader)
             loader.test_login()
             return
         except FileNotFoundError:
@@ -94,6 +101,34 @@ class InstagramService:
         uid = sessionid.split("%3A")[0].split(":")[0]
         if uid.isdigit():
             jar.set("ds_user_id", uid, domain=".instagram.com")
+
+    @staticmethod
+    def _ensure_csrf_and_headers(loader: instaloader.Instaloader) -> None:
+        """Pose un ``csrftoken`` cohérent + les headers requis par ``graphql/query``.
+
+        Une session importée depuis un simple ``sessionid`` n'a pas de
+        ``csrftoken`` (et le GET de la home n'en pose pas pour un compte loggué).
+        Or Instagram renvoie **403** sur l'endpoint ``graphql/query`` (doc_id) si :
+          - le header ``X-CSRFToken`` ne correspond pas au cookie ``csrftoken``
+            (on en génère un si absent — IG vérifie cookie == header) ;
+          - le header ``X-IG-App-ID`` (web app id) est absent.
+
+        ``instaloader.copy_session`` (utilisé par ``doc_id_graphql_query``) recopie
+        les headers de la session puis ne fait qu'un ``update`` partiel → ces
+        headers custom survivent jusqu'à la requête GraphQL.
+        """
+        jar = loader.context._session.cookies
+        csrftoken = jar.get_dict().get("csrftoken")
+        if not csrftoken:
+            csrftoken = secrets.token_hex(16)
+            jar.set("csrftoken", csrftoken, domain=".instagram.com")
+        loader.context._session.headers.update(
+            {
+                "X-CSRFToken": csrftoken,
+                "X-IG-App-ID": _IG_WEB_APP_ID,
+                "X-ASBD-ID": _IG_ASBD_ID,
+            }
+        )
 
     @staticmethod
     def normalize_account(account: str) -> str:
