@@ -119,6 +119,9 @@ class RecipeSearchService:
         la requête bool est enveloppée dans un ``function_score``.
         """
         must_queries = []
+        # ``created_by_user_id`` est mappé en keyword (cf. core/elasticsearch.py) :
+        # on filtre sur le champ directement, surtout pas sur un sous-champ
+        # ``.keyword`` inexistant (sinon le term ne matche aucun document).
         filter_queries = [{"term": {"created_by_user_id": user_id}}]
         must_not_queries = []
 

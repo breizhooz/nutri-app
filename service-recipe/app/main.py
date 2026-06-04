@@ -12,6 +12,7 @@ from app.core.elasticsearch import init_elasticsearch, close_elasticsearch
 from app.api.routes import recipes as recipes_router
 from app.api.routes import ingredient as ingredient_router
 from app.api.routes import search as search_router
+from app.api.routes import spoonacular as spoonacular_router
 
 from nutri_shared.core.logger import configure_logging
 from nutri_shared.core.middleware import RequestLoggingMiddleware
@@ -37,6 +38,11 @@ register_domain_handlers(app)
 setup_telemetry("service-recipe", app)
 
 app.include_router(recipes_router.router, prefix="/api/v1/recipe", tags=["recipe"])
+app.include_router(
+    spoonacular_router.router,
+    prefix="/api/v1/recipe/spoonacular",
+    tags=["recipe"],
+)
 app.include_router(
     ingredient_router.router, prefix="/api/v1/ingredient", tags=["recipe"]
 )

@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -226,3 +227,51 @@ class TestDeleteByUser:
     async def test_handles_none_rowcount(self, repo, session):
         session.execute.return_value = _make_rowcount_result(None)
         assert await repo.delete_by_user("user-1") == 0
+
+
+# ─── image search cache ───────────────────────────────────────────────────────
+
+
+class TestImageCache:
+    @pytest.fixture
+    def session(self):
+        session = _make_session()
+        session.commit = AsyncMock()
+        session.scalar = AsyncMock()
+        return session
+
+    @pytest.fixture
+    def repo(self, session):
+        return RecipeRepository(session)
+
+    async def test_get_returns_none_on_miss(self, repo, session):
+        session.scalar.return_value = None
+        assert await repo.get_cached_image_suggestions("tarte") is None
+
+    async def test_get_returns_suggestions_on_hit(self, repo, session):
+        # La requête sélectionne la colonne JSON : scalar() renvoie la liste telle quelle.
+        session.scalar.return_value = [{"unsplash_id": "a"}]
+        out = await repo.get_cached_image_suggestions("tarte")
+        assert out == [{"unsplash_id": "a"}]
+
+    async def test_get_accepts_fresh_after(self, repo, session):
+        session.scalar.return_value = [{"unsplash_id": "a"}]
+        out = await repo.get_cached_image_suggestions(
+            "tarte", fresh_after=datetime(2026, 1, 1)
+        )
+        assert out == [{"unsplash_id": "a"}]
+        session.scalar.assert_awaited_once()
+
+    async def test_upsert_inserts_when_absent(self, repo, session):
+        session.scalar.return_value = None
+        await repo.upsert_cached_image_suggestions("tarte", [{"unsplash_id": "a"}])
+        session.add.assert_called_once()
+        session.commit.assert_awaited_once()
+
+    async def test_upsert_updates_when_present(self, repo, session):
+        row = MagicMock()
+        session.scalar.return_value = row
+        await repo.upsert_cached_image_suggestions("tarte", [{"unsplash_id": "b"}])
+        assert row.suggestions == [{"unsplash_id": "b"}]
+        session.add.assert_not_called()
+        session.commit.assert_awaited_once()

@@ -17,3 +17,4 @@ minio==7.2.15
 python-multipart==0.0.20
 celery==5.3.6
 redis==5.0.1
+deep-translator==1.11.4

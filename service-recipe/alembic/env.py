@@ -10,6 +10,7 @@ from app.db.base import Base
 from app.models import (
     recipe as recipe,
     ingredient as ingredient,
+    image_cache as image_cache,
     recipe_ingredients as recipe_ingredients,
 )
 
