@@ -57,3 +57,5 @@ frontend/
 
 #data to import
 *.json
+
+SECURITY*
