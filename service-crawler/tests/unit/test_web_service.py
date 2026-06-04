@@ -8,6 +8,15 @@ from app.services.web_service import WebService
 _LONG_TEXT = "x" * 300
 
 
+@pytest.fixture(autouse=True)
+def _allow_all_urls():
+    """Neutralise le garde anti-SSRF pour ces tests (qui valident le parsing /
+    le fallback, pas la résolution réseau). Le garde a sa propre suite dédiée
+    dans ``test_ssrf.py``."""
+    with patch("app.services.web_service.assert_public_url", return_value=None):
+        yield
+
+
 @pytest.mark.asyncio
 async def test_fetch_extracts_title_and_content():
     html = f"<html><head><title>Pasta Recipe</title></head><body><article>{_LONG_TEXT}</article></body></html>"

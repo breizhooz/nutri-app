@@ -5,6 +5,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 from app.core.config import settings
+from app.core.ssrf import assert_public_url
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,10 @@ class WebService:
         cls._js_threshold = value
 
     async def fetch(self, url: str) -> dict:
+        # SEC-03 : refuse toute cible non publique AVANT la moindre requête
+        # (lève UnsafeUrlError, qui n'est pas une httpx.HTTPError → pas de
+        # repli Playwright sur une URL interdite).
+        assert_public_url(url)
         try:
             async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
                 response = await client.get(url)
@@ -66,6 +71,8 @@ class WebService:
         }
 
     async def _fetch_with_playwright(self, url: str) -> dict:
+        # SEC-03 : défense en profondeur si appelé directement un jour.
+        assert_public_url(url)
         from playwright.async_api import async_playwright
 
         async with async_playwright() as p:

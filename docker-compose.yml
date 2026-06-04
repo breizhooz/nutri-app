@@ -78,8 +78,11 @@ services:
       POSTGRES_USER: ${POSTGRES_SUPERUSER}
       POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD}
       POSTGRES_DB: postgres
+    # SEC-01 : binding loopback uniquement — le port n'est plus exposé sur toutes
+    # les interfaces de l'hôte. En prod, retirer entièrement `ports:` (accès via
+    # le réseau Docker interne `nutriplanner` seulement).
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./postgres/initdb:/docker-entrypoint-initdb.d:ro
@@ -413,8 +416,9 @@ services:
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     mem_limit: 1g
+    # SEC-01 : loopback uniquement (cf. postgres).
     ports:
-      - "9200:9200"
+      - "127.0.0.1:9200:9200"
     volumes:
       - es-data:/usr/share/elasticsearch/data
     healthcheck:
@@ -428,8 +432,9 @@ services:
   redis:
     image: redis:7-alpine
     container_name: nutriplanner-redis
+    # SEC-01 : loopback uniquement (cf. postgres).
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
     mem_limit: 64m
@@ -555,14 +560,18 @@ services:
       dockerfile: service-nutrition/Dockerfile
     container_name: nutriplanner-celery-flower
     entrypoint: ["celery"]
-    command: ["-A", "celery_app", "flower", "--port=5555", "--broker=redis://redis:6379/0"]
+    # SEC-02 : Flower exige désormais une auth basique. `FLOWER_BASIC_AUTH` (format
+    # "user:password") est lu depuis le `.env` racine ; valeur de repli volontairement
+    # à changer pour éviter tout démarrage sans auth réelle.
+    command: ["-A", "celery_app", "flower", "--port=5555", "--broker=redis://redis:6379/0", "--basic-auth=${FLOWER_BASIC_AUTH:-flower:change-me-in-env}"]
     environment:
             - CELERY_BROKER_URL=redis://redis:6379/0
     env_file:
       - .env
       - ./service-nutrition/conf/.env
+    # SEC-01/02 : loopback uniquement, en complément de l'auth basique ci-dessus.
     ports:
-      - "5555:5555"
+      - "127.0.0.1:5555:5555"
     mem_limit: 256m
     depends_on:
       redis:
@@ -580,9 +589,11 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    # SEC-01 : loopback uniquement (API S3 + console). En prod, exposer la console
+    # (9001) derrière Traefik avec auth plutôt qu'en direct sur l'hôte.
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - minio-data:/data
     mem_limit: 256m
