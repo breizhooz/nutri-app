@@ -1,8 +1,11 @@
 """OAuth2 social login routes for Google and Facebook."""
 
+import logging
+import uuid
 from urllib.parse import quote, urlencode
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,15 +15,24 @@ from app.core.cookies import set_refresh_cookie
 from app.core.deps import get_locale
 from app.i18n.loader import t
 from app.core.security import (
+    create_access_token,
     create_mfa_token,
+    create_oauth_bootstrap_token,
     create_oauth_state,
     create_refresh_token,
+    verify_oauth_bootstrap_token,
     verify_oauth_state,
 )
 from app.db.session import get_session
 from app.models.oauth_account import OAuthAccount
 from app.models.user import User
+from app.repositories.user_repository import UserRepository
+from app.schemas.auth import OAuthBootstrapRequest
+from app.schemas.user import TokenResponse
 from app.services.oauth_service import OAuthService
+from app.services.user_service import UserService
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 router: APIRouter = APIRouter()
 
@@ -160,7 +172,25 @@ async def oauth_callback(
             provider=provider,
             access_token=token_data["access_token"],
         )
+    except httpx.HTTPStatusError as exc:
+        # Provider rejected the token exchange / userinfo call: the real reason
+        # (invalid_client, redirect_uri_mismatch, …) is in the response body.
+        logger.exception(
+            "OAuth2 %s call failed for provider %s (status=%s, redirect_uri=%s): %s",
+            exc.request.url,
+            provider,
+            exc.response.status_code,
+            _redirect_uri(provider),
+            exc.response.text,
+        )
+        return _error_redirect(t.get("oauth.userinfo_failed", locale))
     except Exception:
+        logger.exception(
+            "OAuth2 code exchange / userinfo failed for provider %s "
+            "(redirect_uri=%s)",
+            provider,
+            _redirect_uri(provider),
+        )
         return _error_redirect(t.get("oauth.userinfo_failed", locale))
 
     provider_user_id, provider_email = OAuthService.extract_user_info(
@@ -215,6 +245,60 @@ async def oauth_callback(
             status_code=302,
         )
 
-    redirect = RedirectResponse(url=_front_callback_url(), status_code=302)
-    set_refresh_cookie(redirect, create_refresh_token(str(user.id)))
-    return redirect
+    # The callback host (a bare `localhost` redirect URI, the only kind Google
+    # accepts) differs from the API host the front uses for `/auth/refresh`, so a
+    # refresh cookie set here would never be sent back. Hand a short-lived token
+    # to the front instead; it exchanges it via `/auth/oauth/bootstrap` on the
+    # API host, which then sets the cookie on the correct host.
+    return RedirectResponse(
+        url=_front_callback_url(bootstrap=create_oauth_bootstrap_token(str(user.id))),
+        status_code=302,
+    )
+
+
+@router.post("/bootstrap", response_model=TokenResponse)
+async def oauth_bootstrap(
+    request: Request,
+    data: OAuthBootstrapRequest,
+    response: Response,
+    session: AsyncSession = Depends(get_session),
+) -> TokenResponse:
+    """Exchange an OAuth bootstrap token for a session (refresh cookie + access).
+
+    Called by the front right after the OAuth callback redirect. Because this
+    request hits the API host directly, the refresh cookie is set on the host the
+    front actually reads from, fixing the cross-host cookie mismatch.
+
+    Args:
+        request: Incoming request (carries the locale).
+        data: The bootstrap token handed to the front by the callback.
+        response: Response used to set the refresh cookie.
+        session: Async database session.
+
+    Returns:
+        A TokenResponse with a fresh access token (refresh travels in the cookie).
+
+    Raises:
+        HTTPException: 401 if the bootstrap token is invalid/expired or the user
+            is missing or inactive.
+    """
+    locale = get_locale(request)
+    try:
+        user_id = verify_oauth_bootstrap_token(data.bootstrap_token)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=t.get("oauth.bootstrap_invalid", locale),
+        )
+
+    user = await UserRepository(session).get_by_id(uuid.UUID(user_id))
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=t.get("oauth.bootstrap_invalid", locale),
+        )
+
+    set_refresh_cookie(response, create_refresh_token(user_id))
+    return TokenResponse(
+        access_token=create_access_token(user_id, UserService.build_token_claims(user)),
+    )

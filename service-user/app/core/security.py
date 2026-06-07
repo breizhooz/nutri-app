@@ -19,6 +19,8 @@ __all__ = [
     "create_mfa_token",
     "create_oauth_state",
     "verify_oauth_state",
+    "create_oauth_bootstrap_token",
+    "verify_oauth_bootstrap_token",
 ]
 
 _ph: PasswordHasher = PasswordHasher()
@@ -125,6 +127,54 @@ def create_oauth_state(provider: str) -> str:
         "type": "oauth_state",
     }
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
+
+def create_oauth_bootstrap_token(subject: str | Any) -> str:
+    """Create a very short-lived JWT to bootstrap a session after OAuth2 login.
+
+    The provider redirects the browser to the OAuth callback, but Google only
+    accepts a bare ``localhost`` redirect URI — a host that is *not* the one the
+    front uses for the API (``api-users.localhost``), so a refresh cookie set on
+    the callback host would never reach ``/auth/refresh``. Instead the callback
+    hands this token to the front, which exchanges it against the API host (see
+    ``/auth/oauth/bootstrap``); that response sets the refresh cookie on the
+    correct host. Kept very short-lived as it grants a full session on its own.
+
+    Args:
+        subject: The user UUID string.
+
+    Returns:
+        A signed HS256 JWT string with type='oauth_bootstrap'.
+    """
+    expire = datetime.now(timezone.utc) + timedelta(
+        seconds=settings.OAUTH_BOOTSTRAP_TOKEN_EXPIRE_SECONDS
+    )
+    payload: dict = {"sub": str(subject), "exp": expire, "type": "oauth_bootstrap"}
+    return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
+
+def verify_oauth_bootstrap_token(token: str) -> str:
+    """Validate an OAuth2 bootstrap JWT and return the embedded user id.
+
+    Args:
+        token: The bootstrap JWT received from the front.
+
+    Returns:
+        The user UUID string stored in the token subject.
+
+    Raises:
+        ValueError: If the token is invalid, expired, or has the wrong type.
+    """
+    try:
+        payload = jwt.decode(
+            token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
+        )
+        if payload.get("type") != "oauth_bootstrap":
+            raise ValueError("Invalid bootstrap token type")
+        subject: str = payload["sub"]
+        return subject
+    except Exception as exc:
+        raise ValueError("Invalid or expired OAuth bootstrap token") from exc
 
 
 def verify_oauth_state(state: str) -> str:
