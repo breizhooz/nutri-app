@@ -56,6 +56,10 @@ async def test_setup_totp_returns_provisioning_uri(
     body = resp.json()
     assert "provisioning_uri" in body
     assert body["provisioning_uri"].startswith("otpauth://totp/")
+    # L'issuer affiché dans l'app d'authentification vient de la config.
+    from app.core.config import settings
+
+    assert f"issuer={settings.MFA_ISSUER}" in body["provisioning_uri"]
     assert "qr_code_base64" in body
     # Vérifie que c'est bien du base64 décodable en PNG
     import base64
@@ -278,3 +282,20 @@ async def test_disable_mfa_not_enabled_returns_400(
 
     resp = await auth_client.delete("/api/v1/auth/2fa/disable")
     assert resp.status_code == 400
+
+
+@pytest.mark.unit
+def test_generate_qr_code_embeds_logo_by_default() -> None:
+    """The QR PNG embeds the bundled brand logo, differing from a plain QR."""
+    import base64
+
+    uri = "otpauth://totp/Rost.r:user@test.com?secret=ABC123&issuer=Rost.r"
+
+    with_logo = TotpService.generate_qr_code_base64(uri)
+    # An unknown logo path falls back to a plain QR code.
+    plain = TotpService.generate_qr_code_base64(uri, logo_path="/no/such/logo.png")
+
+    assert base64.b64decode(with_logo)[:4] == b"\x89PNG"
+    assert base64.b64decode(plain)[:4] == b"\x89PNG"
+    # Embedding the logo changes the rendered image.
+    assert with_logo != plain

@@ -1,5 +1,7 @@
 """OAuth2 social login routes for Google and Facebook."""
 
+from urllib.parse import urlencode
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
@@ -18,8 +20,6 @@ from app.core.security import (
 from app.db.session import get_session
 from app.models.oauth_account import OAuthAccount
 from app.models.user import User
-from app.schemas.auth import PreAuthTokenResponse
-from app.schemas.user import TokenResponse
 from app.services.oauth_service import OAuthService
 from app.services.user_service import UserService
 
@@ -45,6 +45,23 @@ def _redirect_uri(provider: str) -> str:
         The full callback URL string.
     """
     return f"{settings.OAUTH_REDIRECT_BASE_URL}/api/v1/auth/oauth/{provider}/callback"
+
+
+def _frontend_redirect(**params: str) -> RedirectResponse:
+    """Build a 302 redirect to the front-end OAuth callback page.
+
+    The browser lands on this route after the provider flow; the SPA reads the
+    query string (``access_token``/``refresh_token``, ``mfa_token`` or
+    ``error``) to finish login.
+
+    Args:
+        **params: Query parameters to forward to the front-end.
+
+    Returns:
+        A 302 RedirectResponse to ``{FRONTEND_URL}/oauth/callback``.
+    """
+    url = f"{settings.FRONTEND_URL}/oauth/callback?{urlencode(params)}"
+    return RedirectResponse(url=url, status_code=302)
 
 
 @router.get("/{provider}/authorize")
@@ -77,21 +94,22 @@ async def oauth_authorize(request: Request, provider: str) -> RedirectResponse:
     return RedirectResponse(url=url, status_code=302)
 
 
-@router.get(
-    "/{provider}/callback",
-    response_model=TokenResponse | PreAuthTokenResponse,
-)
+@router.get("/{provider}/callback")
 async def oauth_callback(
     request: Request,
     provider: str,
     code: str = Query(...),
     state: str = Query(...),
     session: AsyncSession = Depends(get_session),
-) -> TokenResponse | PreAuthTokenResponse:
-    """Handle the OAuth2 provider callback and issue tokens.
+) -> RedirectResponse:
+    """Handle the OAuth2 provider callback and redirect to the front-end.
 
     Validates the state JWT, exchanges the authorization code for provider
     tokens, fetches the user profile, then creates or links the account.
+    Since the browser is redirected here by the provider, the response is
+    always a 302 to the front-end ``/oauth/callback`` page carrying the
+    issued tokens (``access_token``/``refresh_token``), the ``mfa_token``
+    when 2FA is required, or an ``error`` message.
 
     Args:
         provider: 'google' or 'facebook'.
@@ -100,27 +118,19 @@ async def oauth_callback(
         session: Async database session.
 
     Returns:
-        TokenResponse for users without 2FA, PreAuthTokenResponse otherwise.
-
-    Raises:
-        HTTPException: 400 for invalid state, unsupported provider, or
-            if the provider does not return an email address.
+        A 302 RedirectResponse to the front-end OAuth callback page.
     """
     locale = get_locale(request)
     if not OAuthService.is_valid_provider(provider):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=t.get("oauth.unsupported_provider", locale, provider=provider),
+        return _frontend_redirect(
+            error=t.get("oauth.unsupported_provider", locale, provider=provider)
         )
     try:
         state_provider = verify_oauth_state(state)
         if state_provider != provider:
             raise ValueError("Provider mismatch in state")
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=t.get("oauth.invalid_state", locale),
-        )
+        return _frontend_redirect(error=t.get("oauth.invalid_state", locale))
 
     try:
         token_data = await OAuthService.exchange_code(
@@ -135,19 +145,13 @@ async def oauth_callback(
             access_token=token_data["access_token"],
         )
     except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=t.get("oauth.userinfo_failed", locale),
-        )
+        return _frontend_redirect(error=t.get("oauth.userinfo_failed", locale))
 
     provider_user_id, provider_email = OAuthService.extract_user_info(
         provider, raw_user
     )
     if not provider_email:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=t.get("oauth.no_email", locale),
-        )
+        return _frontend_redirect(error=t.get("oauth.no_email", locale))
 
     # Look for existing OAuth account link
     link_result = await session.execute(
@@ -184,18 +188,15 @@ async def oauth_callback(
         await session.commit()
 
     if not user or not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=t.get("oauth.account_inactive", locale),
-        )
+        return _frontend_redirect(error=t.get("oauth.account_inactive", locale))
 
     if user.two_factor_enabled:
-        return PreAuthTokenResponse(
+        return _frontend_redirect(
             mfa_token=create_mfa_token(str(user.id)),
             mfa_method=user.two_factor_method or "totp",
         )
 
-    return TokenResponse(
+    return _frontend_redirect(
         access_token=create_access_token(
             str(user.id), UserService.build_token_claims(user)
         ),

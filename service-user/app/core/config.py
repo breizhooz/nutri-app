@@ -24,10 +24,16 @@ class Settings(BaseSettings):
     FACEBOOK_CLIENT_ID: str = ""
     FACEBOOK_CLIENT_SECRET: str = ""
     OAUTH_REDIRECT_BASE_URL: str = ""
+    # Front-end base URL the OAuth callback redirects to with the issued tokens.
+    FRONTEND_URL: str = "https://localhost:5173"
 
     MFA_TOTP_ENCRYPTION_KEY: str = ""
     MFA_TOKEN_EXPIRE_MINUTES: int = 5
     MFA_EMAIL_CODE_EXPIRE_MINUTES: int = 5
+    # Title shown in the authenticator app for TOTP entries (the QR issuer).
+    MFA_ISSUER: str = "NutriPlanner"
+    # Logo embedded at the centre of the 2FA QR code. Empty = bundled brand logo.
+    MFA_QR_LOGO_PATH: str = ""
 
     NOTIFICATION_SERVICE_URL: str = ""
     NOTIFICATION_SERVICE_TOKEN: str = ""

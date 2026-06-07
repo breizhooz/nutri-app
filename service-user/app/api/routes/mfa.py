@@ -64,8 +64,12 @@ async def setup_totp(
     session.add(current_user)
     await session.commit()
 
-    uri = TotpService.get_provisioning_uri(secret, current_user.email)
-    qr_base64 = TotpService.generate_qr_code_base64(uri)
+    uri = TotpService.get_provisioning_uri(
+        secret, current_user.email, settings.MFA_ISSUER
+    )
+    qr_base64 = TotpService.generate_qr_code_base64(
+        uri, settings.MFA_QR_LOGO_PATH or None
+    )
 
     return TotpSetupResponse(
         provisioning_uri=uri,
