@@ -3,10 +3,16 @@
 import base64
 import io
 import secrets
+from pathlib import Path
 
 import pyotp
 import qrcode
-from qrcode.image.pil import PilImage
+from PIL import Image
+
+# Bundled brand logo embedded at the centre of the QR code by default.
+_DEFAULT_LOGO_PATH = (
+    Path(__file__).resolve().parent.parent / "assets" / "rostr_logo.png"
+)
 
 
 class TotpService:
@@ -39,7 +45,7 @@ class TotpService:
     def get_provisioning_uri(
         secret: str,
         email: str,
-        issuer: str = "NutriApp",
+        issuer: str = "Rost.r",
     ) -> str:
         """Build the otpauth:// URI for QR code display.
 
@@ -57,22 +63,69 @@ class TotpService:
         )
 
     @staticmethod
-    def generate_qr_code_base64(provisioning_uri: str) -> str:
+    def generate_qr_code_base64(
+        provisioning_uri: str, logo_path: str | None = None
+    ) -> str:
         """Generate a PNG QR code from an otpauth:// URI and return it as base64.
+
+        When a logo image is available it is embedded at the centre of the QR
+        code; a high error-correction level keeps the code scannable despite
+        the overlay. If no logo file is found a plain QR code is produced.
 
         The result can be embedded directly in an HTML img tag:
             <img src="data:image/png;base64,{result}" />
 
         Args:
             provisioning_uri: The otpauth:// URI produced by get_provisioning_uri().
+            logo_path: Optional path to a logo image; falls back to the bundled
+                brand logo when omitted, and to a plain QR when no file exists.
 
         Returns:
             A base64-encoded PNG image string.
         """
-        img: PilImage = qrcode.make(provisioning_uri)
+        qr = qrcode.QRCode(
+            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(provisioning_uri)
+        qr.make(fit=True)
+        img = (
+            qr.make_image(fill_color="black", back_color="white")
+            .get_image()
+            .convert("RGB")
+        )
+
+        logo_file = Path(logo_path) if logo_path else _DEFAULT_LOGO_PATH
+        if logo_file.is_file():
+            TotpService._embed_logo(img, logo_file)
+
         buffer = io.BytesIO()
         img.save(buffer, format="PNG")
         return base64.b64encode(buffer.getvalue()).decode()
+
+    @staticmethod
+    def _embed_logo(qr_img: Image.Image, logo_path: Path) -> None:
+        """Paste a logo at the centre of the QR image, on a white pad.
+
+        The logo is capped to ~20% of the QR width and sits on a white
+        background so it stays separated from the dark modules and the code
+        remains decodable.
+
+        Args:
+            qr_img: The RGB QR image to overlay in place.
+            logo_path: Path to the logo image file.
+        """
+        qr_w, qr_h = qr_img.size
+        logo = Image.open(logo_path).convert("RGB")
+        target = qr_w // 5
+        logo.thumbnail((target, target))
+        pad = max(qr_w // 40, 6)
+        bg = Image.new(
+            "RGB", (logo.size[0] + 2 * pad, logo.size[1] + 2 * pad), "white"
+        )
+        bg.paste(logo, (pad, pad))
+        qr_img.paste(bg, ((qr_w - bg.size[0]) // 2, (qr_h - bg.size[1]) // 2))
 
 
 class CodeGenerator:

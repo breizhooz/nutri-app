@@ -41,33 +41,41 @@ async def test_authorize_unknown_provider_returns_400(anon_client: AsyncClient) 
 
 
 @pytest.mark.unit
-async def test_callback_invalid_state_returns_400(anon_client: AsyncClient) -> None:
-    """Callback with bad state JWT returns 400."""
+async def test_callback_invalid_state_redirects_with_error(
+    anon_client: AsyncClient,
+) -> None:
+    """Callback with bad state JWT redirects to the front with an error."""
     resp = await anon_client.get(
         "/api/v1/auth/oauth/google/callback",
         params={"code": "auth-code", "state": "invalid-state"},
+        follow_redirects=False,
     )
-    assert resp.status_code == 400
+    assert resp.status_code == 302
+    assert "/oauth/callback?error=" in resp.headers["location"]
 
 
 @pytest.mark.unit
-async def test_callback_unknown_provider_returns_400(anon_client: AsyncClient) -> None:
-    """Callback for unknown provider returns 400."""
+async def test_callback_unknown_provider_redirects_with_error(
+    anon_client: AsyncClient,
+) -> None:
+    """Callback for unknown provider redirects to the front with an error."""
     from app.core.security import create_oauth_state
 
     state = create_oauth_state("twitter")
     resp = await anon_client.get(
         "/api/v1/auth/oauth/twitter/callback",
         params={"code": "auth-code", "state": state},
+        follow_redirects=False,
     )
-    assert resp.status_code == 400
+    assert resp.status_code == 302
+    assert "/oauth/callback?error=" in resp.headers["location"]
 
 
 @pytest.mark.unit
-async def test_callback_creates_new_user_and_returns_tokens(
+async def test_callback_creates_new_user_and_redirects_with_tokens(
     anon_client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    """Callback for a brand-new user creates account and returns tokens."""
+    """Callback for a brand-new user creates account and redirects with tokens."""
     from app.core.security import create_oauth_state
 
     state = create_oauth_state("google")
@@ -87,12 +95,14 @@ async def test_callback_creates_new_user_and_returns_tokens(
         resp = await anon_client.get(
             "/api/v1/auth/oauth/google/callback",
             params={"code": "auth-code", "state": state},
+            follow_redirects=False,
         )
 
-    assert resp.status_code == 200
-    body = resp.json()
-    assert "access_token" in body
-    assert "refresh_token" in body
+    assert resp.status_code == 302
+    location = resp.headers["location"]
+    assert "/oauth/callback?" in location
+    assert "access_token=" in location
+    assert "refresh_token=" in location
 
 
 @pytest.mark.unit
@@ -127,9 +137,10 @@ async def test_callback_links_existing_user_by_email(
         resp = await anon_client.get(
             "/api/v1/auth/oauth/google/callback",
             params={"code": "auth-code", "state": state},
+            follow_redirects=False,
         )
 
-    assert resp.status_code == 200
+    assert resp.status_code == 302
     result = await db_session.execute(
         select(OAuthAccount).where(OAuthAccount.provider == "google")
     )
@@ -139,10 +150,10 @@ async def test_callback_links_existing_user_by_email(
 
 
 @pytest.mark.unit
-async def test_callback_provider_failure_returns_400(
+async def test_callback_provider_failure_redirects_with_error(
     anon_client: AsyncClient,
 ) -> None:
-    """Callback where exchange_code raises returns 400."""
+    """Callback where exchange_code raises redirects to the front with an error."""
     from app.core.security import create_oauth_state
 
     state = create_oauth_state("google")
@@ -153,20 +164,24 @@ async def test_callback_provider_failure_returns_400(
         resp = await anon_client.get(
             "/api/v1/auth/oauth/google/callback",
             params={"code": "auth-code", "state": state},
+            follow_redirects=False,
         )
-    assert resp.status_code == 400
+    assert resp.status_code == 302
+    assert "/oauth/callback?error=" in resp.headers["location"]
 
 
 @pytest.mark.unit
-async def test_callback_state_provider_mismatch_returns_400(
+async def test_callback_state_provider_mismatch_redirects_with_error(
     anon_client: AsyncClient,
 ) -> None:
-    """State token for google but callback on facebook returns 400."""
+    """State token for google but callback on facebook redirects with an error."""
     from app.core.security import create_oauth_state
 
     state = create_oauth_state("google")
     resp = await anon_client.get(
         "/api/v1/auth/oauth/facebook/callback",
         params={"code": "auth-code", "state": state},
+        follow_redirects=False,
     )
-    assert resp.status_code == 400
+    assert resp.status_code == 302
+    assert "/oauth/callback?error=" in resp.headers["location"]
