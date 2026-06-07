@@ -1,3 +1,4 @@
+import hmac
 import uuid
 
 from fastapi import Depends, HTTPException, status
@@ -37,10 +38,20 @@ async def get_current_user_id(
 async def verify_service_token(
     credentials: HTTPAuthorizationCredentials = Depends(_bearer_service),
 ) -> None:
-    """Vérifie le token de service pour les appels inter-services."""
+    """Vérifie le token de service pour les appels inter-services.
+
+    SEC-06 : fail-closed — si le token n'est pas configuré, on refuse l'accès
+    (503) au lieu d'ouvrir l'endpoint. Comparaison à temps constant pour ne pas
+    fuiter le secret via une attaque temporelle.
+    """
     if not settings.SERVICE_NOTIFICATION_TOKEN:
-        return
-    if credentials.credentials != settings.SERVICE_NOTIFICATION_TOKEN:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=t.get("errors.service_token_invalid"),
+        )
+    if not hmac.compare_digest(
+        credentials.credentials, settings.SERVICE_NOTIFICATION_TOKEN
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=t.get("errors.service_token_invalid"),

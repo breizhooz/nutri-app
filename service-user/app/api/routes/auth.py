@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.deps import get_locale
+from app.core.rate_limit import login_rate_limit
 from app.i18n.loader import t
 from app.core.security import (
     create_access_token,
@@ -39,6 +40,7 @@ async def login(
     request: Request,
     data: UserLogin,
     session: AsyncSession = Depends(get_session),
+    _rate_limit: None = Depends(login_rate_limit),  # SEC-07
 ) -> TokenResponse | PreAuthTokenResponse:
     """Authenticate a user with email and password.
 

@@ -156,3 +156,18 @@ async def anon_client(db_session: AsyncSession) -> AsyncClient:  # type: ignore[
     ) as ac:
         yield ac
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(autouse=True)
+def _reset_rate_limiters():
+    """Repart d'un compteur de rate-limit vide avant chaque test (SEC-07).
+
+    Les limiteurs sont des singletons de module : sans ce reset, les appels
+    cumulés de plusieurs tests partageant la même IP de TestClient pourraient
+    déclencher un 429 et rendre la suite instable.
+    """
+    from app.core import rate_limit
+
+    rate_limit.login_limiter._hits.clear()
+    rate_limit.mfa_verify_limiter._hits.clear()
+    yield

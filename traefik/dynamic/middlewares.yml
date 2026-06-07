@@ -8,8 +8,14 @@ http:
         referrerPolicy: "strict-origin-when-cross-origin"
     cors:
       headers:
+        # SEC-04 : allowlist explicite d'origines (plus de "*"). Ajouter ici les
+        # origines réelles du front. En prod, remplacer par le domaine HTTPS.
         accessControlAllowOriginList:
-          - "*"
+          - "https://localhost:5173"   # front Vite (dev, HTTPS via mkcert)
+          # - "https://app.nutriplanner.fr"   # prod
+        # Requis dès qu'on passe le refresh token en cookie (SEC-05) ; sans effet
+        # tant que l'auth reste par header Authorization.
+        accessControlAllowCredentials: true
         accessControlAllowMethods:
           - "GET"
           - "POST"

@@ -55,7 +55,10 @@ bandit*
 #front
 frontend/
 
-#data to import
-*.json
-
 SECURITY*
+
+# HTTPS dev — certificats mkcert (ne jamais commiter la clé privée)
+traefik/certs/
+
+#  Docs / études internes (non versionnées)
+docs/

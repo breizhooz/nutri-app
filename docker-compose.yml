@@ -7,14 +7,17 @@ services:
     container_name: nutriplanner-traefik
     ports:
       - "80:80"
+      - "127.0.0.1:443:443"   # HTTPS dev (loopback, cf. SEC-01)
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/dynamic:/etc/traefik/dynamic:ro
+      - ./traefik/certs:/etc/traefik/certs:ro   # certs mkcert (*.localhost)
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik-dash.rule=Host(`traefik.localhost`)"
-      - "traefik.http.routers.traefik-dash.entrypoints=web"
+      - "traefik.http.routers.traefik-dash.entrypoints=websecure"
+      - "traefik.http.routers.traefik-dash.tls=true"
       - "traefik.http.routers.traefik-dash.service=api@internal"
     networks:
       - nutriplanner
@@ -36,7 +39,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.portal.loadbalancer.server.port=80"
       - "traefik.http.routers.portal.rule=Host(`api.localhost`)"
-      - "traefik.http.routers.portal.entrypoints=web"
+      - "traefik.http.routers.portal.entrypoints=websecure"
+      - "traefik.http.routers.portal.tls=true"
       - "traefik.http.routers.portal.service=portal"
     networks:
       - nutriplanner
@@ -115,7 +119,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.svc-user.loadbalancer.server.port=8000"
       - "traefik.http.routers.svc-user.rule=Host(`api-users.localhost`)"
-      - "traefik.http.routers.svc-user.entrypoints=web"
+      - "traefik.http.routers.svc-user.entrypoints=websecure"
+      - "traefik.http.routers.svc-user.tls=true"
       - "traefik.http.routers.svc-user.service=svc-user"
       - "traefik.http.routers.svc-user.middlewares=cors@file"
     depends_on:
@@ -154,7 +159,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.svc-recipe.loadbalancer.server.port=8000"
       - "traefik.http.routers.svc-recipe.rule=Host(`api-recipe.localhost`)"
-      - "traefik.http.routers.svc-recipe.entrypoints=web"
+      - "traefik.http.routers.svc-recipe.entrypoints=websecure"
+      - "traefik.http.routers.svc-recipe.tls=true"
       - "traefik.http.routers.svc-recipe.service=svc-recipe"
       - "traefik.http.routers.svc-recipe.middlewares=cors@file"
     depends_on:
@@ -231,7 +237,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.svc-menu.loadbalancer.server.port=8000"
       - "traefik.http.routers.svc-menu.rule=Host(`api-menu.localhost`)"
-      - "traefik.http.routers.svc-menu.entrypoints=web"
+      - "traefik.http.routers.svc-menu.entrypoints=websecure"
+      - "traefik.http.routers.svc-menu.tls=true"
       - "traefik.http.routers.svc-menu.service=svc-menu"
       - "traefik.http.routers.svc-menu.middlewares=cors@file"
     depends_on:
@@ -272,7 +279,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.svc-crawler.loadbalancer.server.port=8000"
       - "traefik.http.routers.svc-crawler.rule=Host(`api-crawler.localhost`)"
-      - "traefik.http.routers.svc-crawler.entrypoints=web"
+      - "traefik.http.routers.svc-crawler.entrypoints=websecure"
+      - "traefik.http.routers.svc-crawler.tls=true"
       - "traefik.http.routers.svc-crawler.service=svc-crawler"
       - "traefik.http.routers.svc-crawler.middlewares=cors@file"
     depends_on:
@@ -308,7 +316,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.svc-notif.loadbalancer.server.port=8000"
       - "traefik.http.routers.svc-notif.rule=Host(`api-notification.localhost`)"
-      - "traefik.http.routers.svc-notif.entrypoints=web"
+      - "traefik.http.routers.svc-notif.entrypoints=websecure"
+      - "traefik.http.routers.svc-notif.tls=true"
       - "traefik.http.routers.svc-notif.service=svc-notif"
       - "traefik.http.routers.svc-notif.middlewares=cors@file"
     depends_on:
@@ -348,7 +357,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.svc-nutrition.loadbalancer.server.port=8000"
       - "traefik.http.routers.svc-nutrition.rule=Host(`api-nutrition.localhost`)"
-      - "traefik.http.routers.svc-nutrition.entrypoints=web"
+      - "traefik.http.routers.svc-nutrition.entrypoints=websecure"
+      - "traefik.http.routers.svc-nutrition.tls=true"
       - "traefik.http.routers.svc-nutrition.service=svc-nutrition"
       - "traefik.http.routers.svc-nutrition.middlewares=cors@file"
     depends_on:
@@ -390,7 +400,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.svc-profile.loadbalancer.server.port=8000"
       - "traefik.http.routers.svc-profile.rule=Host(`api-profile.localhost`)"
-      - "traefik.http.routers.svc-profile.entrypoints=web"
+      - "traefik.http.routers.svc-profile.entrypoints=websecure"
+      - "traefik.http.routers.svc-profile.tls=true"
       - "traefik.http.routers.svc-profile.service=svc-profile"
       - "traefik.http.routers.svc-profile.middlewares=cors@file"
     depends_on:
@@ -625,7 +636,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
       - "traefik.http.routers.prometheus.rule=Host(`prometheus.localhost`)"
-      - "traefik.http.routers.prometheus.entrypoints=web"
+      - "traefik.http.routers.prometheus.entrypoints=websecure"
+      - "traefik.http.routers.prometheus.tls=true"
       - "traefik.http.routers.prometheus.service=prometheus"
     networks:
       - nutriplanner
@@ -646,7 +658,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.grafana.loadbalancer.server.port=3000"
       - "traefik.http.routers.grafana.rule=Host(`grafana.localhost`)"
-      - "traefik.http.routers.grafana.entrypoints=web"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls=true"
       - "traefik.http.routers.grafana.service=grafana"
     depends_on:
       - prometheus
@@ -669,7 +682,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.loki.loadbalancer.server.port=3100"
       - "traefik.http.routers.loki.rule=Host(`loki.localhost`)"
-      - "traefik.http.routers.loki.entrypoints=web"
+      - "traefik.http.routers.loki.entrypoints=websecure"
+      - "traefik.http.routers.loki.tls=true"
       - "traefik.http.routers.loki.service=loki"
     networks:
       - nutriplanner
@@ -708,7 +722,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.tempo.loadbalancer.server.port=3200"
       - "traefik.http.routers.tempo.rule=Host(`tempo.localhost`)"
-      - "traefik.http.routers.tempo.entrypoints=web"
+      - "traefik.http.routers.tempo.entrypoints=websecure"
+      - "traefik.http.routers.tempo.tls=true"
       - "traefik.http.routers.tempo.service=tempo"
     networks:
       - nutriplanner

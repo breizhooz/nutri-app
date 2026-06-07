@@ -11,6 +11,14 @@ accessLog:
 entryPoints:
   web:
     address: ":80"
+    http:
+      # HTTPS en dev : tout le trafic HTTP est redirigé vers websecure.
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: ":443"
   metrics:
     address: ":8082"
 
