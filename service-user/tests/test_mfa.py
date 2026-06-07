@@ -111,7 +111,10 @@ async def test_confirm_totp_valid_code_enables_2fa(
     code = pyotp.TOTP(secret).now()
     resp = await auth_client.post("/api/v1/auth/2fa/confirm/totp", json={"code": code})
     assert resp.status_code == 200
-    assert "access_token" in resp.json()
+    body = resp.json()
+    assert "access_token" in body
+    assert "refresh_token" not in body  # SEC-05: refresh travels in the cookie
+    assert "refresh_token=" in resp.headers.get("set-cookie", "")
 
     await db_session.refresh(user)
     assert user.two_factor_enabled is True
@@ -181,7 +184,10 @@ async def test_verify_mfa_totp_valid_code_returns_tokens(
         "/api/v1/auth/2fa/verify", json={"mfa_token": mfa_token, "code": code}
     )
     assert resp.status_code == 200
-    assert "access_token" in resp.json()
+    body = resp.json()
+    assert "access_token" in body
+    assert "refresh_token" not in body  # SEC-05: refresh travels in the cookie
+    assert "refresh_token=" in resp.headers.get("set-cookie", "")
 
 
 @pytest.mark.unit

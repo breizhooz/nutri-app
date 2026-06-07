@@ -2,11 +2,12 @@
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.cookies import set_refresh_cookie
 from app.core.deps import get_current_user, get_locale
 from app.core.rate_limit import mfa_verify_rate_limit
 from app.i18n.loader import t
@@ -81,6 +82,7 @@ async def setup_totp(
 async def confirm_totp(
     request: Request,
     data: TotpConfirmRequest,
+    response: Response,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ) -> TokenResponse:
@@ -122,11 +124,11 @@ async def confirm_totp(
     current_user.two_factor_method = "totp"
     session.add(current_user)
     await session.commit()
+    set_refresh_cookie(response, create_refresh_token(str(current_user.id)))
     return TokenResponse(
         access_token=create_access_token(
             str(current_user.id), UserService.build_token_claims(current_user)
         ),
-        refresh_token=create_refresh_token(str(current_user.id)),
     )
 
 
@@ -160,6 +162,7 @@ async def setup_email_2fa(
 async def verify_mfa(
     request: Request,
     data: MfaVerifyRequest,
+    response: Response,
     session: AsyncSession = Depends(get_session),
     _rate_limit: None = Depends(mfa_verify_rate_limit),  # SEC-07
 ) -> TokenResponse:
@@ -236,11 +239,11 @@ async def verify_mfa(
         session.add(pending)
         await session.commit()
 
+    set_refresh_cookie(response, create_refresh_token(str(user.id)))
     return TokenResponse(
         access_token=create_access_token(
             str(user.id), UserService.build_token_claims(user)
         ),
-        refresh_token=create_refresh_token(str(user.id)),
     )
 
 

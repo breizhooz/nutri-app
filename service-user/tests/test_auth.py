@@ -38,10 +38,10 @@ async def _create_user(
 
 
 @pytest.mark.unit
-async def test_login_no_2fa_returns_token_pair(
+async def test_login_no_2fa_returns_access_and_refresh_cookie(
     anon_client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    """Login without 2FA returns access and refresh tokens immediately."""
+    """Login without 2FA returns the access token in body, refresh in HttpOnly cookie."""
     await _create_user(db_session)
     resp = await anon_client.post(
         "/api/v1/auth/login", json={"email": "auth@test.com", "password": "password123"}
@@ -49,8 +49,12 @@ async def test_login_no_2fa_returns_token_pair(
     assert resp.status_code == 200
     body = resp.json()
     assert "access_token" in body
-    assert "refresh_token" in body
+    # SEC-05: refresh never returned in the JSON body anymore.
+    assert "refresh_token" not in body
     assert body["token_type"] == "Bearer"
+    set_cookie = resp.headers.get("set-cookie", "")
+    assert "refresh_token=" in set_cookie
+    assert "HttpOnly" in set_cookie
 
 
 @pytest.mark.unit
@@ -130,23 +134,41 @@ async def test_login_oauth_only_user_no_password_returns_401(
 
 
 @pytest.mark.unit
-async def test_refresh_valid_token(
+async def test_refresh_valid_cookie(
     anon_client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    """Valid refresh token returns a new token pair."""
+    """A valid refresh cookie returns a fresh access token and rotates the cookie."""
     user = await _create_user(db_session)
     refresh = create_refresh_token(str(user.id))
-    resp = await anon_client.post(
-        "/api/v1/auth/refresh", json={"refresh_token": refresh}
-    )
+    anon_client.cookies.set("refresh_token", refresh)
+    resp = await anon_client.post("/api/v1/auth/refresh")
     assert resp.status_code == 200
-    assert "access_token" in resp.json()
+    body = resp.json()
+    assert "access_token" in body
+    assert "refresh_token" not in body
+    # Rotation: a new refresh cookie is issued on every refresh.
+    assert "refresh_token=" in resp.headers.get("set-cookie", "")
 
 
 @pytest.mark.unit
-async def test_refresh_invalid_token_returns_401(anon_client: AsyncClient) -> None:
-    """Invalid refresh token returns 401."""
-    resp = await anon_client.post(
-        "/api/v1/auth/refresh", json={"refresh_token": "not.a.token"}
-    )
+async def test_refresh_invalid_cookie_returns_401(anon_client: AsyncClient) -> None:
+    """An invalid refresh cookie returns 401."""
+    anon_client.cookies.set("refresh_token", "not.a.token")
+    resp = await anon_client.post("/api/v1/auth/refresh")
     assert resp.status_code == 401
+
+
+@pytest.mark.unit
+async def test_refresh_missing_cookie_returns_401(anon_client: AsyncClient) -> None:
+    """No refresh cookie at all returns 401."""
+    resp = await anon_client.post("/api/v1/auth/refresh")
+    assert resp.status_code == 401
+
+
+@pytest.mark.unit
+async def test_logout_clears_refresh_cookie(anon_client: AsyncClient) -> None:
+    """Logout returns 204 and emits a Set-Cookie clearing the refresh token."""
+    resp = await anon_client.post("/api/v1/auth/logout")
+    assert resp.status_code == 204
+    set_cookie = resp.headers.get("set-cookie", "")
+    assert "refresh_token=" in set_cookie
