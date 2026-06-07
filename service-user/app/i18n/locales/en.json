@@ -29,7 +29,8 @@
     "invalid_state": "Invalid or expired OAuth2 state",
     "userinfo_failed": "Failed to retrieve user info from provider",
     "no_email": "Provider did not return an email address",
-    "account_inactive": "Account is inactive"
+    "account_inactive": "Account is inactive",
+    "bootstrap_invalid": "Invalid or expired sign-in session"
   },
   "password": {
     "current_incorrect": "Current password is incorrect.",

@@ -72,10 +72,14 @@ async def test_callback_unknown_provider_redirects_with_error(
 
 
 @pytest.mark.unit
-async def test_callback_creates_new_user_and_sets_cookie(
+async def test_callback_creates_new_user_and_redirects_with_bootstrap(
     anon_client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    """New user: account created, refresh cookie set, redirect carries no token (SEC-05)."""
+    """New user: account created, redirect carries a bootstrap token, no cookie yet.
+
+    The callback host differs from the API host, so it hands a short-lived
+    bootstrap token to the front instead of setting the refresh cookie itself.
+    """
     from app.core.security import create_oauth_state
 
     state = create_oauth_state("google")
@@ -99,10 +103,56 @@ async def test_callback_creates_new_user_and_sets_cookie(
         )
 
     assert resp.status_code == 302
-    assert resp.headers["location"].endswith("/oauth/callback")  # no token leaked
+    assert "/oauth/callback?bootstrap=" in resp.headers["location"]
+    # The cookie is set later by /auth/oauth/bootstrap, not by the callback.
+    assert "refresh_token=" not in resp.headers.get("set-cookie", "")
+
+
+@pytest.mark.unit
+async def test_bootstrap_sets_cookie_and_returns_access_token(
+    anon_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """A valid bootstrap token is exchanged for a refresh cookie + access token."""
+    from app.core.security import create_oauth_bootstrap_token
+
+    user = User(email="bootstrap@oauth.com", hashed_password=None)
+    db_session.add(user)
+    await db_session.commit()
+
+    token = create_oauth_bootstrap_token(str(user.id))
+    resp = await anon_client.post(
+        "/api/v1/auth/oauth/bootstrap",
+        json={"bootstrap_token": token},
+    )
+
+    assert resp.status_code == 200
+    assert resp.json()["access_token"]
     set_cookie = resp.headers.get("set-cookie", "")
     assert "refresh_token=" in set_cookie
     assert "HttpOnly" in set_cookie
+
+
+@pytest.mark.unit
+async def test_bootstrap_rejects_invalid_token(anon_client: AsyncClient) -> None:
+    """A garbage bootstrap token is rejected with 401."""
+    resp = await anon_client.post(
+        "/api/v1/auth/oauth/bootstrap",
+        json={"bootstrap_token": "not-a-token"},
+    )
+    assert resp.status_code == 401
+    assert "refresh_token=" not in resp.headers.get("set-cookie", "")
+
+
+@pytest.mark.unit
+async def test_bootstrap_rejects_wrong_token_type(anon_client: AsyncClient) -> None:
+    """A token of another type (e.g. a refresh token) is not accepted as bootstrap."""
+    from app.core.security import create_refresh_token
+
+    resp = await anon_client.post(
+        "/api/v1/auth/oauth/bootstrap",
+        json={"bootstrap_token": create_refresh_token("some-user-id")},
+    )
+    assert resp.status_code == 401
 
 
 @pytest.mark.unit

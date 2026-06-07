@@ -45,3 +45,13 @@ class OAuthCallbackQuery(BaseModel):
 
     code: str
     state: str
+
+
+class OAuthBootstrapRequest(BaseModel):
+    """Payload for /auth/oauth/bootstrap.
+
+    Carries the short-lived bootstrap token handed to the front by the OAuth
+    callback, exchanged here for a refresh cookie + access token.
+    """
+
+    bootstrap_token: str

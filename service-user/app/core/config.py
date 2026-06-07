@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     FACEBOOK_CLIENT_SECRET: str = ""
     OAUTH_REDIRECT_BASE_URL: str = ""
 
+    # Durée de vie du jeton de bootstrap OAuth (handoff callback → front → API).
+    # Très court : il est consommé immédiatement après le retour du provider pour
+    # poser le cookie refresh sur le bon hôte (cf. routes/oauth.py).
+    OAUTH_BOOTSTRAP_TOKEN_EXPIRE_SECONDS: int = 60
+
     # Front SPA origin, used as the final redirect target of the OAuth callback.
     FRONTEND_URL: str = "https://localhost:5173"
 
