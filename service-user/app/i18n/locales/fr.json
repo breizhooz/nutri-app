@@ -2,7 +2,8 @@
   "auth": {
     "invalid_credentials": "Email ou mot de passe incorrect",
     "admin_required": "Privilèges administrateur requis",
-    "forbidden": "Accès interdit"
+    "forbidden": "Accès interdit",
+    "too_many_requests": "Trop de tentatives. Veuillez réessayer dans un instant."
   },
   "token": {
     "invalid_or_expired": "Token invalide ou expiré",

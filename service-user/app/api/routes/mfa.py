@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.deps import get_current_user, get_locale
+from app.core.rate_limit import mfa_verify_rate_limit
 from app.i18n.loader import t
 from app.core.security import (
     create_access_token,
@@ -156,6 +157,7 @@ async def verify_mfa(
     request: Request,
     data: MfaVerifyRequest,
     session: AsyncSession = Depends(get_session),
+    _rate_limit: None = Depends(mfa_verify_rate_limit),  # SEC-07
 ) -> TokenResponse:
     """Verify a 2FA code and exchange the mfa_pending token for full tokens.
 

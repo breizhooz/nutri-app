@@ -36,5 +36,10 @@ class Settings(BaseSettings):
     PASSWORD_RESET_BASE_URL: str = "http://localhost:3000"
     PASSWORD_HISTORY_COUNT: int = 5
 
+    # SEC-07 : anti brute-force / credential stuffing. Fenêtre glissante par IP,
+    # appliquée à /auth/login et /auth/2fa/verify. 0 = limitation désactivée.
+    LOGIN_RATE_LIMIT_PER_MINUTE: int = 10
+    MFA_VERIFY_RATE_LIMIT_PER_MINUTE: int = 10
+
 
 settings: Settings = Settings()
