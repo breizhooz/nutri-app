@@ -30,6 +30,7 @@ class LookupService:
 
     def __init__(self, es_client=None) -> None:
         self._es = es_client
+        self._index_ensured = False
 
     def _get_client(self):
         if self._es is not None:
@@ -39,6 +40,33 @@ class LookupService:
         if not hasattr(self, "_owned_client"):
             self._owned_client = AsyncElasticsearch(settings.ELASTICSEARCH_URL)
         return self._owned_client
+
+    async def ensure_index(self) -> None:
+        """Garantit que l'index existe avec 0 réplica (cluster mono-nœud).
+
+        Sans création explicite, ES auto-crée l'index au premier document avec
+        le défaut ``number_of_replicas=1`` : sur un cluster à un seul nœud, le
+        shard réplica reste *unassigned* → cluster ``yellow``. On crée donc
+        l'index à 0 réplica, et on force aussi 0 réplica s'il existe déjà (pour
+        régulariser un index hérité du comportement par défaut). Idempotent et
+        exécuté au plus une fois par instance.
+        """
+        if self._index_ensured:
+            return
+        client = self._get_client()
+        index = settings.ELASTICSEARCH_INDEX
+        try:
+            if await client.indices.exists(index=index):
+                await client.indices.put_settings(
+                    index=index, settings={"index": {"number_of_replicas": 0}}
+                )
+            else:
+                await client.indices.create(
+                    index=index, settings={"number_of_replicas": 0}
+                )
+            self._index_ensured = True
+        except Exception as exc:
+            logger.error("ES ensure_index error: %s", exc)
 
     async def search(self, query: str, size: int = 5) -> list[LookupResult]:
         """Retourne les candidats au-dessus du seuil de score, ou liste vide."""
@@ -82,6 +110,7 @@ class LookupService:
         return results
 
     async def index_item(self, item) -> None:
+        await self.ensure_index()
         client = self._get_client()
         try:
             await client.index(
@@ -105,6 +134,7 @@ class LookupService:
         """Index a list of NutritionItems using the bulk API."""
         from elasticsearch.helpers import async_bulk
 
+        await self.ensure_index()
         client = self._get_client()
 
         async def _actions():

@@ -119,3 +119,45 @@ class TestLookupService:
         item.calories = item.proteines = item.glucides = item.lipides = 0
         mock_es.index = AsyncMock(side_effect=Exception("ES boom"))
         await svc.index_item(item)  # ne lève pas
+
+    @pytest.mark.unit
+    async def test_ensure_index_creates_with_zero_replicas(self, svc, mock_es):
+        """Index absent → création avec number_of_replicas=0 (anti cluster yellow)."""
+        mock_es.indices.exists = AsyncMock(return_value=False)
+        mock_es.indices.create = AsyncMock()
+        await svc.ensure_index()
+        mock_es.indices.create.assert_called_once()
+        assert (
+            mock_es.indices.create.call_args[1]["settings"]["number_of_replicas"] == 0
+        )
+
+    @pytest.mark.unit
+    async def test_ensure_index_forces_zero_replicas_when_existing(self, svc, mock_es):
+        """Index présent → put_settings force number_of_replicas=0 (régularisation)."""
+        mock_es.indices.exists = AsyncMock(return_value=True)
+        mock_es.indices.put_settings = AsyncMock()
+        await svc.ensure_index()
+        mock_es.indices.put_settings.assert_called_once()
+        assert (
+            mock_es.indices.put_settings.call_args[1]["settings"]["index"][
+                "number_of_replicas"
+            ]
+            == 0
+        )
+
+    @pytest.mark.unit
+    async def test_ensure_index_runs_once_per_instance(self, svc, mock_es):
+        """ensure_index est idempotente : un seul aller-retour ES par instance."""
+        mock_es.indices.exists = AsyncMock(return_value=False)
+        mock_es.indices.create = AsyncMock()
+        await svc.ensure_index()
+        await svc.ensure_index()
+        mock_es.indices.exists.assert_called_once()
+
+    @pytest.mark.unit
+    async def test_bulk_index_ensures_index_first(self, svc, mock_es):
+        """bulk_index garantit l'index avant d'indexer."""
+        mock_es.indices.exists = AsyncMock(return_value=False)
+        mock_es.indices.create = AsyncMock()
+        await svc.bulk_index([])
+        mock_es.indices.create.assert_called_once()
