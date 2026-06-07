@@ -44,7 +44,7 @@ async def test_authorize_unknown_provider_returns_400(anon_client: AsyncClient) 
 async def test_callback_invalid_state_redirects_with_error(
     anon_client: AsyncClient,
 ) -> None:
-    """Callback with bad state JWT redirects to the front with an error."""
+    """Callback with bad state JWT redirects to the front with an error (SEC-05)."""
     resp = await anon_client.get(
         "/api/v1/auth/oauth/google/callback",
         params={"code": "auth-code", "state": "invalid-state"},
@@ -72,10 +72,10 @@ async def test_callback_unknown_provider_redirects_with_error(
 
 
 @pytest.mark.unit
-async def test_callback_creates_new_user_and_redirects_with_tokens(
+async def test_callback_creates_new_user_and_sets_cookie(
     anon_client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    """Callback for a brand-new user creates account and redirects with tokens."""
+    """New user: account created, refresh cookie set, redirect carries no token (SEC-05)."""
     from app.core.security import create_oauth_state
 
     state = create_oauth_state("google")
@@ -99,10 +99,59 @@ async def test_callback_creates_new_user_and_redirects_with_tokens(
         )
 
     assert resp.status_code == 302
-    location = resp.headers["location"]
-    assert "/oauth/callback?" in location
-    assert "access_token=" in location
-    assert "refresh_token=" in location
+    assert resp.headers["location"].endswith("/oauth/callback")  # no token leaked
+    set_cookie = resp.headers.get("set-cookie", "")
+    assert "refresh_token=" in set_cookie
+    assert "HttpOnly" in set_cookie
+
+
+@pytest.mark.unit
+async def test_callback_2fa_user_redirects_with_mfa_token(
+    anon_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """A 2FA-enabled user is redirected with an mfa_token, no refresh cookie yet."""
+    from app.core.security import create_oauth_state
+
+    user = User(
+        email="2fa@oauth.com",
+        hashed_password=None,
+        two_factor_enabled=True,
+        two_factor_method="totp",
+    )
+    db_session.add(user)
+    await db_session.flush()
+    db_session.add(
+        OAuthAccount(
+            user_id=user.id,
+            provider="google",
+            provider_user_id="google-uid-2fa",
+            provider_email="2fa@oauth.com",
+        )
+    )
+    await db_session.commit()
+
+    state = create_oauth_state("google")
+    with (
+        patch(
+            "app.api.routes.oauth.OAuthService.exchange_code",
+            new=AsyncMock(return_value={"access_token": "fake-at"}),
+        ),
+        patch(
+            "app.api.routes.oauth.OAuthService.fetch_user_info",
+            new=AsyncMock(
+                return_value={"sub": "google-uid-2fa", "email": "2fa@oauth.com"}
+            ),
+        ),
+    ):
+        resp = await anon_client.get(
+            "/api/v1/auth/oauth/google/callback",
+            params={"code": "auth-code", "state": state},
+            follow_redirects=False,
+        )
+
+    assert resp.status_code == 302
+    assert "mfa_token=" in resp.headers["location"]
+    assert "refresh_token=" not in resp.headers.get("set-cookie", "")
 
 
 @pytest.mark.unit

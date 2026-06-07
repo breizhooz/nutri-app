@@ -85,14 +85,11 @@ class UserLogin(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    """Full authentication token pair."""
+    """Authentication response carrying the in-memory access token.
+
+    SEC-05: the refresh token is no longer returned here — it is delivered as an
+    HttpOnly cookie (see app/core/cookies.py).
+    """
 
     access_token: str
-    refresh_token: str
     token_type: str = "Bearer"
-
-
-class RefreshRequest(BaseModel):
-    """Payload for the /auth/refresh endpoint."""
-
-    refresh_token: str

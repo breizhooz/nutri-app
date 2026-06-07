@@ -24,8 +24,20 @@ class Settings(BaseSettings):
     FACEBOOK_CLIENT_ID: str = ""
     FACEBOOK_CLIENT_SECRET: str = ""
     OAUTH_REDIRECT_BASE_URL: str = ""
-    # Front-end base URL the OAuth callback redirects to with the issued tokens.
+
+    # Front SPA origin, used as the final redirect target of the OAuth callback.
     FRONTEND_URL: str = "https://localhost:5173"
+
+    # SEC-05 : le refresh token n'est plus renvoyé en JSON mais posé dans un cookie
+    # HttpOnly (inaccessible au JS → immunisé contre l'exfiltration par XSS).
+    # En dev le front (localhost:5173) et l'API (api-users.localhost) sont des sites
+    # différents → SameSite=None obligatoire pour que le cookie parte sur le XHR
+    # /auth/refresh. Path restreint aux routes auth pour limiter la surface.
+    REFRESH_COOKIE_NAME: str = "refresh_token"
+    REFRESH_COOKIE_PATH: str = "/api/v1/auth"
+    COOKIE_SECURE: bool = True
+    COOKIE_SAMESITE: str = "none"
+    COOKIE_DOMAIN: str | None = None
 
     MFA_TOTP_ENCRYPTION_KEY: str = ""
     MFA_TOKEN_EXPIRE_MINUTES: int = 5
