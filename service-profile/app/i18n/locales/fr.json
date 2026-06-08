@@ -110,5 +110,15 @@
     "moderate_obesity": "Obésité modérée",
     "severe_obesity": "Obésité sévère",
     "morbid_obesity": "Obésité morbide"
+  },
+  "objective_explanation": {
+    "goal": "Votre objectif est : {goal}.",
+    "energy": "Votre métabolisme de base est estimé à {bmr} kcal/jour ; avec votre niveau d'activité (PAL {pal}), votre dépense énergétique totale (maintenance) s'élève à {tdee} kcal/jour.",
+    "target_deficit": "Pour atteindre cet objectif, un déficit de {pct} % est appliqué : votre cible énergétique est de {target} kcal/jour, soit en dessous de votre maintenance de {tdee} kcal.",
+    "target_surplus": "Pour atteindre cet objectif, un surplus de {pct} % est appliqué : votre cible énergétique est de {target} kcal/jour, soit au-dessus de votre maintenance de {tdee} kcal.",
+    "target_maintenance": "Votre cible énergétique correspond à votre maintenance, soit {target} kcal/jour.",
+    "target_floored": "Un plancher de sécurité a été appliqué : votre cible ne descend pas sous {target} kcal/jour pour préserver votre métabolisme.",
+    "macros": "La répartition quotidienne visée est de {proteins_g} g de protéines, {carbs_g} g de glucides et {fats_g} g de lipides.",
+    "bmi": "Votre IMC est de {bmi} ({bmi_category}), pour une fourchette de poids idéal de {ideal_min} à {ideal_max} kg."
   }
 }
