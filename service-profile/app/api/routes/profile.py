@@ -79,7 +79,10 @@ async def calculate_my_profile(
     user_id: uuid.UUID = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_session),
 ) -> CalculationResponse:
-    """Calcule IMC, MB, TDEE, poids idéal et macros pour le profil authentifié."""
+    """Calcule IMC, MB, TDEE, poids idéal, cible énergétique, macros et explication.
+
+    L'explication textuelle (déterministe, i18n) est localisée selon la requête.
+    """
     locale = get_locale(request)
     profile_repo = ProfileRepository(session)
     pref_repo = PreferencesRepository(session)

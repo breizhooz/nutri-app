@@ -111,3 +111,149 @@ class TestCalculationService:
         assert result.bmr_kcal > 1800
         assert result.tdee_kcal > result.bmr_kcal
         assert result.macros is None
+        # Sans objectif : pas de cible ni d'ajustement.
+        assert result.target_calories_kcal is None
+        assert result.energy_adjustment_pct == 0
+        # Explication présente même sans objectif (énergie + IMC), sans phrase macros.
+        assert result.explanation
+        assert str(result.tdee_kcal) in result.explanation
+
+    @pytest.mark.unit
+    def test_target_calories_weight_loss_deficit(self, svc: CalculationService) -> None:
+        """Perte de poids : −20 % du TDEE, au-dessus du plancher."""
+        target, pct, floored = svc.compute_target_calories(
+            2500, 1500, MainGoal.WEIGHT_LOSS
+        )
+        assert pct == -20
+        assert target == 2000
+        assert floored is False
+
+    @pytest.mark.unit
+    def test_target_calories_muscle_gain_surplus(self, svc: CalculationService) -> None:
+        """Prise de masse : +12 % du TDEE."""
+        target, pct, floored = svc.compute_target_calories(
+            2500, 1500, MainGoal.MUSCLE_GAIN
+        )
+        assert pct == 12
+        assert target == round(2500 * 1.12)
+        assert floored is False
+
+    @pytest.mark.unit
+    def test_target_calories_maintenance_unchanged(
+        self, svc: CalculationService
+    ) -> None:
+        """Maintien : cible = TDEE, ajustement nul."""
+        target, pct, floored = svc.compute_target_calories(
+            2500, 1500, MainGoal.MAINTENANCE
+        )
+        assert pct == 0
+        assert target == 2500
+        assert floored is False
+
+    @pytest.mark.unit
+    def test_target_calories_safety_floor(self, svc: CalculationService) -> None:
+        """Déficit qui passerait sous BMR+100 → plancher appliqué, pct nominal conservé."""
+        target, pct, floored = svc.compute_target_calories(
+            1800, 1700, MainGoal.WEIGHT_LOSS
+        )
+        assert floored is True
+        assert target == 1800  # plancher = bmr + 100
+        assert pct == -20
+
+    @pytest.mark.unit
+    def test_calculate_applies_deficit_for_weight_loss(
+        self, svc: CalculationService
+    ) -> None:
+        """calculate() applique le déficit et répartit les macros sur la cible."""
+        from decimal import Decimal
+        from types import SimpleNamespace
+        import uuid
+
+        profile = Profile(
+            id=uuid.uuid4(),
+            user_id=uuid.uuid4(),
+            slug="test",
+            date_of_birth=date(1992, 3, 15),
+            biological_sex=BiologicalSex.MALE,
+            height_cm=Decimal("181.0"),
+            weight_kg=Decimal("88.5"),
+        )
+        nutrition = SimpleNamespace(main_goal=MainGoal.WEIGHT_LOSS)
+        result = svc.calculate(profile, None, None, nutrition)  # type: ignore[arg-type]
+
+        assert result.energy_adjustment_pct == -20
+        assert result.target_calories_kcal is not None
+        assert result.target_calories_kcal < result.tdee_kcal
+        # Macros réparties sur la cible (et non la maintenance).
+        assert result.macros is not None
+        assert result.macros.tdee_kcal == result.target_calories_kcal
+        assert "déficit" in result.explanation
+
+    @pytest.mark.unit
+    def test_objective_explanation_with_goal_and_macros(
+        self, svc: CalculationService
+    ) -> None:
+        """Avec un objectif, l'explication cite l'objectif, les macros et l'IMC."""
+        macros = svc.compute_macros(2500, MainGoal.MUSCLE_GAIN)
+        text = svc.build_objective_explanation(
+            bmr_kcal=1800,
+            pal=1.55,
+            tdee_kcal=2500,
+            bmi=27.0,
+            bmi_category="Surpoids",
+            ideal_min=68.0,
+            ideal_max=83.0,
+            macros=macros,
+            goal=MainGoal.MUSCLE_GAIN,
+            locale="fr",
+        )
+        assert "Prise de masse musculaire" in text
+        assert "2500" in text
+        assert f"{macros.proteins_g} g de protéines" in text
+        assert "Surpoids" in text
+        # Pas de clé i18n brute (placeholders correctement résolus).
+        assert "objective_explanation" not in text
+        assert "{" not in text
+
+    @pytest.mark.unit
+    def test_objective_explanation_without_goal_omits_goal_and_macros(
+        self, svc: CalculationService
+    ) -> None:
+        """Sans objectif : ni phrase d'objectif, ni phrase de macros, mais énergie + IMC."""
+        text = svc.build_objective_explanation(
+            bmr_kcal=1800,
+            pal=1.2,
+            tdee_kcal=2160,
+            bmi=22.0,
+            bmi_category="Poids normal",
+            ideal_min=60.0,
+            ideal_max=74.0,
+            macros=None,
+            goal=None,
+            locale="fr",
+        )
+        assert "Votre objectif est" not in text
+        assert "protéines" not in text
+        assert "2160" in text
+        assert "Poids normal" in text
+
+    @pytest.mark.unit
+    def test_objective_explanation_english_locale(
+        self, svc: CalculationService
+    ) -> None:
+        """En locale 'en', l'explication est en anglais."""
+        text = svc.build_objective_explanation(
+            bmr_kcal=1800,
+            pal=1.55,
+            tdee_kcal=2500,
+            bmi=27.0,
+            bmi_category="Overweight",
+            ideal_min=68.0,
+            ideal_max=83.0,
+            macros=None,
+            goal=MainGoal.WEIGHT_LOSS,
+            locale="en",
+        )
+        assert "Your goal is" in text
+        assert "Weight loss" in text
+        assert "kcal/day" in text

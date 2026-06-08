@@ -87,5 +87,15 @@
     "moderate_obesity": "Moderate obesity",
     "severe_obesity": "Severe obesity",
     "morbid_obesity": "Morbid obesity"
+  },
+  "objective_explanation": {
+    "goal": "Your goal is: {goal}.",
+    "energy": "Your basal metabolic rate is estimated at {bmr} kcal/day; with your activity level (PAL {pal}), your total daily energy expenditure (maintenance) reaches {tdee} kcal/day.",
+    "target_deficit": "To reach this goal, a {pct}% deficit is applied: your energy target is {target} kcal/day, below your maintenance of {tdee} kcal.",
+    "target_surplus": "To reach this goal, a {pct}% surplus is applied: your energy target is {target} kcal/day, above your maintenance of {tdee} kcal.",
+    "target_maintenance": "Your energy target matches your maintenance, i.e. {target} kcal/day.",
+    "target_floored": "A safety floor was applied: your target does not go below {target} kcal/day to protect your metabolism.",
+    "macros": "The targeted daily split is {proteins_g} g of protein, {carbs_g} g of carbs and {fats_g} g of fat.",
+    "bmi": "Your BMI is {bmi} ({bmi_category}), for an ideal weight range of {ideal_min} to {ideal_max} kg."
   }
 }
