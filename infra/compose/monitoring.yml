@@ -43,13 +43,6 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.enable-lifecycle'
       - '--storage.tsdb.retention.time=15d'
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
-      - "traefik.http.routers.prometheus.rule=Host(`prometheus.localhost`)"
-      - "traefik.http.routers.prometheus.entrypoints=websecure"
-      - "traefik.http.routers.prometheus.tls=true"
-      - "traefik.http.routers.prometheus.service=prometheus"
     networks:
       - nutriplanner
     restart: unless-stopped
@@ -65,13 +58,6 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
       - ../monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
-      - "traefik.http.routers.grafana.rule=Host(`grafana.localhost`)"
-      - "traefik.http.routers.grafana.entrypoints=websecure"
-      - "traefik.http.routers.grafana.tls=true"
-      - "traefik.http.routers.grafana.service=grafana"
     depends_on:
       - prometheus
     networks:
@@ -89,13 +75,6 @@ services:
     volumes:
       - ../monitoring/loki:/etc/loki:ro
       - loki-data:/loki
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.loki.loadbalancer.server.port=3100"
-      - "traefik.http.routers.loki.rule=Host(`loki.localhost`)"
-      - "traefik.http.routers.loki.entrypoints=websecure"
-      - "traefik.http.routers.loki.tls=true"
-      - "traefik.http.routers.loki.service=loki"
     networks:
       - nutriplanner
     restart: unless-stopped
@@ -129,13 +108,6 @@ services:
     ports:
       - "4317:4317"
       - "4318:4318"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.tempo.loadbalancer.server.port=3200"
-      - "traefik.http.routers.tempo.rule=Host(`tempo.localhost`)"
-      - "traefik.http.routers.tempo.entrypoints=websecure"
-      - "traefik.http.routers.tempo.tls=true"
-      - "traefik.http.routers.tempo.service=tempo"
     networks:
       - nutriplanner
     restart: unless-stopped

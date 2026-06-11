@@ -13,17 +13,12 @@ services:
     ports:
       - "80:80"
       - "127.0.0.1:443:443"   # HTTPS dev (loopback, cf. SEC-01)
+    # Plus de montage docker.sock : le routage vit dans ../traefik/dynamic/routers.yml
+    # (file provider), le provider docker est désactivé (phase 4 infra).
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ../traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ../traefik/dynamic:/etc/traefik/dynamic:ro
       - ../traefik/certs:/etc/traefik/certs:ro   # certs mkcert (*.localhost)
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.traefik-dash.rule=Host(`traefik.localhost`)"
-      - "traefik.http.routers.traefik-dash.entrypoints=websecure"
-      - "traefik.http.routers.traefik-dash.tls=true"
-      - "traefik.http.routers.traefik-dash.service=api@internal"
     networks:
       - nutriplanner
     restart: unless-stopped
@@ -40,13 +35,6 @@ services:
     depends_on:
       service-user:
         condition: service_healthy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.portal.loadbalancer.server.port=80"
-      - "traefik.http.routers.portal.rule=Host(`api.localhost`)"
-      - "traefik.http.routers.portal.entrypoints=websecure"
-      - "traefik.http.routers.portal.tls=true"
-      - "traefik.http.routers.portal.service=portal"
     networks:
       - nutriplanner
     restart: unless-stopped

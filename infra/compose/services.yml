@@ -39,14 +39,6 @@ services:
       - ../env/platform.env
       - ../env/services/user.env
       - ../env/secrets/user.secrets.env
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.svc-user.loadbalancer.server.port=8000"
-      - "traefik.http.routers.svc-user.rule=Host(`api-users.localhost`)"
-      - "traefik.http.routers.svc-user.entrypoints=websecure"
-      - "traefik.http.routers.svc-user.tls=true"
-      - "traefik.http.routers.svc-user.service=svc-user"
-      - "traefik.http.routers.svc-user.middlewares=cors@file"
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,14 +67,6 @@ services:
       - ../env/platform.env
       - ../env/services/recipe.env
       - ../env/secrets/recipe.secrets.env
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.svc-recipe.loadbalancer.server.port=8000"
-      - "traefik.http.routers.svc-recipe.rule=Host(`api-recipe.localhost`)"
-      - "traefik.http.routers.svc-recipe.entrypoints=websecure"
-      - "traefik.http.routers.svc-recipe.tls=true"
-      - "traefik.http.routers.svc-recipe.service=svc-recipe"
-      - "traefik.http.routers.svc-recipe.middlewares=cors@file"
     depends_on:
       postgres:
         condition: service_healthy
@@ -114,14 +98,6 @@ services:
       - ../env/platform.env
       - ../env/services/menu.env
       - ../env/secrets/menu.secrets.env
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.svc-menu.loadbalancer.server.port=8000"
-      - "traefik.http.routers.svc-menu.rule=Host(`api-menu.localhost`)"
-      - "traefik.http.routers.svc-menu.entrypoints=websecure"
-      - "traefik.http.routers.svc-menu.tls=true"
-      - "traefik.http.routers.svc-menu.service=svc-menu"
-      - "traefik.http.routers.svc-menu.middlewares=cors@file"
     depends_on:
       postgres:
         condition: service_healthy
@@ -152,14 +128,6 @@ services:
       - ../env/platform.env
       - ../env/services/crawler.env
       - ../env/secrets/crawler.secrets.env
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.svc-crawler.loadbalancer.server.port=8000"
-      - "traefik.http.routers.svc-crawler.rule=Host(`api-crawler.localhost`)"
-      - "traefik.http.routers.svc-crawler.entrypoints=websecure"
-      - "traefik.http.routers.svc-crawler.tls=true"
-      - "traefik.http.routers.svc-crawler.service=svc-crawler"
-      - "traefik.http.routers.svc-crawler.middlewares=cors@file"
     depends_on:
       postgres:
         condition: service_healthy
@@ -185,14 +153,6 @@ services:
       - ../env/platform.env
       - ../env/services/notification.env
       - ../env/secrets/notification.secrets.env
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.svc-notif.loadbalancer.server.port=8000"
-      - "traefik.http.routers.svc-notif.rule=Host(`api-notification.localhost`)"
-      - "traefik.http.routers.svc-notif.entrypoints=websecure"
-      - "traefik.http.routers.svc-notif.tls=true"
-      - "traefik.http.routers.svc-notif.service=svc-notif"
-      - "traefik.http.routers.svc-notif.middlewares=cors@file"
     depends_on:
       postgres:
         condition: service_healthy
@@ -222,14 +182,6 @@ services:
       - ../env/platform.env
       - ../env/services/nutrition.env
       - ../env/secrets/nutrition.secrets.env
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.svc-nutrition.loadbalancer.server.port=8000"
-      - "traefik.http.routers.svc-nutrition.rule=Host(`api-nutrition.localhost`)"
-      - "traefik.http.routers.svc-nutrition.entrypoints=websecure"
-      - "traefik.http.routers.svc-nutrition.tls=true"
-      - "traefik.http.routers.svc-nutrition.service=svc-nutrition"
-      - "traefik.http.routers.svc-nutrition.middlewares=cors@file"
     depends_on:
       postgres:
         condition: service_healthy
@@ -261,14 +213,6 @@ services:
       - ../env/platform.env
       - ../env/services/profile.env
       - ../env/secrets/profile.secrets.env
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.svc-profile.loadbalancer.server.port=8000"
-      - "traefik.http.routers.svc-profile.rule=Host(`api-profile.localhost`)"
-      - "traefik.http.routers.svc-profile.entrypoints=websecure"
-      - "traefik.http.routers.svc-profile.tls=true"
-      - "traefik.http.routers.svc-profile.service=svc-profile"
-      - "traefik.http.routers.svc-profile.middlewares=cors@file"
     depends_on:
       postgres:
         condition: service_healthy
