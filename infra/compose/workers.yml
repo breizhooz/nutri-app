@@ -24,8 +24,9 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
     env_file:
-      - ../../.env
-      - ../../service-recipe/conf/.env
+      - ../env/platform.env
+      - ../env/services/recipe.env
+      - ../env/secrets/recipe.secrets.env
     volumes:
       - ../../service-recipe:/app
     mem_limit: 1g
@@ -52,8 +53,9 @@ services:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres:5432/${POSTGRES_CRAWLER_DB}
       - CELERY_BROKER_URL=redis://redis:6379/0
     env_file:
-      - ../../.env
-      - ../../service-crawler/conf/.env
+      - ../env/platform.env
+      - ../env/services/crawler.env
+      - ../env/secrets/crawler.secrets.env
     volumes:
       - ../../service-crawler:/app
     mem_limit: 128m
@@ -82,8 +84,9 @@ services:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres:5432/${POSTGRES_CRAWLER_DB}
       - CELERY_BROKER_URL=redis://redis:6379/0
     env_file:
-      - ../../.env
-      - ../../service-crawler/conf/.env
+      - ../env/platform.env
+      - ../env/services/crawler.env
+      - ../env/secrets/crawler.secrets.env
     volumes:
       - ../../service-crawler:/app
       - instagram-session:/data
@@ -109,8 +112,9 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
     env_file:
-      - ../../.env
-      - ../../service-nutrition/conf/.env
+      - ../env/platform.env
+      - ../env/services/nutrition.env
+      - ../env/secrets/nutrition.secrets.env
     mem_limit: 128m
     depends_on:
       redis:
@@ -134,8 +138,9 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
     env_file:
-      - ../../.env
-      - ../../service-nutrition/conf/.env
+      - ../env/platform.env
+      - ../env/services/nutrition.env
+      - ../env/secrets/nutrition.secrets.env
     mem_limit: 1g
     depends_on:
       redis:
@@ -160,8 +165,9 @@ services:
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
     env_file:
-      - ../../.env
-      - ../../service-nutrition/conf/.env
+      - ../env/platform.env
+      - ../env/services/nutrition.env
+      - ../env/secrets/nutrition.secrets.env
     # SEC-01/02 : loopback uniquement, en complément de l'auth basique ci-dessus.
     ports:
       - "127.0.0.1:5555:5555"

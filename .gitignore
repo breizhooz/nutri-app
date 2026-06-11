@@ -1,7 +1,9 @@
 #  Environnements virtuels
 .venv/
 venv/
-env/
+# venvs nommés env/ : pattern scopé, un `env/` nu avalerait infra/env/ (conf committée)
+/env/
+service-*/env/
 
 #  Python
 __pycache__/
@@ -31,6 +33,9 @@ coverage.xml
 !.env.example
 !.env.*.example
 .secrets
+# Secrets stratifiés (phase 2 infra) — seul le README est committé
+infra/env/secrets/*
+!infra/env/secrets/README.md
 #  Dumps Postgres (données + hash de mots de passe) — jamais versionnés
 infra/postgres/dump/
 #  Docker (optionnel si tu en as)

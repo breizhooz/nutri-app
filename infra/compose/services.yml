@@ -36,8 +36,9 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER_USER}:${POSTGRES_USER_PASSWORD}@postgres:5432/${POSTGRES_USER_DB}
     env_file:
-      - ../../.env
-      - ../../service-user/conf/.env
+      - ../env/platform.env
+      - ../env/services/user.env
+      - ../env/secrets/user.secrets.env
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.svc-user.loadbalancer.server.port=8000"
@@ -71,8 +72,9 @@ services:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
     env_file:
-      - ../../.env
-      - ../../service-recipe/conf/.env
+      - ../env/platform.env
+      - ../env/services/recipe.env
+      - ../env/secrets/recipe.secrets.env
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.svc-recipe.loadbalancer.server.port=8000"
@@ -109,8 +111,9 @@ services:
       - SERVICE_USER_URL=http://service-user:8000
       - SERVICE_RECIPE_URL=http://service-recipe:8000
     env_file:
-      - ../../.env
-      - ../../service-menu/conf/.env
+      - ../env/platform.env
+      - ../env/services/menu.env
+      - ../env/secrets/menu.secrets.env
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.svc-menu.loadbalancer.server.port=8000"
@@ -146,8 +149,9 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres:5432/${POSTGRES_CRAWLER_DB}
     env_file:
-      - ../../.env
-      - ../../service-crawler/conf/.env
+      - ../env/platform.env
+      - ../env/services/crawler.env
+      - ../env/secrets/crawler.secrets.env
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.svc-crawler.loadbalancer.server.port=8000"
@@ -178,8 +182,9 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NOTIFICATION_USER}:${POSTGRES_NOTIFICATION_PASSWORD}@postgres:5432/${POSTGRES_NOTIFICATION_DB}
     env_file:
-      - ../../.env
-      - ../../service-notification/conf/.env
+      - ../env/platform.env
+      - ../env/services/notification.env
+      - ../env/secrets/notification.secrets.env
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.svc-notif.loadbalancer.server.port=8000"
@@ -214,8 +219,9 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
       - SERVICE_NOTIFICATION_URL=http://service-notification:8000
     env_file:
-      - ../../.env
-      - ../../service-nutrition/conf/.env
+      - ../env/platform.env
+      - ../env/services/nutrition.env
+      - ../env/secrets/nutrition.secrets.env
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.svc-nutrition.loadbalancer.server.port=8000"
@@ -252,8 +258,9 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_PROFILE_USER}:${POSTGRES_PROFILE_PASSWORD}@postgres:5432/${POSTGRES_PROFILE_DB}
     env_file:
-      - ../../.env
-      - ../../service-profile/conf/.env
+      - ../env/platform.env
+      - ../env/services/profile.env
+      - ../env/secrets/profile.secrets.env
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.svc-profile.loadbalancer.server.port=8000"
