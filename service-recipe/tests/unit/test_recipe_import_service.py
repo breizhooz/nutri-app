@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -10,6 +10,20 @@ from app.schemas.recipe_import import (
 from app.services.recipe_import_service import RecipeImportService
 
 
+@pytest.fixture(autouse=True)
+def _mock_user_client():
+    """Multicomptes : l'import résout account_id via service-user. On le stub."""
+    client = AsyncMock()
+    client.default_account = AsyncMock(return_value="acc-1")
+    cm = MagicMock()
+    cm.__aenter__ = AsyncMock(return_value=client)
+    cm.__aexit__ = AsyncMock(return_value=False)
+    with patch(
+        "app.services.recipe_import_service.ServicesUserClient", return_value=cm
+    ):
+        yield
+
+
 def _make_repo(upserted: int = 0) -> AsyncMock:
     repo = AsyncMock()
     repo.upsert_ingredients.return_value = upserted
@@ -19,7 +33,7 @@ def _make_repo(upserted: int = 0) -> AsyncMock:
 def _make_recipe_service() -> AsyncMock:
     service = AsyncMock()
 
-    def _create_full(item, user_id):
+    def _create_full(item, user_id, account_id):
         recipe = MagicMock()
         recipe.slug = item.title.lower().replace(" ", "-")
         return recipe
@@ -67,8 +81,9 @@ class TestImportPayload:
 
     async def test_forwards_user_id(self, service, recipe_service):
         await service.import_payload(_payload(created_by_user_id="user-42"))
-        _, user_id = recipe_service.create_full.call_args[0]
+        _, user_id, account_id = recipe_service.create_full.call_args[0]
         assert user_id == "user-42"
+        assert account_id == "acc-1"
 
     async def test_report_aggregates_counts(self, repo, recipe_service):
         repo.upsert_ingredients.return_value = 3

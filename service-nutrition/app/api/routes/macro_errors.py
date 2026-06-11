@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import get_current_user_id
+from app.core.deps import get_read_account_id, get_write_account_id
 from app.db.session import get_session
 from app.i18n.loader import t
 from app.models.enums.enums import MacroErrorStatus
@@ -17,22 +17,14 @@ router = APIRouter()
 async def list_macro_errors(
     user_slug: str,
     session: AsyncSession = Depends(get_session),
-    current_user_id: uuid.UUID = Depends(get_current_user_id),
+    account_id: uuid.UUID = Depends(get_read_account_id),
 ) -> list[MacroErrorResponse]:
-    """Liste les erreurs de résolution d'ingrédients du user."""
-    try:
-        user_id = uuid.UUID(user_slug)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=t.get("errors.invalid_payload"),
-        )
-    if user_id != current_user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=t.get("errors.forbidden"),
-        )
-    return await MacroErrorRepository(session).get_by_user_id(user_id)
+    """Liste les erreurs de résolution d'ingrédients du compte actif.
+
+    Multicomptes : bornée par account_id (le user_slug du chemin est conservé
+    pour la compat d'API mais le filtre d'accès est le compte actif).
+    """
+    return await MacroErrorRepository(session).get_by_account_id(account_id)
 
 
 @router.patch("/macro-errors/{slug}", response_model=MacroErrorResponse)
@@ -40,7 +32,7 @@ async def patch_macro_error(
     slug: str,
     data: MacroErrorPatch,
     session: AsyncSession = Depends(get_session),
-    current_user_id: uuid.UUID = Depends(get_current_user_id),
+    account_id: uuid.UUID = Depends(get_write_account_id),
 ) -> MacroErrorResponse:
     """Corrige un ingrédient non résolu (nom ou macros manuelles)."""
     repo = MacroErrorRepository(session)
@@ -51,7 +43,7 @@ async def patch_macro_error(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=t.get("macro_error.not_found"),
         )
-    if error.user_id != current_user_id:
+    if error.account_id != account_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=t.get("errors.forbidden"),

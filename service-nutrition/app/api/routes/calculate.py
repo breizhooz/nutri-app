@@ -28,6 +28,7 @@ async def calculate_macros(
     """Calcule les macros d'une recette (appel inter-service)."""
     try:
         user_id = uuid.UUID(payload.user_id)
+        account_id = uuid.UUID(payload.account_id) if payload.account_id else None
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -43,6 +44,7 @@ async def calculate_macros(
     result = await ExtractionService(session).process(
         raw_texts=[ing.raw_text for ing in payload.ingredients],
         user_id=user_id,
+        account_id=account_id,
     )
 
     ingredient_macros = [

@@ -108,6 +108,15 @@ class Recipe(AbstractModel):
 
     # metadata
     created_by_user_id: Mapped[str | None] = mapped_column(String(36))
+    # Multicomptes (CRM) : clé de partition (act_account du JWT). Filtre d'accès =
+    # account_id ; created_by_user_id reste = auteur/legacy. Backfill cross-DB
+    # depuis les memberships OWNER de service-user.
+    account_id: Mapped[str | None] = mapped_column(String(36), index=True)
+    # Coaching (docs/coaching_model.md) : si cette recette est une copie poussée
+    # par un coach dans le compte d'un client, id de la recette source (dans le
+    # compte du coach). Sert de provenance + garde anti-doublon. Copie one-shot,
+    # pas de resynchronisation avec la source.
+    source_recipe_id: Mapped[int | None] = mapped_column(Integer, index=True)
     created_at: Mapped[datetime] = mapped_column(default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         default=func.now(), onupdate=func.now()

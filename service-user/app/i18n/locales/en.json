@@ -41,5 +41,22 @@
   },
   "validation": {
     "password_too_short": "Password must be at least 8 characters long"
+  },
+  "accounts": {
+    "not_member": "You do not have access to this account",
+    "manage_forbidden": "Member management is restricted to managers of this account",
+    "rank_too_high": "You cannot grant or change a role higher than your own",
+    "last_owner": "Cannot proceed: this is the account's last OWNER",
+    "membership_not_found": "Member not found on this account",
+    "already_member": "This identity is already a member of the account",
+    "invitation_invalid": "Invalid or expired invitation",
+    "invitation_email_mismatch": "This invitation does not match your email address",
+    "invitation_not_found": "Invitation not found",
+    "coach_already_assigned": "This account already has an active coach; revoke them before adding another",
+    "cannot_coach_self": "You cannot become your own coach",
+    "no_client_account": "This client account could not be found to attach the coach",
+    "coach_capability_required": "Only a coach (enabled by an administrator) can create a coaching link",
+    "not_owner": "Action restricted to the owner of this account",
+    "nothing_to_update": "No change provided"
   }
 }

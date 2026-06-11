@@ -2,8 +2,14 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
+from nutri_shared.core.context import AccessContext
+
 from app.db.session import get_session
-from app.core.deps import get_current_user_id
+from app.core.deps import (
+    get_read_account_id,
+    get_write_account_id,
+    get_write_context,
+)
 from app.core.http_client import (
     ServicesRecipeClient,
     get_recipe_client,
@@ -25,10 +31,10 @@ router = APIRouter()
 async def create_menu(
     menu_data: WeeklyMenuCreate,
     session: AsyncSession = Depends(get_session),
-    current_user_id: str = Depends(get_current_user_id),
+    ctx: AccessContext = Depends(get_write_context),
 ):
     return await menu_service.create_menu(
-        session, menu_data=menu_data, user_id=current_user_id
+        session, menu_data=menu_data, user_id=ctx.sub, account_id=ctx.account_id
     )
 
 
@@ -40,7 +46,7 @@ async def generate_menu(
     request: Request,
     session: AsyncSession = Depends(get_session),
     recipe_client: ServicesRecipeClient = Depends(get_recipe_client),
-    current_user_id: str = Depends(get_current_user_id),
+    ctx: AccessContext = Depends(get_write_context),
 ):
     try:
         menu_data.slots = await generate_slots(
@@ -55,8 +61,8 @@ async def generate_menu(
     except ValueError:
         raise LocalizedHTTPException.no_recipes_available(request)
 
-    existing = await menu_service.get_menu_by_user_and_date(
-        session, current_user_id, menu_data.start_date
+    existing = await menu_service.get_menu_by_account_and_date(
+        session, ctx.account_id, menu_data.start_date
     )
     if existing:
         return await menu_service.update_menu(
@@ -69,7 +75,9 @@ async def generate_menu(
             ),
         )
 
-    return await menu_service.create_menu(session, menu_data, current_user_id)
+    return await menu_service.create_menu(
+        session, menu_data, user_id=ctx.sub, account_id=ctx.account_id
+    )
 
 
 @router.get("", response_model=list[WeeklyMenuResponse])
@@ -77,9 +85,9 @@ async def list_menus(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
     session: AsyncSession = Depends(get_session),
-    current_user_id: str = Depends(get_current_user_id),
+    account_id: str = Depends(get_read_account_id),
 ):
-    return await menu_service.get_menu_by_user(session, current_user_id, skip, limit)
+    return await menu_service.get_menu_by_account(session, account_id, skip, limit)
 
 
 @router.get("/{menu_id}", response_model=WeeklyMenuResponse)
@@ -87,12 +95,12 @@ async def get_menu(
     menu_id: int,
     request: Request,
     session: AsyncSession = Depends(get_session),
-    current_user_id: str = Depends(get_current_user_id),
+    account_id: str = Depends(get_read_account_id),
 ):
     menu = await menu_service.get_menu(session, menu_id)
     if not menu:
         raise LocalizedHTTPException.menu_not_found(request)
-    if menu.user_id != current_user_id:
+    if menu.account_id != account_id:
         raise LocalizedHTTPException.menu_unauthorized(request)
     return menu
 
@@ -103,12 +111,12 @@ async def update_menu(
     menu_data: WeeklyMenuUpdate,
     request: Request,
     session: AsyncSession = Depends(get_session),
-    current_user_id: str = Depends(get_current_user_id),
+    account_id: str = Depends(get_write_account_id),
 ):
     menu = await menu_service.get_menu(session, menu_id)
     if not menu:
         raise LocalizedHTTPException.menu_not_found(request)
-    if menu.user_id != current_user_id:
+    if menu.account_id != account_id:
         raise LocalizedHTTPException.menu_unauthorized(request)
     return await menu_service.update_menu(session, menu_id, menu_data)
 
@@ -118,11 +126,11 @@ async def delete_menu(
     menu_id: int,
     request: Request,
     session: AsyncSession = Depends(get_session),
-    current_user_id: str = Depends(get_current_user_id),
+    account_id: str = Depends(get_write_account_id),
 ):
     menu = await menu_service.get_menu(session, menu_id)
     if not menu:
         raise LocalizedHTTPException.menu_not_found(request)
-    if menu.user_id != current_user_id:
+    if menu.account_id != account_id:
         raise LocalizedHTTPException.menu_unauthorized(request)
     await menu_service.delete_menu(session, menu_id)

@@ -49,9 +49,9 @@ class _FakeRecipeService:
     def __init__(self):
         self.calls = []
 
-    async def create_full(self, item, user_id):
-        self.calls.append((item, user_id))
-        return f"recipe::{item.title}::{user_id}"
+    async def create_full(self, item, user_id, account_id):
+        self.calls.append((item, user_id, account_id))
+        return f"recipe::{item.title}::{user_id}::{account_id}"
 
 
 def _recipe(rid: int) -> SpoonacularRecipe:
@@ -148,16 +148,17 @@ class TestAddToPersonalList:
         service = SpoonacularCacheService(repo, client=_FakeClient([]))
         recipe_service = _FakeRecipeService()
 
-        result = await service.add_to_personal_list(7, "user-1", recipe_service)
+        result = await service.add_to_personal_list(7, "user-1", "acc-1", recipe_service)
 
-        assert result == "recipe::Tarte::user-1"
+        assert result == "recipe::Tarte::user-1::acc-1"
         assert len(recipe_service.calls) == 1
-        item, user_id = recipe_service.calls[0]
+        item, user_id, account_id = recipe_service.calls[0]
         assert item.title == "Tarte"
         assert item.servings == 6
         assert user_id == "user-1"
+        assert account_id == "acc-1"
 
     async def test_raises_when_not_in_cache(self):
         service = SpoonacularCacheService(_FakeRepository(), client=_FakeClient([]))
         with pytest.raises(RecipeNotFound):
-            await service.add_to_personal_list(999, "user-1", _FakeRecipeService())
+            await service.add_to_personal_list(999, "user-1", "acc-1", _FakeRecipeService())

@@ -95,6 +95,10 @@ class RecipeResponse(RecipeBase):
     id: int
     created_at: datetime
     updated_at: datetime
+    # Coaching : non-null si la recette est une copie poussée par un gestionnaire
+    # (coach) dans le compte du client → l'UI affiche « Ajouté par votre
+    # gestionnaire ». Cf. docs/coaching_model.md §6.
+    source_recipe_id: Optional[int] = None
     # On expose les ingrédients complets dans la réponse
     recipe_ingredients: List[RecipeIngredientResponse]
 
@@ -125,3 +129,27 @@ class RecipeManualCreate(BaseModel):
     course_type: Optional[CourseType] = None
     free_tags: list[str] = []
     ingredients: list[ManualIngredient] = []
+
+
+class RecipePushRequest(BaseModel):
+    """Coach → client : recettes à copier dans le compte du client."""
+
+    recipe_ids: list[int] = Field(..., min_length=1)
+    target_account_id: str
+
+
+class RecipePushResult(BaseModel):
+    """Résultat d'un push : slugs créés + ids source déjà présents (ignorés)."""
+
+    pushed: list[str] = []
+    skipped: list[int] = []
+
+
+class RecipeLibraryItem(BaseModel):
+    """Entrée légère de la bibliothèque d'un compte (vue coach : éviter doublons)."""
+
+    id: int
+    title: str
+    slug: str
+    image_url: Optional[str] = None
+    source_recipe_id: Optional[int] = None

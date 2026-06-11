@@ -52,6 +52,7 @@ class NutritionServiceClient:
         servings: int,
         user_id: str,
         ingredients: list[dict],
+        account_id: str | None = None,
     ) -> NutritionResult | None:
         if not settings.SERVICE_NUTRITION_URL:
             return None
@@ -62,6 +63,9 @@ class NutritionServiceClient:
             "recipe_slug": recipe_slug,
             "servings": servings,
             "user_id": user_id,
+            # Multicomptes : permet à service-nutrition de tagger les macro_errors
+            # par compte (frontière). None tant que l'appelant n'est pas account-aware.
+            "account_id": account_id,
             "ingredients": [{"raw_text": t} for t in raw_texts],
         }
         try:
@@ -160,6 +164,50 @@ class ServicesUserClient:
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
                 return False
+            raise ServiceUnavailableError(
+                f"service-user responded {e.response.status_code}"
+            ) from e
+        except httpx.HTTPError as e:
+            raise ServiceUnavailableError(f"service-user unavailable: {e}") from e
+
+    async def default_account(self, user_id: str) -> str | None:
+        """Résout le compte personnel (default_account_id) d'une identité.
+
+        Utilisé par les flux pilotés par token de service (crawler/import) pour
+        attribuer la recette créée au bon compte. ``None`` si inconnu.
+        """
+        try:
+            response = await self._client.get(
+                f"/api/v1/users/{user_id}/default-account"
+            )
+            response.raise_for_status()
+            return response.json().get("account_id")
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                return None
+            raise ServiceUnavailableError(
+                f"service-user responded {e.response.status_code}"
+            ) from e
+        except httpx.HTTPError as e:
+            raise ServiceUnavailableError(f"service-user unavailable: {e}") from e
+
+    async def access_scopes(self, identity_id: str, account_id: str) -> list[str]:
+        """Scopes effectifs d'une identité sur un compte (coaching : push).
+
+        Permet à service-recipe de vérifier qu'un coach a bien ``recipe:write``
+        sur le compte d'un client (qui n'est pas son compte actif). Liste vide si
+        aucune adhésion active.
+        """
+        try:
+            response = await self._client.get(
+                f"/api/v1/accounts/{account_id}/access/{identity_id}"
+            )
+            response.raise_for_status()
+            scopes = response.json().get("scopes", [])
+            return [s for s in scopes if isinstance(s, str)]
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                return []
             raise ServiceUnavailableError(
                 f"service-user responded {e.response.status_code}"
             ) from e

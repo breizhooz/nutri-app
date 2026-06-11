@@ -15,13 +15,14 @@ os.environ.setdefault("ELASTICSEARCH_URL", "http://es-test:9200")
 os.environ.setdefault("ELASTICSEARCH_INDEX_RECIPES", "recipes-test")
 
 TEST_USER_ID = "test-user-uuid-5678"
+TEST_ACCOUNT_ID = "test-account-uuid-5678"
 
 
 @pytest.fixture
 async def client():
     from app.main import app
     from app.db.session import get_session
-    from app.core.deps import get_current_user_id
+    from app.core.deps import get_read_account_id
     from app.core.http_client import get_recipe_client
 
     session = AsyncMock()
@@ -30,14 +31,11 @@ async def client():
     async def _override_session():
         yield session
 
-    async def _override_user_id():
-        return TEST_USER_ID
-
     async def _override_recipe_client():
         return recipe_client
 
     app.dependency_overrides[get_session] = _override_session
-    app.dependency_overrides[get_current_user_id] = _override_user_id
+    app.dependency_overrides[get_read_account_id] = lambda: TEST_ACCOUNT_ID
     app.dependency_overrides[get_recipe_client] = _override_recipe_client
 
     async with AsyncClient(
@@ -78,7 +76,7 @@ class TestShoppingListRoutes:
     ):
         """GET /shopping-list retourne 403 si le menu appartient à un autre utilisateur."""
         menu = MagicMock()
-        menu.user_id = "other-user-id"
+        menu.account_id = "other-account-id"
         with patch(
             "app.api.routes.shopping_list.get_menu", new=AsyncMock(return_value=menu)
         ):
@@ -89,7 +87,7 @@ class TestShoppingListRoutes:
     async def test_get_shopping_list_returns_200_for_owner(self, client: AsyncClient):
         """GET /shopping-list retourne 200 pour le propriétaire du menu."""
         menu = MagicMock()
-        menu.user_id = TEST_USER_ID
+        menu.account_id = TEST_ACCOUNT_ID
         sl = _make_shopping_list()
         with (
             patch(

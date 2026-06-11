@@ -31,6 +31,7 @@ def _make_recipe(
     r.id = 1
     r.title = "Tarte aux pommes"
     r.created_by_user_id = user_id
+    r.account_id = user_id
     r.recipe_ingredients = []
     r.image_suggestions = suggestions if suggestions is not None else []
     r.image_url = image_url

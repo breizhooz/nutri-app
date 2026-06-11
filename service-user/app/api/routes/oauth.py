@@ -29,8 +29,8 @@ from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth import OAuthBootstrapRequest
 from app.schemas.user import TokenResponse
+from app.services.access_service import AccessService
 from app.services.oauth_service import OAuthService
-from app.services.user_service import UserService
 
 logger: logging.Logger = logging.getLogger(__name__)
 
@@ -223,6 +223,9 @@ async def oauth_callback(
             user = User(email=provider_email, hashed_password=None)
             session.add(user)
             await session.flush()
+            # Multicomptes : tout nouvel inscrit (y compris OAuth) reçoit son
+            # compte personnel + membership OWNER.
+            await AccessService(session).provision_personal_account(user)
 
         oauth_account = OAuthAccount(
             user_id=user.id,
@@ -299,6 +302,7 @@ async def oauth_bootstrap(
         )
 
     set_refresh_cookie(response, create_refresh_token(user_id))
+    claims = await AccessService(session).build_login_claims(user)
     return TokenResponse(
-        access_token=create_access_token(user_id, UserService.build_token_claims(user)),
+        access_token=create_access_token(user_id, claims),
     )

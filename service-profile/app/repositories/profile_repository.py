@@ -27,6 +27,18 @@ class ProfileRepository(BaseRepository):
         )
         return result.scalar_one_or_none()
 
+    async def get_by_account_id(self, account_id: uuid.UUID) -> Profile | None:
+        """Retourne le profil du compte (clé de partition multicomptes), ou None.
+
+        Résolution de dossier des routes ``/me*`` : le JWT de contexte porte
+        ``act_account`` et le dossier est borné par ce compte.
+        """
+        logger.debug("Recherche profile pour account_id=%s", account_id)
+        result = await self._session.execute(
+            select(Profile).where(Profile.account_id == account_id)
+        )
+        return result.scalar_one_or_none()
+
     def add(self, profile: Profile) -> None:
         """Enregistre un nouveau Profile dans la session (sans commit)."""
         self._session.add(profile)

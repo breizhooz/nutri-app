@@ -95,9 +95,10 @@ class SpoonacularCacheService:
         self,
         spoonacular_id: int,
         user_id: str,
+        account_id: str,
         recipe_service: RecipeService,
     ) -> Recipe:
-        """Ajoute une recette du cache à la liste personnelle de ``user_id``.
+        """Ajoute une recette du cache à la liste personnelle du compte actif.
 
         Passe par le « process habituel » (``RecipeService.create_full``) :
         hydratation/création des ingrédients, calcul des macros via
@@ -108,4 +109,4 @@ class SpoonacularCacheService:
         if cached is None:
             raise RecipeNotFound()
         item = spoonacular_to_import_item(cached.payload or {})
-        return await recipe_service.create_full(item, user_id)
+        return await recipe_service.create_full(item, user_id, account_id)

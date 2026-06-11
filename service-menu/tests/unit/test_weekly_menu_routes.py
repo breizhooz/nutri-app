@@ -15,6 +15,7 @@ os.environ.setdefault("ELASTICSEARCH_URL", "http://es-test:9200")
 os.environ.setdefault("ELASTICSEARCH_INDEX_RECIPES", "recipes-test")
 
 TEST_USER_ID = "test-user-uuid-1234"
+TEST_ACCOUNT_ID = "test-account-uuid-1234"
 
 
 def _make_menu_response(menu_id: int = 1, slug: str = "menu-test") -> dict:
@@ -22,6 +23,7 @@ def _make_menu_response(menu_id: int = 1, slug: str = "menu-test") -> dict:
         "id": menu_id,
         "slug": slug,
         "user_id": TEST_USER_ID,
+        "account_id": TEST_ACCOUNT_ID,
         "nb_persons": 2,
         "caloric_target": None,
         "start_date": str(date(2026, 6, 2)),
@@ -37,20 +39,31 @@ def _make_menu_response(menu_id: int = 1, slug: str = "menu-test") -> dict:
 
 @pytest.fixture
 async def client():
+    from nutri_shared.core.context import AccessContext
+
     from app.main import app
     from app.db.session import get_session
-    from app.core.deps import get_current_user_id
+    from app.core.deps import (
+        get_read_account_id,
+        get_write_account_id,
+        get_write_context,
+    )
 
     session = AsyncMock()
 
     async def _override_session():
         yield session
 
-    async def _override_user_id():
-        return TEST_USER_ID
-
     app.dependency_overrides[get_session] = _override_session
-    app.dependency_overrides[get_current_user_id] = _override_user_id
+    app.dependency_overrides[get_read_account_id] = lambda: TEST_ACCOUNT_ID
+    app.dependency_overrides[get_write_account_id] = lambda: TEST_ACCOUNT_ID
+    app.dependency_overrides[get_write_context] = lambda: AccessContext(
+        sub=TEST_USER_ID,
+        account_id=TEST_ACCOUNT_ID,
+        scopes=frozenset({"plan:read", "plan:write"}),
+        user_admin=False,
+        capabilities={},
+    )
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
@@ -79,7 +92,7 @@ class TestWeeklyMenuRoutes:
     async def test_list_menus_returns_200(self, client: AsyncClient):
         """GET /weekly-menus retourne 200 avec la liste des menus."""
         with patch(
-            "app.repositories.menu_service.get_menu_by_user",
+            "app.repositories.menu_service.get_menu_by_account",
             new=AsyncMock(return_value=[]),
         ):
             resp = await client.get("/api/v1/menus")
@@ -97,9 +110,9 @@ class TestWeeklyMenuRoutes:
 
     @pytest.mark.unit
     async def test_get_menu_returns_403_for_other_user(self, client: AsyncClient):
-        """GET /weekly-menus/{id} retourne 403 si le menu appartient à un autre utilisateur."""
+        """GET /weekly-menus/{id} retourne 403 si le menu appartient à un autre compte."""
         menu = MagicMock()
-        menu.user_id = "other-user-id"
+        menu.account_id = "other-account-id"
         menu.id = 1
         with patch(
             "app.repositories.menu_service.get_menu", new=AsyncMock(return_value=menu)

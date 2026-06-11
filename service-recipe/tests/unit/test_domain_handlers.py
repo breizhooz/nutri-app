@@ -12,6 +12,7 @@ from httpx import ASGITransport, AsyncClient
 
 from app.api.routes.ingredient import IngredientServiceFactory
 from app.api.routes.recipes import RecipeServiceFactory
+from app.core.deps import get_read_account_id
 from app.core.exceptions import (
     IngredientAlreadyExists,
     IngredientNotFound,
@@ -43,6 +44,7 @@ async def test_recipe_domain_errors_are_localized(exc, expected_status, expected
     service = AsyncMock()
     service.get_by_id.side_effect = exc
     app.dependency_overrides[RecipeServiceFactory.inject] = lambda: service
+    app.dependency_overrides[get_read_account_id] = lambda: "acc-1"
     try:
         status_code, body = await _get("/api/v1/recipe/id/1")
     finally:

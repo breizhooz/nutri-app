@@ -85,7 +85,7 @@ class TestCreateMenu:
             "app.repositories.menu_service._load_with_slots",
             new=AsyncMock(return_value=created_menu),
         ):
-            result = await create_menu(session, menu_data, user_id="user-123")
+            result = await create_menu(session, menu_data, user_id="user-123", account_id="acc-123")
 
         session.add.assert_called()
         session.commit.assert_awaited_once()
@@ -118,7 +118,7 @@ class TestCreateMenu:
             "app.repositories.menu_service._load_with_slots",
             new=AsyncMock(return_value=created_menu),
         ):
-            result = await create_menu(session, menu_data, user_id="user-abc")
+            result = await create_menu(session, menu_data, user_id="user-abc", account_id="acc-abc")
 
         assert result.slug == "my-custom-slug"
 
@@ -147,7 +147,7 @@ class TestCreateMenu:
             "app.repositories.menu_service._load_with_slots",
             new=AsyncMock(return_value=created_menu),
         ):
-            await create_menu(session, menu_data, user_id="user-abc")
+            await create_menu(session, menu_data, user_id="user-abc", account_id="acc-abc")
 
         # 1 SELECT des ids existants + 2 DELETE (slots puis menus)
         assert session.execute.await_count == 3
@@ -189,7 +189,7 @@ class TestGetMenuByUser:
     @pytest.mark.unit
     async def test_get_menu_by_user_returns_list(self):
         """get_menu_by_user retourne la liste des menus de l'utilisateur."""
-        from app.repositories.menu_service import get_menu_by_user
+        from app.repositories.menu_service import get_menu_by_account
 
         menus = [MagicMock(), MagicMock()]
         scalar_result = MagicMock()
@@ -199,13 +199,13 @@ class TestGetMenuByUser:
         session = AsyncMock()
         session.execute = AsyncMock(return_value=scalar_result)
 
-        result = await get_menu_by_user(session, "user-123")
+        result = await get_menu_by_account(session, "acc-123")
         assert result == menus
 
     @pytest.mark.unit
     async def test_get_menu_by_user_empty_list(self):
         """get_menu_by_user retourne une liste vide si aucun menu n'existe."""
-        from app.repositories.menu_service import get_menu_by_user
+        from app.repositories.menu_service import get_menu_by_account
 
         scalar_result = MagicMock()
         scalar_result.scalars = MagicMock(
@@ -214,5 +214,5 @@ class TestGetMenuByUser:
         session = AsyncMock()
         session.execute = AsyncMock(return_value=scalar_result)
 
-        result = await get_menu_by_user(session, "user-unknown")
+        result = await get_menu_by_account(session, "acc-unknown")
         assert result == []

@@ -28,6 +28,27 @@ class RecipeRepository:
         )
         return result.scalar_one_or_none()
 
+    async def list_all_for_account(self, account_id: str) -> list[Recipe]:
+        """Toutes les recettes d'un compte (vue bibliothèque, triées par titre)."""
+        result = await self.session.execute(
+            select(Recipe)
+            .where(Recipe.account_id == account_id)
+            .order_by(Recipe.title)
+        )
+        return list(result.scalars().all())
+
+    async def find_clone(
+        self, account_id: str, source_recipe_id: int
+    ) -> Recipe | None:
+        """Recette déjà poussée d'une source donnée dans un compte (anti-doublon)."""
+        result = await self.session.execute(
+            select(Recipe).where(
+                Recipe.account_id == account_id,
+                Recipe.source_recipe_id == source_recipe_id,
+            )
+        )
+        return result.scalar_one_or_none()
+
     async def get_by_slug_with_relations(self, slug: str) -> Recipe | None:
         result = await self.session.execute(
             select(Recipe)
@@ -45,24 +66,20 @@ class RecipeRepository:
         page: int,
         page_size: int,
         course_type: str | None = None,
-        created_by_user_id: str | None = None,
+        account_id: str | None = None,
     ) -> tuple[list[Recipe], int]:
         """Return (items, total) for a page, optionally filtered.
 
-        ``created_by_user_id`` restricts to a single author (None = all authors).
+        ``account_id`` borne la liste au compte actif (multicomptes).
         """
         base_query = select(Recipe)
         count_query = select(func.count()).select_from(Recipe)
         if course_type:
             base_query = base_query.where(Recipe.course_type == course_type)
             count_query = count_query.where(Recipe.course_type == course_type)
-        if created_by_user_id:
-            base_query = base_query.where(
-                Recipe.created_by_user_id == created_by_user_id
-            )
-            count_query = count_query.where(
-                Recipe.created_by_user_id == created_by_user_id
-            )
+        if account_id:
+            base_query = base_query.where(Recipe.account_id == account_id)
+            count_query = count_query.where(Recipe.account_id == account_id)
 
         total = (await self.session.execute(count_query)).scalar_one()
 

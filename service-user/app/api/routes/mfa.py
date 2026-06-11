@@ -25,9 +25,9 @@ from app.schemas.auth import (
     TotpSetupResponse,
 )
 from app.schemas.user import TokenResponse
+from app.services.access_service import AccessService
 from app.services.crypto_service import CryptoService
 from app.services.totp_service import TotpService
-from app.services.user_service import UserService
 
 router: APIRouter = APIRouter()
 
@@ -125,10 +125,9 @@ async def confirm_totp(
     session.add(current_user)
     await session.commit()
     set_refresh_cookie(response, create_refresh_token(str(current_user.id)))
+    claims = await AccessService(session).build_login_claims(current_user)
     return TokenResponse(
-        access_token=create_access_token(
-            str(current_user.id), UserService.build_token_claims(current_user)
-        ),
+        access_token=create_access_token(str(current_user.id), claims),
     )
 
 
@@ -240,10 +239,9 @@ async def verify_mfa(
         await session.commit()
 
     set_refresh_cookie(response, create_refresh_token(str(user.id)))
+    claims = await AccessService(session).build_login_claims(user)
     return TokenResponse(
-        access_token=create_access_token(
-            str(user.id), UserService.build_token_claims(user)
-        ),
+        access_token=create_access_token(str(user.id), claims),
     )
 
 

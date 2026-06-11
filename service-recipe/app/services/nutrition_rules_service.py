@@ -42,6 +42,7 @@ class NutritionRulesService:
     async def search(
         self,
         user_id: str,
+        account_id: str,
         apply_rules: bool = True,
         aggressiveness: float | None = None,
         variety_pct: float | None = None,
@@ -49,13 +50,18 @@ class NutritionRulesService:
         override_proteines: int | None = None,
         **params,
     ) -> dict:
-        """Recherche personnalisée si les règles du user sont actives, sinon standard."""
+        """Recherche personnalisée si les règles du user sont actives, sinon standard.
+
+        Multicomptes : les recettes sont filtrées par ``account_id`` (compte actif),
+        tandis que les règles/cibles nutritionnelles restent résolues par ``user_id``
+        (dossier via service-profile).
+        """
         if not apply_rules:
-            return await self._search.search_recipes(user_id=user_id, **params)
+            return await self._search.search_recipes(account_id=account_id, **params)
 
         engine_inputs = await self._resolve_engine_inputs(user_id)
         if engine_inputs is None:
-            return await self._search.search_recipes(user_id=user_id, **params)
+            return await self._search.search_recipes(account_id=account_id, **params)
 
         adjustment = self._build_adjustment(
             engine_inputs.pop("_prefs"),
@@ -68,11 +74,11 @@ class NutritionRulesService:
             **engine_inputs, adjustment=adjustment
         )
         if result is None:
-            return await self._search.search_recipes(user_id=user_id, **params)
+            return await self._search.search_recipes(account_id=account_id, **params)
 
         clauses = self._extract_clauses(result.search_query)
         response = await self._search.search_recipes(
-            user_id=user_id,
+            account_id=account_id,
             **params,
             extra_must_not=clauses["must_not"],
             extra_filter=clauses["filter"],

@@ -100,32 +100,32 @@ class TestRecipeServiceCreateManual:
         return RecipeService(repo, search, nutrition_client=nutrition)
 
     async def test_returns_created_recipe(self, service, repo):
-        result = await service.create_manual(_make_data(), user_id="user-1")
+        result = await service.create_manual(_make_data(), user_id="user-1", account_id="acc-user-1")
         assert result is repo.create.return_value
 
     async def test_calls_repository_create(self, service, repo):
-        await service.create_manual(_make_data(), user_id="user-1")
+        await service.create_manual(_make_data(), user_id="user-1", account_id="acc-user-1")
         repo.create.assert_called_once()
 
     async def test_sets_user_id_on_recipe(self, service, repo):
-        await service.create_manual(_make_data(), user_id="user-42")
+        await service.create_manual(_make_data(), user_id="user-42", account_id="acc-user-42")
         recipe_arg = repo.create.call_args[0][0]
         assert recipe_arg.created_by_user_id == "user-42"
 
     async def test_defaults_course_type_to_main_course(self, service, repo):
-        await service.create_manual(_make_data(course_type=None), user_id="u")
+        await service.create_manual(_make_data(course_type=None), user_id="u", account_id="acc-u")
         recipe_arg = repo.create.call_args[0][0]
         assert recipe_arg.course_type == CourseType.MAIN_COURSE
 
     async def test_explicit_course_type_preserved(self, service, repo):
         await service.create_manual(
-            _make_data(course_type=CourseType.DESSERT), user_id="u"
+            _make_data(course_type=CourseType.DESSERT), user_id="u", account_id="acc-u"
         )
         recipe_arg = repo.create.call_args[0][0]
         assert recipe_arg.course_type == CourseType.DESSERT
 
     async def test_sets_defaults_for_enums(self, service, repo):
-        await service.create_manual(_make_data(), user_id="u")
+        await service.create_manual(_make_data(), user_id="u", account_id="acc-u")
         recipe_arg = repo.create.call_args[0][0]
         assert recipe_arg.difficulty == DifficultyLevel.EASY
         assert recipe_arg.cuisine_origin == CuisineOrigin.FRENCH
@@ -138,7 +138,7 @@ class TestRecipeServiceCreateManual:
                 ManualIngredient(name="oeufs", quantity=3.0, unit="unité"),
             ]
         )
-        await service.create_manual(data, user_id="u")
+        await service.create_manual(data, user_id="u", account_id="acc-u")
         assert repo.get_or_create_ingredient.call_count == 2
         calls = [c[0][0] for c in repo.get_or_create_ingredient.call_args_list]
         assert "farine" in calls
@@ -148,7 +148,7 @@ class TestRecipeServiceCreateManual:
         data = _make_data(
             ingredients=[ManualIngredient(name="sel", quantity=1.0, unit="g")]
         )
-        await service.create_manual(data, user_id="u")
+        await service.create_manual(data, user_id="u", account_id="acc-u")
         _, recipe_ingredients = repo.create.call_args[0]
         assert len(recipe_ingredients) == 1
         assert recipe_ingredients[0].unit == "g"
@@ -157,12 +157,12 @@ class TestRecipeServiceCreateManual:
     async def test_indexes_recipe_in_search(self, service, repo, search):
         recipe = _make_recipe()
         repo.create.return_value = recipe
-        await service.create_manual(_make_data(), user_id="u")
+        await service.create_manual(_make_data(), user_id="u", account_id="acc-u")
         search.index_recipe.assert_called_once_with(recipe)
 
     async def test_es_failure_does_not_raise(self, service, repo, search):
         search.index_recipe.side_effect = Exception("ES down")
-        result = await service.create_manual(_make_data(), user_id="u")
+        result = await service.create_manual(_make_data(), user_id="u", account_id="acc-u")
         assert result is not None
 
     async def test_nutrition_called_when_ingredients_present(
@@ -172,7 +172,7 @@ class TestRecipeServiceCreateManual:
         data = _make_data(
             ingredients=[ManualIngredient(name="farine", quantity=200.0, unit="g")]
         )
-        await service.create_manual(data, user_id="u")
+        await service.create_manual(data, user_id="u", account_id="acc-u")
         nutrition.calculate.assert_called_once()
 
     async def test_macros_saved_when_nutrition_returns_result(self, repo, search):
@@ -187,7 +187,7 @@ class TestRecipeServiceCreateManual:
         data = _make_data(
             ingredients=[ManualIngredient(name="farine", quantity=200.0, unit="g")]
         )
-        await service.create_manual(data, user_id="u")
+        await service.create_manual(data, user_id="u", account_id="acc-u")
         repo.update_macros.assert_called_once_with(
             repo.create.return_value.id,
             calories=350.0,
@@ -202,11 +202,11 @@ class TestRecipeServiceCreateManual:
         data = _make_data(
             ingredients=[ManualIngredient(name="farine", quantity=200.0, unit="g")]
         )
-        await service.create_manual(data, user_id="u")
+        await service.create_manual(data, user_id="u", account_id="acc-u")
         repo.update_macros.assert_not_called()
 
     async def test_nutrition_not_called_when_no_ingredients(self, service, nutrition):
-        await service.create_manual(_make_data(ingredients=[]), user_id="u")
+        await service.create_manual(_make_data(ingredients=[]), user_id="u", account_id="acc-u")
         nutrition.calculate.assert_not_called()
 
     async def test_nutrition_failure_does_not_raise(self, repo, search):
@@ -217,7 +217,7 @@ class TestRecipeServiceCreateManual:
             ingredients=[ManualIngredient(name="farine", quantity=200.0, unit="g")]
         )
         with pytest.raises(Exception):
-            await service.create_manual(data, user_id="u")
+            await service.create_manual(data, user_id="u", account_id="acc-u")
 
 
 # ─── create_full ──────────────────────────────────────────────────────────────
@@ -249,7 +249,7 @@ class TestRecipeServiceCreateFull:
                 course_type=CourseType.DESSERT,
                 book_name="Larousse",
             ),
-            user_id="u",
+            user_id="u", account_id="acc-u",
         )
         recipe_arg = repo.create.call_args[0][0]
         assert recipe_arg.difficulty == DifficultyLevel.HARD
@@ -261,14 +261,14 @@ class TestRecipeServiceCreateFull:
     async def test_sets_image_url_and_tags(self, service, repo):
         await service.create_full(
             _make_import_item(image_url="http://img", free_tags=["bio"]),
-            user_id="u",
+            user_id="u", account_id="acc-u",
         )
         recipe_arg = repo.create.call_args[0][0]
         assert recipe_arg.image_url == "http://img"
         assert recipe_arg.free_tags == ["bio"]
 
     async def test_sets_user_id(self, service, repo):
-        await service.create_full(_make_import_item(), user_id="user-42")
+        await service.create_full(_make_import_item(), user_id="user-42", account_id="acc-user-42")
         recipe_arg = repo.create.call_args[0][0]
         assert recipe_arg.created_by_user_id == "user-42"
 
@@ -279,13 +279,13 @@ class TestRecipeServiceCreateFull:
                 RecipeIngredientImport(name="parmesan", quantity=60.0, unit="g"),
             ]
         )
-        await service.create_full(item, user_id="u")
+        await service.create_full(item, user_id="u", account_id="acc-u")
         assert repo.get_or_create_ingredient.call_count == 2
 
     async def test_indexes_recipe_in_search(self, service, repo, search):
         recipe = _make_recipe()
         repo.create.return_value = recipe
-        await service.create_full(_make_import_item(), user_id="u")
+        await service.create_full(_make_import_item(), user_id="u", account_id="acc-u")
         search.index_recipe.assert_called_once_with(recipe)
 
     async def test_does_not_call_unsplash_on_bulk_import(self, repo, search, nutrition):
@@ -295,7 +295,7 @@ class TestRecipeServiceCreateFull:
         service = RecipeService(
             repo, search, nutrition_client=nutrition, unsplash=unsplash
         )
-        await service.create_full(_make_import_item(image_url="http://img"), user_id="u")
+        await service.create_full(_make_import_item(image_url="http://img"), user_id="u", account_id="acc-u")
         unsplash.search.assert_not_called()
 
     async def test_nutrition_called_when_ingredients_present(
@@ -305,7 +305,7 @@ class TestRecipeServiceCreateFull:
         item = _make_import_item(
             ingredients=[RecipeIngredientImport(name="riz", quantity=300.0, unit="g")]
         )
-        await service.create_full(item, user_id="u")
+        await service.create_full(item, user_id="u", account_id="acc-u")
         nutrition.calculate.assert_called_once()
 
     async def test_macros_saved_when_nutrition_returns_result(self, repo, search):
@@ -320,7 +320,7 @@ class TestRecipeServiceCreateFull:
         item = _make_import_item(
             ingredients=[RecipeIngredientImport(name="riz", quantity=300.0, unit="g")]
         )
-        await service.create_full(item, user_id="u")
+        await service.create_full(item, user_id="u", account_id="acc-u")
         repo.update_macros.assert_called_once_with(
             repo.create.return_value.id,
             calories=480.0,
@@ -330,7 +330,7 @@ class TestRecipeServiceCreateFull:
         )
 
     async def test_nutrition_not_called_when_no_ingredients(self, service, nutrition):
-        await service.create_full(_make_import_item(ingredients=[]), user_id="u")
+        await service.create_full(_make_import_item(ingredients=[]), user_id="u", account_id="acc-u")
         nutrition.calculate.assert_not_called()
 
 
@@ -377,6 +377,9 @@ class TestGenerateUniqueSlug:
 def _owned_recipe(user_id: str = "user-1") -> MagicMock:
     recipe = _make_recipe()
     recipe.created_by_user_id = user_id
+    # Multicomptes : l'appartenance est désormais contrôlée par account_id.
+    # On aligne account_id sur la valeur fournie (qui joue le rôle de compte).
+    recipe.account_id = user_id
     return recipe
 
 
@@ -392,24 +395,29 @@ class TestRecipeServiceRead:
         )
 
     async def test_get_by_slug_returns_recipe(self, service, repo):
-        recipe = _make_recipe()
+        recipe = _owned_recipe("acc-1")
         repo.get_by_slug_with_relations.return_value = recipe
-        assert await service.get_by_slug("tarte") is recipe
+        assert await service.get_by_slug("tarte", "acc-1") is recipe
 
     async def test_get_by_slug_raises_when_missing(self, service, repo):
         repo.get_by_slug_with_relations.return_value = None
         with pytest.raises(RecipeNotFound):
-            await service.get_by_slug("inconnu")
+            await service.get_by_slug("inconnu", "acc-1")
 
     async def test_get_by_id_returns_recipe(self, service, repo):
-        recipe = _make_recipe()
+        recipe = _owned_recipe("acc-1")
         repo.get_by_id_with_relations.return_value = recipe
-        assert await service.get_by_id(1) is recipe
+        assert await service.get_by_id(1, "acc-1") is recipe
 
     async def test_get_by_id_raises_when_missing(self, service, repo):
         repo.get_by_id_with_relations.return_value = None
         with pytest.raises(RecipeNotFound):
-            await service.get_by_id(999)
+            await service.get_by_id(999, "acc-1")
+
+    async def test_get_by_slug_foreign_account_forbidden(self, service, repo):
+        repo.get_by_slug_with_relations.return_value = _owned_recipe("autre-compte")
+        with pytest.raises(RecipeForbidden):
+            await service.get_by_slug("tarte", "acc-1")
 
     async def test_list_recipes_computes_pages(self, service, repo):
         repo.list_paginated.return_value = ([], 45)
@@ -424,10 +432,10 @@ class TestRecipeServiceRead:
         assert result.pages == 1
         repo.list_paginated.assert_called_once_with(1, 20, "dessert", None)
 
-    async def test_list_recipes_passes_author_filter(self, service, repo):
+    async def test_list_recipes_passes_account_filter(self, service, repo):
         repo.list_paginated.return_value = ([], 0)
-        await service.list_recipes(page=1, page_size=20, created_by_user_id="user-1")
-        repo.list_paginated.assert_called_once_with(1, 20, None, "user-1")
+        await service.list_recipes(page=1, page_size=20, account_id="acc-1")
+        repo.list_paginated.assert_called_once_with(1, 20, None, "acc-1")
 
 
 # ─── update / delete ──────────────────────────────────────────────────────────

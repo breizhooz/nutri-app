@@ -1,0 +1,30 @@
+# Contexte de build = racine du repo (cf. docker-compose.yml `context: .`).
+# Tout ce qui est listé ici n'est ni envoyé au daemon ni copié par `COPY service-X/ .`
+
+# Environnements virtuels locaux — JAMAIS dans l'image (699 Mo dans service-menu !)
+**/.venv
+**/venv
+
+# Caches Python / outils
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+**/.coverage
+**/coverage.xml
+**/bandit-report.json
+**/bandit-summary.txt
+
+# Hors périmètre des images backend
+.git
+frontend
+docs
+monitoring
+portal
+traefik
+postgres/initdb
+ci-local-report.txt
+
+# Secrets locaux : les .env sont injectés via env_file, pas via COPY
+**/.env

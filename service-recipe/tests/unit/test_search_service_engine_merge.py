@@ -21,20 +21,20 @@ def _query(mock_es) -> dict:
 class TestSearchEngineMerge:
     async def test_extra_clauses_merged_into_bool(self, mock_es):
         await search_service.search_recipes(
-            user_id="u1",
+            account_id="u1",
             extra_must_not=[{"terms": {"ingredient_names": ["porc"]}}],
             extra_filter=[{"exists": {"field": "course_type"}}],
         )
         bool_q = _query(mock_es)["bool"]
         # scoping user toujours présent
-        assert {"term": {"created_by_user_id": "u1"}} in bool_q["filter"]
+        assert {"term": {"account_id": "u1"}} in bool_q["filter"]
         # clauses moteur fusionnées
         assert {"terms": {"ingredient_names": ["porc"]}} in bool_q["must_not"]
         assert {"exists": {"field": "course_type"}} in bool_q["filter"]
 
     async def test_scoring_wraps_in_function_score(self, mock_es):
         await search_service.search_recipes(
-            user_id="u1",
+            account_id="u1",
             scoring_functions=[{"gauss": {"calories": {"origin": 2000, "scale": 200}}}],
         )
         q = _query(mock_es)
@@ -46,12 +46,12 @@ class TestSearchEngineMerge:
             {"gauss": {"calories": {"origin": 2000, "scale": 200}}}
         ]
         # le bool reste à l'intérieur, avec le scoping user
-        assert {"term": {"created_by_user_id": "u1"}} in fs["query"]["bool"][
+        assert {"term": {"account_id": "u1"}} in fs["query"]["bool"][
             "filter"
         ]
 
     async def test_no_extras_stays_plain_bool(self, mock_es):
-        await search_service.search_recipes(user_id="u1")
+        await search_service.search_recipes(account_id="u1")
         q = _query(mock_es)
         assert "function_score" not in q
         assert "bool" in q

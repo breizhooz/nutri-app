@@ -20,11 +20,13 @@ class MacroErrorRepository:
         recipe_id: uuid.UUID | None = None,
         suggested_match: str | None = None,
         match_score: float | None = None,
+        account_id: uuid.UUID | None = None,
     ) -> MacroError:
         slug = self._build_slug(raw_ingredient)
         error = MacroError(
             slug=slug,
             user_id=user_id,
+            account_id=account_id,
             recipe_id=recipe_id,
             raw_ingredient=raw_ingredient,
             suggested_match=suggested_match,
@@ -48,6 +50,19 @@ class MacroErrorRepository:
         status: MacroErrorStatus | None = None,
     ) -> list[MacroError]:
         q = select(MacroError).where(MacroError.user_id == user_id)
+        if status is not None:
+            q = q.where(MacroError.status == status)
+        q = q.order_by(MacroError.created_at.desc())
+        result = await self._session.execute(q)
+        return list(result.scalars().all())
+
+    async def get_by_account_id(
+        self,
+        account_id: uuid.UUID,
+        status: MacroErrorStatus | None = None,
+    ) -> list[MacroError]:
+        """Macro-errors du compte actif (multicomptes)."""
+        q = select(MacroError).where(MacroError.account_id == account_id)
         if status is not None:
             q = q.where(MacroError.status == status)
         q = q.order_by(MacroError.created_at.desc())
@@ -83,6 +98,16 @@ class MacroErrorRepository:
         result = await self._session.execute(
             select(sa_func.count(MacroError.id))
             .where(MacroError.user_id == user_id)
+            .where(MacroError.status == status)
+        )
+        return result.scalar_one()
+
+    async def count_by_account_and_status(
+        self, account_id: uuid.UUID, status: MacroErrorStatus
+    ) -> int:
+        result = await self._session.execute(
+            select(sa_func.count(MacroError.id))
+            .where(MacroError.account_id == account_id)
             .where(MacroError.status == status)
         )
         return result.scalar_one()

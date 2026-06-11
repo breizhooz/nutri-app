@@ -56,6 +56,7 @@ class ExtractionService:
         raw_texts: list[str],
         user_id: uuid.UUID,
         recipe_id: uuid.UUID | None = None,
+        account_id: uuid.UUID | None = None,
     ) -> ExtractionResult:
         resolved: list[ResolvedIngredient] = []
         failed: list[FailedIngredient] = []
@@ -75,6 +76,7 @@ class ExtractionService:
                     user_id=user_id,
                     raw_ingredient=raw_text,
                     recipe_id=recipe_id,
+                    account_id=account_id,
                 )
                 failed.append(
                     FailedIngredient(
@@ -94,6 +96,7 @@ class ExtractionService:
                     raw_ingredient=raw_text,
                     recipe_id=recipe_id,
                     suggested_match=ingredient.nom,
+                    account_id=account_id,
                 )
                 failed.append(
                     FailedIngredient(

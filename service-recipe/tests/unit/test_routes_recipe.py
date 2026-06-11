@@ -4,9 +4,16 @@ from unittest.mock import AsyncMock, MagicMock
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from nutri_shared.core.context import AccessContext
+
 from app.api.routes.recipes import RecipeServiceFactory
 from app.core.http_client import get_user_client
-from app.core.deps import get_current_user_id
+from app.core.deps import (
+    get_read_account_id,
+    get_write_auth,
+    get_write_context,
+    WriteAuth,
+)
 from app.main import app
 from app.db.session import get_session
 from app.models.enums import CuisineOrigin, CourseType, DifficultyLevel, RecipeOrigin
@@ -36,12 +43,14 @@ async def test_get_recipe_by_slug_not_found_returns_404(override_db):
     mock_result = MagicMock()
     mock_result.scalar_one_or_none.return_value = None
     override_db.execute.return_value = mock_result
+    app.dependency_overrides[get_read_account_id] = lambda: "acc-1"
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         response = await client.get("/api/v1/recipe/slug-inexistant")
 
+    app.dependency_overrides.pop(get_read_account_id, None)
     assert response.status_code == 404
 
 
@@ -66,8 +75,10 @@ async def test_create_recipe_with_valid_user_returns_201(override_user_client_ex
     mock_service.create.return_value = _make_recipe_response()
 
     app.dependency_overrides[RecipeServiceFactory.inject] = lambda: mock_service
-    app.dependency_overrides[get_current_user_id] = lambda: (
-        "123e4567-e89b-12d3-a456-426614174000"
+    app.dependency_overrides[get_write_auth] = lambda: WriteAuth(
+        trusted=False,
+        account_id="acc-1",
+        sub="123e4567-e89b-12d3-a456-426614174000",
     )
 
     payload = {
@@ -131,7 +142,13 @@ async def test_create_recipe_manual_success():
     mock_service.create_manual.return_value = _make_recipe_response()
 
     app.dependency_overrides[RecipeServiceFactory.inject] = lambda: mock_service
-    app.dependency_overrides[get_current_user_id] = lambda: "user-1"
+    app.dependency_overrides[get_write_context] = lambda: AccessContext(
+        sub="user-1",
+        account_id="acc-1",
+        scopes=frozenset({"recipe:write"}),
+        user_admin=False,
+        capabilities={},
+    )
 
     payload = {
         "title": "Soupe à l'oignon",
@@ -157,7 +174,13 @@ async def test_create_recipe_manual_success():
 
 @pytest.mark.asyncio
 async def test_create_recipe_manual_missing_title_returns_422():
-    app.dependency_overrides[get_current_user_id] = lambda: "user-1"
+    app.dependency_overrides[get_write_context] = lambda: AccessContext(
+        sub="user-1",
+        account_id="acc-1",
+        scopes=frozenset({"recipe:write"}),
+        user_admin=False,
+        capabilities={},
+    )
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"

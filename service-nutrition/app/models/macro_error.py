@@ -21,6 +21,12 @@ class MacroError(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), nullable=False, index=True
     )
+    # Multicomptes (CRM) : clé de partition (act_account du JWT). Filtre d'accès =
+    # account_id ; user_id reste l'auteur. Renseigné par le flux recipe→/calculate
+    # qui propage account_id. Backfill cross-DB pour l'existant.
+    account_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), nullable=True, index=True
+    )
     recipe_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True
     )

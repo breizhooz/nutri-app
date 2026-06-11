@@ -7,6 +7,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from nutri_shared.core.context import AccessContext, get_access_context
+
 from app.core.security import decode_token
 from app.db.session import get_session
 from app.i18n.loader import t
@@ -70,6 +72,27 @@ async def get_current_user(
         )
 
     return user
+
+
+async def require_account_manager(
+    account_id: uuid.UUID,
+    request: Request,
+    ctx: AccessContext = Depends(get_access_context),
+) -> AccessContext:
+    """Garde des routes de gestion de membres (multicomptes, phase 3).
+
+    Exige le scope ``member:manage`` ET que le compte actif du token de contexte
+    soit bien celui du chemin (on ne gère que les membres de son compte actif).
+    Un ``platform_admin`` (SAV) court-circuite mais l'action reste auditée.
+    """
+    if ctx.user_admin:
+        return ctx
+    if "member:manage" not in ctx.scopes or ctx.account_id != str(account_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=t.get("accounts.manage_forbidden", get_locale(request)),
+        )
+    return ctx
 
 
 async def get_current_admin(

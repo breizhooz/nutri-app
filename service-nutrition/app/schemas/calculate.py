@@ -29,6 +29,9 @@ class CalculateRequest(BaseModel):
     recipe_slug: str
     servings: int = 1
     user_id: str
+    # Multicomptes : propagé par service-recipe pour tagger les macro_errors par
+    # compte. None pour un appelant pas encore account-aware (tolérant).
+    account_id: str | None = None
     ingredients: list[IngredientInput]
 
 

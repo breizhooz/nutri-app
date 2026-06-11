@@ -4,20 +4,52 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from nutri_shared.core.context import AccessContext
+
 from app.main import app
 from app.db.session import get_session
 from app.core.http_client import get_user_client
-from app.core.deps import get_current_user_id
+from app.core.deps import (
+    get_current_user_id,
+    get_read_account_id,
+    get_read_context,
+    get_write_account_id,
+    get_write_auth,
+    get_write_context,
+    WriteAuth,
+)
 from app.models.enums import CuisineOrigin, CourseType, DifficultyLevel, RecipeOrigin
 
 TEST_USER_ID = "123e4567-e89b-12d3-a456-426614174000"
+TEST_ACCOUNT_ID = "acc-123e4567-e89b-12d3-a456-426614174000"
+
+
+def _test_ctx() -> AccessContext:
+    return AccessContext(
+        sub=TEST_USER_ID,
+        account_id=TEST_ACCOUNT_ID,
+        scopes=frozenset({"recipe:read", "recipe:write"}),
+        user_admin=False,
+        capabilities={},
+    )
 
 
 @pytest.fixture(autouse=True)
 def override_current_user():
-    app.dependency_overrides[get_current_user_id] = lambda: TEST_USER_ID
+    overrides = {
+        get_current_user_id: lambda: TEST_USER_ID,
+        get_read_account_id: lambda: TEST_ACCOUNT_ID,
+        get_write_account_id: lambda: TEST_ACCOUNT_ID,
+        get_read_context: _test_ctx,
+        get_write_context: _test_ctx,
+        get_write_auth: lambda: WriteAuth(
+            trusted=False, account_id=TEST_ACCOUNT_ID, sub=TEST_USER_ID
+        ),
+    }
+    app.dependency_overrides.update(overrides)
     yield
-    app.dependency_overrides.pop(get_current_user_id, None)
+    for dep in overrides:
+        app.dependency_overrides.pop(dep, None)
 
 
 @pytest.fixture
@@ -89,6 +121,8 @@ def make_mock_recipe(
     recipe.image_suggestions = []
     recipe.image_search_keyword = None
     recipe.created_by_user_id = "123e4567-e89b-12d3-a456-426614174000"
+    recipe.account_id = TEST_ACCOUNT_ID
+    recipe.source_recipe_id = None
     recipe.created_at = datetime(2026, 1, 1, 12, 0, 0)
     recipe.updated_at = datetime(2026, 1, 1, 12, 0, 0)
     recipe.calories_per_serving = 520.0

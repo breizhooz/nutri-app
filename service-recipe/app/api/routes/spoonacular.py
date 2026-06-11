@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import get_current_user_id
+from nutri_shared.core.context import AccessContext
+
+from app.core.deps import get_current_user_id, get_write_context
 from app.db.session import get_session
 from app.repositories.recipe_repository import RecipeRepository
 from app.repositories.spoonacular_cache_repository import SpoonacularCacheRepository
@@ -63,13 +65,13 @@ async def add_to_personal_list(
         SpoonacularCacheServiceFactory.inject
     ),
     recipe_service: RecipeService = Depends(RecipeServiceFactory.inject),
-    current_user_id: str = Depends(get_current_user_id),
+    ctx: AccessContext = Depends(get_write_context),
 ) -> RecipeResponse:
-    """Ajoute la recette Spoonacular à la liste personnelle de l'utilisateur.
+    """Ajoute la recette Spoonacular à la liste personnelle du compte actif.
 
     Passe par le pipeline habituel (``create_full``) : hydratation des
     ingrédients, calcul des macros (service-nutrition), indexation Elasticsearch.
     """
     return await service.add_to_personal_list(
-        spoonacular_id, current_user_id, recipe_service
+        spoonacular_id, ctx.sub, ctx.account_id, recipe_service
     )

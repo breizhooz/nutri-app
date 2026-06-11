@@ -1,7 +1,9 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, Query
 
-from app.core.deps import get_current_user_id
+from nutri_shared.core.context import AccessContext
+
+from app.core.deps import get_read_context
 from app.services.nutrition_rules_service import nutrition_rules_service
 
 router = APIRouter()
@@ -9,7 +11,7 @@ router = APIRouter()
 
 @router.get("/search/recipes")
 async def search_recipe(
-    current_user_id: str = Depends(get_current_user_id),
+    ctx: AccessContext = Depends(get_read_context),
     q: Optional[str] = Query(
         None, description="Texte à rechercher (titre, description, ingrédients)"
     ),
@@ -68,7 +70,8 @@ async def search_recipe(
       la recherche est personnalisée via le moteur de cibles (sinon recherche standard)
     """
     return await nutrition_rules_service.search(
-        user_id=current_user_id,
+        user_id=ctx.sub,
+        account_id=ctx.account_id,
         apply_rules=apply_rules,
         aggressiveness=aggressiveness,
         variety_pct=variety_pct,

@@ -1,7 +1,8 @@
 {
   "errors": {
     "token_invalid": "Invalid or expired token",
-    "service_token_invalid": "Invalid service token"
+    "service_token_invalid": "Invalid service token",
+    "no_account_context": "No active account in context"
   },
   "validation": {
     "rpe_range": "RPE must be between 1 and 10"

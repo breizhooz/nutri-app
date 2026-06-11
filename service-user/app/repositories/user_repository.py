@@ -7,9 +7,10 @@ no raw queries in routes or services).
 import uuid
 from typing import Any, Optional
 
-from sqlalchemy import select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.access import Account, Invitation, Membership
 from app.models.user import User
 
 
@@ -31,8 +32,40 @@ class UserRepository:
         result = await self.session.execute(select(User).order_by(User.email))
         return list(result.scalars().all())
 
+    async def delete_personal_accounts(self, user: User) -> None:
+        """Supprime le(s) compte(s) personnel(s) de l'identité avant de la supprimer.
+
+        Sans ça, supprimer un utilisateur laisse son compte orphelin **et** les
+        adhésions que d'autres détiennent dessus (ex. un coach) → ils continuent
+        de le voir. Le DELETE sur ``accounts`` cascade les memberships (FK
+        ondelete CASCADE), nettoyant aussi les liens de coaching.
+        """
+        conditions = [Account.created_by == user.id]
+        if user.default_account_id is not None:
+            conditions.append(Account.id == user.default_account_id)
+        rows = await self.session.execute(select(Account.id).where(or_(*conditions)))
+        account_ids = [r[0] for r in rows.all()]
+        if not account_ids:
+            return
+
+        # Lâche la référence users.default_account_id avant de supprimer le compte
+        # (la FK n'est pas forcément ON DELETE SET NULL).
+        user.default_account_id = None
+        await self.session.flush()
+        # Suppression explicite des dépendances (robuste SQLite + PG) : memberships
+        # (dont les liens de coaching), invitations, puis les comptes eux-mêmes.
+        await self.session.execute(
+            delete(Membership).where(Membership.account_id.in_(account_ids))
+        )
+        await self.session.execute(
+            delete(Invitation).where(Invitation.account_id.in_(account_ids))
+        )
+        await self.session.execute(delete(Account).where(Account.id.in_(account_ids)))
+        await self.session.flush()
+
     async def delete(self, user: User) -> None:
-        """Permanently remove a user account."""
+        """Permanently remove a user account (and its personal account)."""
+        await self.delete_personal_accounts(user)
         await self.session.delete(user)
         await self.session.commit()
 
@@ -41,6 +74,7 @@ class UserRepository:
         user: User,
         *,
         user_admin: Optional[bool] = None,
+        is_coach: Optional[bool] = None,
         user_right: Optional[dict[str, Any]] = None,
     ) -> User:
         """Persist a partial update of a user's RBAC fields.
@@ -49,6 +83,8 @@ class UserRepository:
         """
         if user_admin is not None:
             user.user_admin = user_admin
+        if is_coach is not None:
+            user.is_coach = is_coach
         if user_right is not None:
             user.user_right = user_right
         await self.session.commit()
