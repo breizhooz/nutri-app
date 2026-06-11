@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
 from app.db.session import get_session
-from app.core.deps import get_current_user_id
+from app.core.deps import get_read_account_id
 from app.core.http_client import (
     ServicesRecipeClient,
     get_recipe_client,
@@ -23,12 +23,12 @@ async def _resolve_shopping_list(
     request: Request,
     session: AsyncSession,
     recipe_client: ServicesRecipeClient,
-    user_id: str,
+    account_id: str,
 ) -> ShoppingList:
     menu = await get_menu(session, menu_id)
     if not menu:
         raise LocalizedHTTPException.menu_not_found(request)
-    if menu.user_id != user_id:
+    if menu.account_id != account_id:
         raise LocalizedHTTPException.menu_unauthorized(request)
     try:
         return await build_shopping_list(menu, recipe_client)
@@ -42,10 +42,10 @@ async def get_shopping_list(
     request: Request,
     session: AsyncSession = Depends(get_session),
     recipe_client: ServicesRecipeClient = Depends(get_recipe_client),
-    current_user_id: str = Depends(get_current_user_id),
+    account_id: str = Depends(get_read_account_id),
 ):
     return await _resolve_shopping_list(
-        menu_id, request, session, recipe_client, current_user_id
+        menu_id, request, session, recipe_client, account_id
     )
 
 
@@ -56,9 +56,9 @@ async def export(
     format: str = Query(default="csv", pattern="^(csv|pdf)$"),
     session: AsyncSession = Depends(get_session),
     recipe_client: ServicesRecipeClient = Depends(get_recipe_client),
-    current_user_id: str = Depends(get_current_user_id),
+    account_id: str = Depends(get_read_account_id),
 ):
     sl = await _resolve_shopping_list(
-        menu_id, request, session, recipe_client, current_user_id
+        menu_id, request, session, recipe_client, account_id
     )
     return export_shopping_list(sl, format)

@@ -6,16 +6,25 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.pool import StaticPool
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
+from nutri_shared.core.context import AccessContext
+
 from app.main import app
 from app.db.base import Base
 from app.db.session import get_session
-from app.core.deps import get_current_user_id
+from app.core.deps import (
+    get_read_account_id,
+    get_write_account_id,
+    get_write_context,
+)
 from app.core.http_client import get_recipe_client
 from app.models.weekly_menu import WeeklyMenu
 from tests.conftest import MockRecipeClient, SAMPLE_RECIPES, RICH_RECIPE
 
 TEST_USER_ID = "test-user-uuid-1234"
 OTHER_USER_ID = "other-user-uuid-9999"
+TEST_ACCOUNT_ID = "test-account-uuid-1234"
+OTHER_ACCOUNT_ID = "other-account-uuid-9999"
+_TEST_SCOPES = frozenset({"plan:read", "plan:write"})
 
 _TEST_ENGINE = create_async_engine(
     "sqlite+aiosqlite:///:memory:",
@@ -69,7 +78,15 @@ async def client(
         yield mock_recipe_client
 
     app.dependency_overrides[get_session] = _get_session
-    app.dependency_overrides[get_current_user_id] = lambda: TEST_USER_ID
+    app.dependency_overrides[get_read_account_id] = lambda: TEST_ACCOUNT_ID
+    app.dependency_overrides[get_write_account_id] = lambda: TEST_ACCOUNT_ID
+    app.dependency_overrides[get_write_context] = lambda: AccessContext(
+        sub=TEST_USER_ID,
+        account_id=TEST_ACCOUNT_ID,
+        scopes=_TEST_SCOPES,
+        user_admin=False,
+        capabilities={},
+    )
     app.dependency_overrides[get_recipe_client] = _get_recipe_client
 
     async with AsyncClient(
@@ -87,6 +104,7 @@ async def other_user_menu(session: AsyncSession) -> WeeklyMenu:
     menu = WeeklyMenu(
         slug="other-user-menu",
         user_id=OTHER_USER_ID,
+        account_id=OTHER_ACCOUNT_ID,
         nb_persons=1,
         start_date=date_type(2026, 6, 2),
         exclusions=[],

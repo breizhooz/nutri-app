@@ -53,6 +53,10 @@ class RecipeSearchService:
             "image_url": recipe.image_url,
             "free_tags": recipe.free_tags or [],
             "created_by_user_id": recipe.created_by_user_id,
+            "account_id": recipe.account_id,
+            # Coaching : provenance d'un push coach→client (cf. coaching_model.md
+            # §6) → l'UI badge « Ajouté par votre gestionnaire » sur la grille.
+            "source_recipe_id": recipe.source_recipe_id,
             "created_at": recipe.created_at.isoformat() if recipe.created_at else None,
             # Macros par portion — noms alignés sur le moteur de cibles (fr).
             "calories": recipe.calories_per_serving,
@@ -96,7 +100,7 @@ class RecipeSearchService:
 
     async def search_recipes(
         self,
-        user_id: str,
+        account_id: str,
         query: Optional[str] = None,
         difficulty: Optional[str] = None,
         cuisine_origin: Optional[str] = None,
@@ -119,10 +123,10 @@ class RecipeSearchService:
         la requête bool est enveloppée dans un ``function_score``.
         """
         must_queries = []
-        # ``created_by_user_id`` est mappé en keyword (cf. core/elasticsearch.py) :
-        # on filtre sur le champ directement, surtout pas sur un sous-champ
-        # ``.keyword`` inexistant (sinon le term ne matche aucun document).
-        filter_queries = [{"term": {"created_by_user_id": user_id}}]
+        # Multicomptes : la recherche est bornée au compte actif. ``account_id``
+        # est mappé en keyword (cf. core/elasticsearch.py) : on filtre sur le champ
+        # directement, surtout pas sur un sous-champ ``.keyword`` inexistant.
+        filter_queries = [{"term": {"account_id": account_id}}]
         must_not_queries = []
 
         if query:

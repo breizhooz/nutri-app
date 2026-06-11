@@ -9,9 +9,11 @@ from app.core.security import hash_password, verify_password
 from app.i18n.loader import t
 from app.db.session import get_session
 from app.models.user import User
+from app.repositories.access_repository import MembershipRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.password import PasswordChangeSchema, PasswordResetMessage
 from app.schemas.user import UserAdminOut, UserCreate, UserOut, UserRightsUpdate
+from app.services.access_service import AccessService
 from app.services.password_reset_service import PasswordResetService
 from app.services.user_service import UserService
 
@@ -44,6 +46,9 @@ async def create_user(
         hashed_password=hash_password(data.password),
     )
     session.add(user)
+    await session.flush()  # assign user.id before provisioning its account
+    # Multicomptes : tout nouvel inscrit reçoit son compte personnel + OWNER.
+    await AccessService(session).provision_personal_account(user)
     await session.commit()
     await session.refresh(user)
     return user
@@ -108,9 +113,23 @@ async def get_user(
 async def list_users(
     _admin: User = Depends(get_current_admin),
     service: UserService = Depends(UserServiceFactory.inject),
-) -> list[User]:
-    """List all users with their RBAC rights. Admin-only."""
-    return await service.list_users()
+    session: AsyncSession = Depends(get_session),
+) -> list[UserAdminOut]:
+    """List all users with their RBAC rights + account roles. Admin-only."""
+    users = await service.list_users()
+    roles = await MembershipRepository(session).roles_by_identity()
+    return [
+        UserAdminOut(
+            id=u.id,
+            email=u.email,
+            is_active=u.is_active,
+            user_admin=u.user_admin,
+            is_coach=u.is_coach,
+            account_roles=sorted(roles.get(u.id, [])),
+            user_right=u.user_right,
+        )
+        for u in users
+    ]
 
 
 @router.patch("/{user_id}/rights", response_model=UserAdminOut)
@@ -165,3 +184,21 @@ async def is_user_exist(
     user_exist = result.scalar_one_or_none() is not None
 
     return {"exists": user_exist}
+
+
+@router.get("/{user_id}/default-account")
+async def get_default_account(
+    user_id: uuid.UUID, session: AsyncSession = Depends(get_session)
+) -> dict[str, str | None]:
+    """Résout le compte personnel (default_account_id) d'une identité.
+
+    Endpoint inter-service (multicomptes) : permet aux flux pilotés par un token
+    de service (crawler, import) de retrouver le compte sur lequel attribuer une
+    ressource créée pour le compte de ``user_id``. Renvoie ``{"account_id": null}``
+    si l'utilisateur n'existe pas ou n'a pas (encore) de compte.
+    """
+    result = await session.execute(
+        select(User.default_account_id).where(User.id == user_id)
+    )
+    account_id = result.scalar_one_or_none()
+    return {"account_id": str(account_id) if account_id else None}

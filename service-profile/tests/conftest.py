@@ -19,10 +19,21 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.pool import StaticPool
 
-from app.core.deps import get_current_user_id
+from nutri_shared.core.context import AccessContext
+
+from app.core.deps import (
+    get_read_account_id,
+    get_write_account_id,
+    get_write_context,
+)
 from app.db.base import Base
 from app.db.session import get_session
 from app.main import app
+
+# Scopes complets accordés au contexte de test (OWNER-like).
+_TEST_SCOPES = frozenset(
+    {"profile:read", "profile:write", "recipe:read", "plan:read", "journal:read"}
+)
 
 
 @compiles(PG_UUID, "sqlite")
@@ -74,6 +85,61 @@ def test_user_id() -> uuid.UUID:
     return uuid.uuid4()
 
 
+@pytest.fixture
+def test_account_id() -> uuid.UUID:
+    """Compte actif unique par test (multicomptes) — clé de partition du dossier."""
+    return uuid.uuid4()
+
+
+def make_context_token(
+    *,
+    sub: uuid.UUID,
+    account_id: uuid.UUID | None,
+    scopes: list[str],
+    user_admin: bool = False,
+) -> str:
+    """Forge un JWT d'accès de contexte (act_account + scopes) pour les tests.
+
+    Permet de tester l'enforcement réel de require_scope et l'isolation par
+    compte, sans passer par les overrides du fixture ``client``.
+    """
+    import jwt
+    from datetime import datetime, timedelta, timezone
+
+    payload: dict = {
+        "sub": str(sub),
+        "type": "access",
+        "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+        "scopes": scopes,
+        "user_admin": user_admin,
+        "user_right": {},
+    }
+    if account_id is not None:
+        payload["act_account"] = str(account_id)
+    return jwt.encode(payload, os.environ["JWT_SECRET"], algorithm="HS256")
+
+
+@pytest_asyncio.fixture
+async def raw_client(
+    session: AsyncSession,
+) -> AsyncGenerator[AsyncClient, None]:
+    """Client à authentification réelle : seul get_session est overridé.
+
+    Les routes appliquent leur vrai require_scope / résolution de compte ; les
+    tests fournissent un Bearer forgé par requête (cf. make_context_token).
+    """
+
+    async def _override_session() -> AsyncGenerator[AsyncSession, None]:
+        yield session
+
+    app.dependency_overrides[get_session] = _override_session
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
+        yield ac
+    app.dependency_overrides.clear()
+
+
 @pytest_asyncio.fixture
 async def service_client() -> AsyncGenerator[AsyncClient, None]:
     """Client HTTP inter-service authentifié par SERVICE_PROFILE_TOKEN."""
@@ -87,20 +153,38 @@ async def service_client() -> AsyncGenerator[AsyncClient, None]:
 
 @pytest_asyncio.fixture
 async def client(
-    session: AsyncSession, test_user_id: uuid.UUID
+    session: AsyncSession, test_user_id: uuid.UUID, test_account_id: uuid.UUID
 ) -> AsyncGenerator[AsyncClient, None]:
-    """Client HTTP de test avec session DB et user_id injectés via dependency_overrides."""
+    """Client HTTP de test : session DB + contexte de compte injectés.
+
+    Multicomptes : le contexte de test agit sur ``test_account_id`` (clé de
+    partition du dossier) en tant qu'identité ``test_user_id`` (auteur). Le
+    dossier créé via l'API porte donc ``account_id=test_account_id`` ET
+    ``user_id=test_user_id`` (ce dernier sert aux endpoints inter-service).
+    """
 
     async def _override_session() -> AsyncGenerator[AsyncSession, None]:
-        """Remplace get_session par la session de test."""
         yield session
 
-    async def _override_user_id() -> uuid.UUID:
-        """Remplace get_current_user_id par l'UUID de test."""
-        return test_user_id
+    async def _override_read_account() -> uuid.UUID:
+        return test_account_id
+
+    async def _override_write_account() -> uuid.UUID:
+        return test_account_id
+
+    async def _override_write_context() -> AccessContext:
+        return AccessContext(
+            sub=str(test_user_id),
+            account_id=str(test_account_id),
+            scopes=_TEST_SCOPES,
+            user_admin=False,
+            capabilities={},
+        )
 
     app.dependency_overrides[get_session] = _override_session
-    app.dependency_overrides[get_current_user_id] = _override_user_id
+    app.dependency_overrides[get_read_account_id] = _override_read_account
+    app.dependency_overrides[get_write_account_id] = _override_write_account
+    app.dependency_overrides[get_write_context] = _override_write_context
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"

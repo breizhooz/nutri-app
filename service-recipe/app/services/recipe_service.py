@@ -50,36 +50,40 @@ class RecipeService:
             user_id: count for user_id, count in await self._repository.count_by_user()
         }
 
-    async def get_by_slug(self, slug: str) -> Recipe:
+    async def get_by_slug(self, slug: str, account_id: str) -> Recipe:
         recipe = await self._repository.get_by_slug_with_relations(slug)
-        if recipe is None:
-            raise RecipeNotFound()
-        return recipe
+        return self._ensure_account(recipe, account_id)
 
-    async def get_by_id(self, recipe_id: int) -> Recipe:
+    async def get_by_id(self, recipe_id: int, account_id: str) -> Recipe:
         recipe = await self._repository.get_by_id_with_relations(recipe_id)
-        if recipe is None:
-            raise RecipeNotFound()
-        return recipe
+        return self._ensure_account(recipe, account_id)
 
     async def list_recipes(
         self,
         page: int,
         page_size: int,
         course_type: str | None = None,
-        created_by_user_id: str | None = None,
+        account_id: str | None = None,
     ) -> PaginatedRecipeResponse:
         items, total = await self._repository.list_paginated(
-            page, page_size, course_type, created_by_user_id
+            page, page_size, course_type, account_id
         )
         pages = max(1, -(-total // page_size))  # ceiling division
         return PaginatedRecipeResponse(
             items=items, total=total, page=page, page_size=page_size, pages=pages
         )
 
-    async def update(self, recipe_id: int, data: RecipeUpdate, user_id: str) -> Recipe:
+    async def update(
+        self, recipe_id: int, data: RecipeUpdate, account_id: str | None
+    ) -> Recipe:
         recipe = await self._repository.get_by_id_with_relations(recipe_id)
-        self._ensure_author(recipe, user_id)
+        # account_id None = appelant de confiance (crawler/commit) : pas de
+        # contrôle d'appartenance, mais la recette doit exister.
+        if account_id is None:
+            if recipe is None:
+                raise RecipeNotFound()
+        else:
+            self._ensure_account(recipe, account_id)
 
         update_fields = data.model_dump(
             exclude_unset=True, exclude={"recipe_ingredients"}
@@ -98,9 +102,9 @@ class RecipeService:
             logger.warning("ES reindex failed for recipe %s: %s", recipe_id, exc)
         return updated
 
-    async def delete(self, recipe_id: int, user_id: str) -> None:
+    async def delete(self, recipe_id: int, account_id: str) -> None:
         recipe = await self._repository.get_by_id_with_relations(recipe_id)
-        recipe = self._ensure_author(recipe, user_id)
+        recipe = self._ensure_account(recipe, account_id)
         await self._repository.delete(recipe)
         try:
             await self._search.delete_recipe(recipe_id)
@@ -116,7 +120,9 @@ class RecipeService:
             logger.warning("ES delete-by-user failed for %s: %s", user_id, exc)
         return count
 
-    async def create_manual(self, data: RecipeManualCreate, user_id: str) -> Recipe:
+    async def create_manual(
+        self, data: RecipeManualCreate, user_id: str, account_id: str
+    ) -> Recipe:
         recipe_ingredients = await self._resolve_ingredients(data.ingredients)
         slug = await self._generate_unique_slug(slugify(data.title))
 
@@ -134,13 +140,16 @@ class RecipeService:
             cuisine_origin=CuisineOrigin.FRENCH,
             origin_recipe=RecipeOrigin.PERSONAL,
             created_by_user_id=user_id,
+            account_id=account_id,
         )
 
         recipe = await self._repository.create(recipe, recipe_ingredients)
-        recipe = await self._index_and_enrich(recipe, data.ingredients, user_id)
+        recipe = await self._index_and_enrich(
+            recipe, data.ingredients, user_id, account_id
+        )
         return await self._attach_suggestions(recipe)
 
-    async def create(self, data: RecipeCreate, user_id: str) -> Recipe:
+    async def create(self, data: RecipeCreate, user_id: str, account_id: str) -> Recipe:
         """Generic creation path (manual UI form, crawler import via POST /recipe)."""
         slug = await self._generate_unique_slug(slugify(data.title))
 
@@ -161,6 +170,7 @@ class RecipeService:
             book_name=data.book_name,
             source_url=data.source_url,
             created_by_user_id=data.created_by_user_id or user_id,
+            account_id=account_id,
         )
         recipe_ingredients = [
             RecipeIngredient(
@@ -177,7 +187,9 @@ class RecipeService:
             logger.warning("ES indexing failed for recipe %s: %s", recipe.id, exc)
         return await self._attach_suggestions(recipe)
 
-    async def create_full(self, data: RecipeImportItem, user_id: str) -> Recipe:
+    async def create_full(
+        self, data: RecipeImportItem, user_id: str, account_id: str
+    ) -> Recipe:
         """Create a recipe honoring every field (used by the JSON import)."""
         recipe_ingredients = await self._resolve_ingredients(data.ingredients)
         slug = await self._generate_unique_slug(slugify(data.title))
@@ -200,10 +212,13 @@ class RecipeService:
             source_url=data.source_url,
             image_url=data.image_url,
             created_by_user_id=user_id,
+            account_id=account_id,
         )
 
         recipe = await self._repository.create(recipe, recipe_ingredients)
-        recipe = await self._index_and_enrich(recipe, data.ingredients, user_id)
+        recipe = await self._index_and_enrich(
+            recipe, data.ingredients, user_id, account_id
+        )
         # Import en masse : on NE lance PAS de recherche d'image Unsplash par
         # recette. Sinon un import de N recettes = N appels Unsplash, ce qui crame
         # le quota (50 req/h en clé "demo") et casse la recherche d'image pour
@@ -211,6 +226,82 @@ class RecipeService:
         # (``image_url``) est conservée ; les recettes sans image en restent
         # dépourvues et l'auteur peut lancer une recherche à la demande ensuite.
         return recipe
+
+    async def push_to_account(
+        self,
+        recipe_ids: list[int],
+        source_account_id: str,
+        target_account_id: str,
+    ) -> tuple[list[Recipe], list[int]]:
+        """Copie (one-shot) des recettes du compte coach vers un compte client.
+
+        Pour chaque recette source (qui doit appartenir à ``source_account_id``),
+        crée une copie indépendante dans ``target_account_id`` : macros recopiées
+        (pas de ré-extraction), nouvel id/slug, ``source_recipe_id`` renseigné pour
+        la traçabilité et l'anti-doublon (une source déjà poussée est ignorée).
+
+        Retourne ``(créées, ignorées)`` où ``ignorées`` liste les ids source déjà
+        présents dans le compte cible. Cf. docs/coaching_model.md §6.
+        """
+        created: list[Recipe] = []
+        skipped: list[int] = []
+        for recipe_id in recipe_ids:
+            source = await self._repository.get_by_id_with_relations(recipe_id)
+            # 403/404 si la recette n'est pas dans la bibliothèque du coach.
+            self._ensure_account(source, source_account_id)
+
+            if await self._repository.find_clone(target_account_id, recipe_id):
+                skipped.append(recipe_id)
+                continue
+
+            slug = await self._generate_unique_slug(slugify(source.title))
+            clone = Recipe(
+                title=source.title,
+                slug=slug,
+                description=source.description,
+                instructions=source.instructions,
+                prep_time_minutes=source.prep_time_minutes,
+                cook_time_minutes=source.cook_time_minutes,
+                servings=source.servings,
+                difficulty=source.difficulty,
+                cuisine_origin=source.cuisine_origin,
+                origin_recipe=source.origin_recipe,
+                course_type=source.course_type,
+                tags=source.tags,
+                free_tags=source.free_tags,
+                book_name=source.book_name,
+                source_url=source.source_url,
+                image_url=source.image_url,
+                image_thumb_url=source.image_thumb_url,
+                image_search_keyword=source.image_search_keyword,
+                comment=source.comment,
+                rating=source.rating,
+                # Macros recopiées telles quelles (copie one-shot, pas de resync).
+                calories_per_serving=source.calories_per_serving,
+                proteins_per_serving=source.proteins_per_serving,
+                carbs_per_serving=source.carbs_per_serving,
+                fats_per_serving=source.fats_per_serving,
+                created_by_user_id=source.created_by_user_id,
+                account_id=target_account_id,
+                source_recipe_id=source.id,
+            )
+            ingredients = [
+                RecipeIngredient(
+                    ingredient_id=ri.ingredient_id,
+                    quantity=ri.quantity,
+                    unit=ri.unit,
+                )
+                for ri in source.recipe_ingredients
+            ]
+            clone = await self._repository.create(clone, ingredients)
+            try:
+                await self._search.index_recipe(clone)
+            except Exception as exc:
+                logger.warning(
+                    "ES indexing failed for pushed recipe %s: %s", clone.id, exc
+                )
+            created.append(clone)
+        return created, skipped
 
     async def _resolve_ingredients(self, ingredients) -> list[RecipeIngredient]:
         rows: list[RecipeIngredient] = []
@@ -226,7 +317,7 @@ class RecipeService:
         return rows
 
     async def _index_and_enrich(
-        self, recipe: Recipe, ingredients, user_id: str
+        self, recipe: Recipe, ingredients, user_id: str, account_id: str
     ) -> Recipe:
         try:
             await self._search.index_recipe(recipe)
@@ -238,6 +329,7 @@ class RecipeService:
                 recipe_slug=recipe.slug,
                 servings=recipe.servings,
                 user_id=user_id,
+                account_id=account_id,
                 ingredients=[
                     {"name": i.name, "quantity": i.quantity, "unit": i.unit}
                     for i in ingredients
@@ -265,10 +357,10 @@ class RecipeService:
         return recipe
 
     async def update_image_url(
-        self, recipe_id: int, user_id: str, image_url: str
+        self, recipe_id: int, account_id: str, image_url: str
     ) -> Recipe:
         recipe = await self._repository.get_by_id_with_relations(recipe_id)
-        self._ensure_author(recipe, user_id)
+        self._ensure_account(recipe, account_id)
         recipe = await self._repository.update_image_url(recipe_id, image_url)
         try:
             await self._search.index_recipe(recipe)
@@ -319,22 +411,23 @@ class RecipeService:
             logger.warning("ES reindex failed for recipe %s: %s", recipe.id, exc)
         return recipe
 
-    def _ensure_author(self, recipe: Recipe | None, user_id: str) -> Recipe:
+    def _ensure_account(self, recipe: Recipe | None, account_id: str) -> Recipe:
+        """Contrôle d'appartenance au compte actif (frontière multicomptes).
+
+        404 si la recette n'existe pas, 403 si elle appartient à un autre compte.
+        """
         if recipe is None:
             raise RecipeNotFound()
-        if (
-            recipe.created_by_user_id is None
-            or str(recipe.created_by_user_id) != user_id
-        ):
+        if recipe.account_id is None or str(recipe.account_id) != account_id:
             raise RecipeForbidden()
         return recipe
 
     async def refresh_suggestions(
-        self, recipe_id: int, keyword: str, user_id: str
+        self, recipe_id: int, keyword: str, account_id: str
     ) -> Recipe:
         """Re-run an Unsplash search with a free keyword and store new proposals."""
         recipe = await self._repository.get_by_id_with_relations(recipe_id)
-        self._ensure_author(recipe, user_id)
+        self._ensure_account(recipe, account_id)
         suggestions = await self._search_images(keyword)
         updated = await self._repository.update_image_suggestions(
             recipe_id, keyword, [s.to_dict() for s in suggestions]
@@ -375,11 +468,11 @@ class RecipeService:
         return suggestions
 
     async def select_image(
-        self, recipe_id: int, unsplash_id: str, user_id: str
+        self, recipe_id: int, unsplash_id: str, account_id: str
     ) -> Recipe:
         """Validate a proposed image and persist it as the final recipe image."""
         recipe = await self._repository.get_by_id_with_relations(recipe_id)
-        self._ensure_author(recipe, user_id)
+        self._ensure_account(recipe, account_id)
 
         chosen = next(
             (

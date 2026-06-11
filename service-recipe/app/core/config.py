@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
 
+    # Multicomptes : secret partagé identifiant un appelant inter-service de
+    # CONFIANCE (crawler, import) qui agit pour le compte d'un created_by_user_id
+    # sans porter de contexte de compte. Vide = bypass désactivé.
+    SERVICE_RECIPE_TOKEN: str = ""
+
     # Celery (import asynchrone de recettes). Queue dédiée "recipe" pour ne pas
     # être consommé par le worker d'un autre service partageant le broker Redis.
     CELERY_BROKER_URL: str = "redis://redis:6379/0"

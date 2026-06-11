@@ -47,6 +47,12 @@ class User(Base):
     user_admin: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="false", nullable=False
     )
+    # Capacité « coach » au niveau de l'identité (accordée par un admin) : autorise
+    # à créer des liens de coaching et à voir « Mon équipe ». Distincte du rôle
+    # COACH d'un membership (qui, lui, s'applique sur le compte d'un client donné).
+    is_coach: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
     # Type JSON générique (portable SQLite/PG) ; la colonne réelle est JSONB
     # côté Postgres via la migration. Défaut côté Python ; le server_default
     # JSONB n'est posé que dans la migration (backfill des lignes existantes).
@@ -64,6 +70,14 @@ class User(Base):
     )
     two_factor_method: Mapped[Optional[str]] = mapped_column(
         String(10),
+        nullable=True,
+    )
+    # Compte ouvert par défaut au login (multicomptes). Colonne simple au niveau
+    # ORM : la vraie FK -> accounts.id est posée dans la migration Postgres pour
+    # éviter le cycle de FK users<->accounts que le create_all SQLite (tests) ne
+    # sait pas résoudre. Même approche que user_right (JSON en ORM, JSONB en migr).
+    default_account_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
         nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(

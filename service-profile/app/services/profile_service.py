@@ -21,20 +21,26 @@ class ProfileService:
         self._session = session
         self._repo = ProfileRepository(session)
 
-    async def create(self, user_id: uuid.UUID, data: ProfileCreate) -> Profile:
-        """Crée un profil pour l'utilisateur donné.
+    async def create(
+        self, account_id: uuid.UUID, author_user_id: uuid.UUID, data: ProfileCreate
+    ) -> Profile:
+        """Crée le dossier d'un compte (multicomptes).
 
-        Lève ValueError('already_exists') si un profil existe déjà.
+        ``account_id`` est la clé de partition (un dossier par compte) ;
+        ``author_user_id`` (= identité du JWT) reste enregistré comme auteur.
+        Lève ValueError('already_exists') si le compte a déjà un dossier.
         """
-        if await self._repo.get_by_user_id(user_id):
+        if await self._repo.get_by_account_id(account_id):
             logger.warning(
-                "Tentative de création d'un profil en double pour user_id=%s", user_id
+                "Tentative de création d'un profil en double pour account_id=%s",
+                account_id,
             )
             raise ValueError("already_exists")
 
-        slug = await self._repo.resolve_slug(Profile, f"profile-{str(user_id)[:8]}")
+        slug = await self._repo.resolve_slug(Profile, f"profile-{str(account_id)[:8]}")
         profile = Profile(
-            user_id=user_id,
+            account_id=account_id,
+            user_id=author_user_id,
             slug=slug,
             date_of_birth=data.date_of_birth,
             biological_sex=data.biological_sex,
@@ -45,18 +51,26 @@ class ProfileService:
         self._repo.add(profile)
         await self._session.commit()
         await self._session.refresh(profile)
-        logger.info("Profil créé : slug=%s user_id=%s", profile.slug, user_id)
+        logger.info("Profil créé : slug=%s account_id=%s", profile.slug, account_id)
         return profile
 
     async def get_by_user_id(self, user_id: uuid.UUID) -> Profile | None:
-        """Retourne le profil d'un utilisateur, ou None."""
+        """Retourne le profil d'un utilisateur, ou None. (Usage inter-service.)"""
         return await self._repo.get_by_user_id(user_id)
 
-    async def update(self, user_id: uuid.UUID, data: ProfileUpdate) -> Profile | None:
-        """Met à jour les champs fournis du profil. Retourne None si le profil est introuvable."""
-        profile = await self._repo.get_by_user_id(user_id)
+    async def get_by_account_id(self, account_id: uuid.UUID) -> Profile | None:
+        """Retourne le dossier d'un compte (routes /me*), ou None."""
+        return await self._repo.get_by_account_id(account_id)
+
+    async def update(
+        self, account_id: uuid.UUID, data: ProfileUpdate
+    ) -> Profile | None:
+        """Met à jour le dossier du compte. Retourne None si introuvable."""
+        profile = await self._repo.get_by_account_id(account_id)
         if not profile:
-            logger.warning("Profil introuvable pour mise à jour user_id=%s", user_id)
+            logger.warning(
+                "Profil introuvable pour mise à jour account_id=%s", account_id
+            )
             return None
 
         for field, value in data.model_dump(exclude_none=True).items():
@@ -65,5 +79,5 @@ class ProfileService:
 
         await self._session.commit()
         await self._session.refresh(profile)
-        logger.info("Profil mis à jour : user_id=%s", user_id)
+        logger.info("Profil mis à jour : account_id=%s", account_id)
         return profile

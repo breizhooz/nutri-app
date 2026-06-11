@@ -4,6 +4,7 @@ import pytest
 from httpx import AsyncClient
 
 from app.repositories.macro_error_repository import MacroErrorRepository
+from tests.conftest import TEST_ACCOUNT_ID
 
 USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 OTHER_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000002")
@@ -14,9 +15,10 @@ class TestStatsRoute:
     async def test_stats_returns_correct_counts(self, client: AsyncClient, db_session):
         """GET /users/{id}/stats → counts corrects depuis la DB."""
         repo = MacroErrorRepository(db_session)
-        e1 = await repo.create(user_id=USER_ID, raw_ingredient="err1")
-        e2 = await repo.create(user_id=USER_ID, raw_ingredient="err2")
-        await repo.create(user_id=USER_ID, raw_ingredient="err3")
+        acc = TEST_ACCOUNT_ID
+        e1 = await repo.create(user_id=USER_ID, raw_ingredient="err1", account_id=acc)
+        e2 = await repo.create(user_id=USER_ID, raw_ingredient="err2", account_id=acc)
+        await repo.create(user_id=USER_ID, raw_ingredient="err3", account_id=acc)
         await repo.resolve(e1, resolved_name="ok")
         await repo.resolve(e2, resolved_name="ok2", calories=50.0)
 
@@ -41,20 +43,14 @@ class TestStatsRoute:
         assert data["recipes_analysed"] == 0
 
     @pytest.mark.unit
-    async def test_stats_forbidden_for_other_user(
+    async def test_stats_path_user_slug_is_informational(
         self, client: AsyncClient, db_session
     ):
-        """Accès aux stats d'un autre user → 403."""
+        """Multicomptes : les stats sont bornées au compte actif du token, pas au
+        user_slug du chemin (conservé pour compat d'API)."""
         resp = await client.get(f"/api/v1/users/{OTHER_USER_ID}/stats")
-        assert resp.status_code == 403
-
-    @pytest.mark.unit
-    async def test_stats_invalid_uuid_returns_422(
-        self, client: AsyncClient, db_session
-    ):
-        """user_slug non UUID → 422."""
-        resp = await client.get("/api/v1/users/jean-dupont/stats")
-        assert resp.status_code == 422
+        assert resp.status_code == 200
+        assert resp.json()["macro_errors_pending"] == 0
 
     @pytest.mark.unit
     async def test_stats_avg_daily_present(self, client: AsyncClient, db_session):

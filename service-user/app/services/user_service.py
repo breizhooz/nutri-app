@@ -33,7 +33,10 @@ class UserService:
             payload.user_right.model_dump() if payload.user_right is not None else None
         )
         return await self.repository.update_rights(
-            user, user_admin=payload.user_admin, user_right=user_right
+            user,
+            user_admin=payload.user_admin,
+            is_coach=payload.is_coach,
+            user_right=user_right,
         )
 
     async def delete_user(self, user_id: uuid.UUID) -> bool:

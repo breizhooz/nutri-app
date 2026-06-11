@@ -26,6 +26,10 @@ class WeeklyMenu(AbstractModel):
 
     slug: Mapped[str | None] = mapped_column(String(350), unique=True, index=True)
     user_id: Mapped[str | None] = mapped_column(String(36))
+    # Multicomptes (CRM) : clé de partition (act_account du JWT). Filtre d'accès =
+    # account_id ; user_id reste = auteur/legacy. Backfill cross-DB depuis les
+    # memberships OWNER de service-user.
+    account_id: Mapped[str | None] = mapped_column(String(36), index=True)
 
     nb_persons: Mapped[int] = mapped_column(Integer, default=1)
     caloric_target: Mapped[int | None] = mapped_column(Integer)

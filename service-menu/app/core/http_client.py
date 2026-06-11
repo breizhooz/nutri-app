@@ -1,4 +1,6 @@
 import httpx
+from starlette.requests import Request
+
 from app.core.config import settings
 
 
@@ -45,15 +47,24 @@ class ServicesUserClient:
 
 class ServicesRecipeClient:
     """
-    Http client allow to communicate with service-recipe
+    Http client allow to communicate with service-recipe.
+
+    Multicomptes : les recettes sont privées par compte côté service-recipe, qui
+    exige un token de contexte (act_account + scope recipe:read). On forwarde donc
+    le token de l'utilisateur appelant pour que la génération de menus / les listes
+    de courses ne voient que les recettes de SON compte.
     """
 
-    def __init__(self):
+    def __init__(self, auth_header: str | None = None):
         self.base_url = settings.SERVICE_RECIPE_URL
+        self._auth_header = auth_header
         self._client = None
 
     async def __aenter__(self):
-        self._client = httpx.AsyncClient(base_url=self.base_url, timeout=5.0)
+        headers = {"Authorization": self._auth_header} if self._auth_header else {}
+        self._client = httpx.AsyncClient(
+            base_url=self.base_url, timeout=5.0, headers=headers
+        )
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -119,6 +130,10 @@ async def get_user_client():
         yield client
 
 
-async def get_recipe_client():
-    async with ServicesRecipeClient() as client:
+async def get_recipe_client(request: Request):
+    # Forward le token de contexte de l'utilisateur vers service-recipe (recettes
+    # privées par compte). Sans token, on retombe sur un client non authentifié
+    # (les endpoints recipe répondront 401/403 — comportement attendu).
+    auth_header = request.headers.get("authorization")
+    async with ServicesRecipeClient(auth_header=auth_header) as client:
         yield client

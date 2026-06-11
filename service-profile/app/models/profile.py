@@ -29,6 +29,12 @@ class Profile(Base, SlugMixin, TimestampMixin, UpdatedAtMixin):
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), unique=True, nullable=False, index=True
     )
+    # Multicomptes (CRM) : clé de partition du dossier. 1-to-1 avec un compte de
+    # service-user (act_account du JWT). Nullable le temps du backfill cross-DB ;
+    # devient la clé de filtrage à la place de user_id (qui reste = auteur/legacy).
+    account_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), unique=True, nullable=True, index=True
+    )
     date_of_birth: Mapped[date | None] = mapped_column(Date, nullable=True)
     biological_sex: Mapped[BiologicalSex | None] = mapped_column(
         SQLEnum(BiologicalSex, native_enum=False, length=20), nullable=True

@@ -26,9 +26,9 @@ from app.models.user import User
 from app.schemas.auth import PreAuthTokenResponse
 from app.schemas.user import TokenResponse, UserLogin
 from app.repositories.user_repository import UserRepository
+from app.services.access_service import AccessService
 from app.services.notification_client import NotificationClient
 from app.services.totp_service import CodeGenerator
-from app.services.user_service import UserService
 
 router: APIRouter = APIRouter()
 
@@ -82,10 +82,9 @@ async def login(
 
     if not user.two_factor_enabled:
         set_refresh_cookie(response, create_refresh_token(str(user.id)))
+        claims = await AccessService(session).build_login_claims(user)
         return TokenResponse(
-            access_token=create_access_token(
-                str(user.id), UserService.build_token_claims(user)
-            ),
+            access_token=create_access_token(str(user.id), claims),
         )
 
     mfa_token = create_mfa_token(str(user.id))
@@ -164,8 +163,9 @@ async def refresh(
         )
 
     set_refresh_cookie(response, create_refresh_token(user_id))
+    claims = await AccessService(session).build_login_claims(user)
     return TokenResponse(
-        access_token=create_access_token(user_id, UserService.build_token_claims(user)),
+        access_token=create_access_token(user_id, claims),
     )
 
 

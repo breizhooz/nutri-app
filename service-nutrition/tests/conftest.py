@@ -27,6 +27,8 @@ from app.main import app as _app  # noqa: E402
 DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 TEST_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 OTHER_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000002")
+TEST_ACCOUNT_ID = uuid.UUID("00000000-0000-0000-0000-0000000000a1")
+OTHER_ACCOUNT_ID = uuid.UUID("00000000-0000-0000-0000-0000000000a2")
 _JWT_SECRET = "test-jwt-secret"
 
 
@@ -35,10 +37,18 @@ def _pg_uuid_to_char(element, compiler, **kw):
     return "CHAR(32)"
 
 
-def make_test_token(user_id: uuid.UUID = TEST_USER_ID) -> str:
+def make_test_token(
+    user_id: uuid.UUID = TEST_USER_ID,
+    account_id: uuid.UUID = TEST_ACCOUNT_ID,
+) -> str:
+    """Token de contexte (multicomptes) : act_account + scopes recipe:*."""
     payload = {
         "sub": str(user_id),
         "type": "access",
+        "act_account": str(account_id),
+        "scopes": ["recipe:read", "recipe:write"],
+        "user_admin": False,
+        "user_right": {},
         "exp": datetime.now(timezone.utc) + timedelta(hours=1),
     }
     return jwt.encode(payload, _JWT_SECRET, algorithm="HS256")

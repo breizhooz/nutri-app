@@ -1,5 +1,5 @@
 import pytest
-from .conftest import TEST_USER_ID
+from .conftest import TEST_ACCOUNT_ID, TEST_USER_ID
 
 SEARCH_BASE = "/api/v1/search/recipes"
 
@@ -138,13 +138,13 @@ async def test_search_limit_max_returns_422(mock_es, http_client):
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_search_always_filters_by_user_id(mock_es, http_client):
-    """La query ES doit toujours contenir un filtre term sur created_by_user_id."""
+async def test_search_always_filters_by_account_id(mock_es, http_client):
+    """La query ES doit toujours contenir un filtre term sur account_id (multicomptes)."""
     mock_es.search.return_value = _es_response()
     async with http_client as client:
         await client.get(SEARCH_BASE)
     filters = mock_es.search.call_args.kwargs["query"]["bool"]["filter"]
-    assert {"term": {"created_by_user_id": TEST_USER_ID}} in filters
+    assert {"term": {"account_id": TEST_ACCOUNT_ID}} in filters
 
 
 @pytest.mark.asyncio

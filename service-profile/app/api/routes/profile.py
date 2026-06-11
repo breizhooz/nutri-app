@@ -6,7 +6,15 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import get_current_user_id, get_locale, verify_service_token
+from nutri_shared.core.context import AccessContext
+
+from app.core.deps import (
+    get_locale,
+    get_read_account_id,
+    get_write_account_id,
+    get_write_context,
+    verify_service_token,
+)
 from app.db.session import get_session
 from app.i18n import t
 from app.repositories.preferences_repository import PreferencesRepository
@@ -26,13 +34,15 @@ router = APIRouter()
 async def create_profile(
     request: Request,
     data: ProfileCreate,
-    user_id: uuid.UUID = Depends(get_current_user_id),
+    ctx: AccessContext = Depends(get_write_context),
     session: AsyncSession = Depends(get_session),
 ) -> ProfileResponse:
-    """Crée le profil de l'utilisateur authentifié. HTTP 409 si déjà existant."""
+    """Crée le dossier du compte actif. HTTP 409 si déjà existant."""
     locale = get_locale(request)
     try:
-        profile = await ProfileService(session).create(user_id, data)
+        profile = await ProfileService(session).create(
+            uuid.UUID(ctx.account_id), uuid.UUID(ctx.sub), data
+        )
     except ValueError:
         raise HTTPException(
             status.HTTP_409_CONFLICT, detail=t.get("profile.already_exists", locale)
@@ -43,12 +53,12 @@ async def create_profile(
 @router.get("/me", response_model=ProfileResponse)
 async def get_my_profile(
     request: Request,
-    user_id: uuid.UUID = Depends(get_current_user_id),
+    account_id: uuid.UUID = Depends(get_read_account_id),
     session: AsyncSession = Depends(get_session),
 ) -> ProfileResponse:
-    """Retourne le profil de l'utilisateur authentifié."""
+    """Retourne le dossier du compte actif."""
     locale = get_locale(request)
-    profile = await ProfileService(session).get_by_user_id(user_id)
+    profile = await ProfileService(session).get_by_account_id(account_id)
     if not profile:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale)
@@ -60,12 +70,12 @@ async def get_my_profile(
 async def update_my_profile(
     request: Request,
     data: ProfileUpdate,
-    user_id: uuid.UUID = Depends(get_current_user_id),
+    account_id: uuid.UUID = Depends(get_write_account_id),
     session: AsyncSession = Depends(get_session),
 ) -> ProfileResponse:
-    """Met à jour les champs fournis du profil de l'utilisateur authentifié."""
+    """Met à jour les champs fournis du dossier du compte actif."""
     locale = get_locale(request)
-    profile = await ProfileService(session).update(user_id, data)
+    profile = await ProfileService(session).update(account_id, data)
     if not profile:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale)
@@ -76,7 +86,7 @@ async def update_my_profile(
 @router.get("/me/calculate", response_model=CalculationResponse)
 async def calculate_my_profile(
     request: Request,
-    user_id: uuid.UUID = Depends(get_current_user_id),
+    account_id: uuid.UUID = Depends(get_read_account_id),
     session: AsyncSession = Depends(get_session),
 ) -> CalculationResponse:
     """Calcule IMC, MB, TDEE, poids idéal, cible énergétique, macros et explication.
@@ -87,7 +97,7 @@ async def calculate_my_profile(
     profile_repo = ProfileRepository(session)
     pref_repo = PreferencesRepository(session)
 
-    profile = await profile_repo.get_by_user_id(user_id)
+    profile = await profile_repo.get_by_account_id(account_id)
     if not profile:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND, detail=t.get("profile.not_found", locale)

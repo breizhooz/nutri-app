@@ -35,11 +35,16 @@ async def _unique_slug(session: AsyncSession, start_date: date) -> str:
 
 
 async def create_menu(
-    session: AsyncSession, menu_data: WeeklyMenuCreate, user_id: str
+    session: AsyncSession,
+    menu_data: WeeklyMenuCreate,
+    user_id: str,
+    account_id: str,
 ) -> WeeklyMenu:
+    # Partition par compte : un seul menu par (compte, semaine). user_id reste
+    # l'auteur de la ligne.
     existing = await session.execute(
         select(WeeklyMenu.id).where(
-            WeeklyMenu.user_id == user_id,
+            WeeklyMenu.account_id == account_id,
             WeeklyMenu.start_date == menu_data.start_date,
         )
     )
@@ -54,6 +59,7 @@ async def create_menu(
     menu = WeeklyMenu(
         slug=slug,
         user_id=user_id,
+        account_id=account_id,
         nb_persons=menu_data.nb_persons,
         caloric_target=menu_data.caloric_target,
         start_date=menu_data.start_date,
@@ -84,12 +90,15 @@ async def get_menu(session: AsyncSession, menu_id: int) -> WeeklyMenu | None:
     return await _load_with_slots(session, menu_id)
 
 
-async def get_menu_by_user_and_date(
-    session: AsyncSession, user_id: str, start_date: date
+async def get_menu_by_account_and_date(
+    session: AsyncSession, account_id: str, start_date: date
 ) -> WeeklyMenu | None:
     result = await session.execute(
         select(WeeklyMenu)
-        .where(WeeklyMenu.user_id == user_id, WeeklyMenu.start_date == start_date)
+        .where(
+            WeeklyMenu.account_id == account_id,
+            WeeklyMenu.start_date == start_date,
+        )
         .options(selectinload(WeeklyMenu.slots))
         .order_by(WeeklyMenu.created_at.desc())
         .limit(1)
@@ -97,12 +106,12 @@ async def get_menu_by_user_and_date(
     return result.scalar_one_or_none()
 
 
-async def get_menu_by_user(
-    session: AsyncSession, user_id: str, skip: int = 0, limit: int = 20
+async def get_menu_by_account(
+    session: AsyncSession, account_id: str, skip: int = 0, limit: int = 20
 ) -> list[WeeklyMenu]:
     result = await session.execute(
         select(WeeklyMenu)
-        .where(WeeklyMenu.user_id == user_id)
+        .where(WeeklyMenu.account_id == account_id)
         .options(selectinload(WeeklyMenu.slots))
         .offset(skip)
         .limit(limit)

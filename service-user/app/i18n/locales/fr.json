@@ -41,5 +41,22 @@
   },
   "validation": {
     "password_too_short": "Le mot de passe doit contenir au moins 8 caractères"
+  },
+  "accounts": {
+    "not_member": "Vous n'avez pas accès à ce compte",
+    "manage_forbidden": "Gestion des membres réservée aux gestionnaires de ce compte",
+    "rank_too_high": "Vous ne pouvez pas attribuer ou modifier un rôle supérieur au vôtre",
+    "last_owner": "Impossible : c'est le dernier propriétaire (OWNER) du compte",
+    "membership_not_found": "Membre introuvable sur ce compte",
+    "already_member": "Cette identité est déjà membre du compte",
+    "invitation_invalid": "Invitation invalide ou expirée",
+    "invitation_email_mismatch": "Cette invitation ne correspond pas à votre adresse email",
+    "invitation_not_found": "Invitation introuvable",
+    "coach_already_assigned": "Ce compte a déjà un coach actif ; révoquez-le avant d'en ajouter un autre",
+    "cannot_coach_self": "Vous ne pouvez pas devenir votre propre coach",
+    "no_client_account": "Ce compte client est introuvable pour rattacher le coach",
+    "coach_capability_required": "Seul un coach (habilité par un administrateur) peut créer un lien de coaching",
+    "not_owner": "Action réservée au propriétaire de ce compte",
+    "nothing_to_update": "Aucune modification fournie"
   }
 }

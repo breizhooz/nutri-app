@@ -4,14 +4,17 @@ import pytest
 from httpx import AsyncClient
 
 from app.repositories.macro_error_repository import MacroErrorRepository
+from tests.conftest import TEST_ACCOUNT_ID, OTHER_ACCOUNT_ID
 
 USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 OTHER_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000002")
 
 
-async def _create_error(session, raw="gochujank", user_id=USER_ID):
+async def _create_error(
+    session, raw="gochujank", user_id=USER_ID, account_id=TEST_ACCOUNT_ID
+):
     return await MacroErrorRepository(session).create(
-        user_id=user_id, raw_ingredient=raw
+        user_id=user_id, raw_ingredient=raw, account_id=account_id
     )
 
 
@@ -39,20 +42,25 @@ class TestMacroErrorsRoutes:
         assert resp.json() == []
 
     @pytest.mark.unit
-    async def test_list_macro_errors_forbidden_for_other_user(
+    async def test_list_isolated_from_other_account(
         self, client: AsyncClient, db_session
     ):
-        """GET avec autre user_id → 403."""
-        resp = await client.get(f"/api/v1/users/{OTHER_USER_ID}/macro-errors")
-        assert resp.status_code == 403
+        """Multicomptes : une erreur d'un AUTRE compte n'apparaît pas."""
+        await _create_error(db_session, "autre-compte", account_id=OTHER_ACCOUNT_ID)
+        resp = await client.get(f"/api/v1/users/{USER_ID}/macro-errors")
+        assert resp.status_code == 200
+        assert resp.json() == []
 
     @pytest.mark.unit
-    async def test_list_macro_errors_invalid_uuid_returns_422(
+    async def test_list_path_user_slug_is_informational(
         self, client: AsyncClient, db_session
     ):
-        """user_slug non UUID → 422."""
-        resp = await client.get("/api/v1/users/jean-dupont/macro-errors")
-        assert resp.status_code == 422
+        """Le user_slug du chemin n'est plus autoritaire : la donnée est bornée au
+        compte actif du token, pas au chemin."""
+        await _create_error(db_session, "gochujank")
+        resp = await client.get(f"/api/v1/users/{OTHER_USER_ID}/macro-errors")
+        assert resp.status_code == 200
+        assert len(resp.json()) == 1
 
     @pytest.mark.unit
     async def test_patch_resolve_with_name_only(self, client: AsyncClient, db_session):
@@ -98,11 +106,13 @@ class TestMacroErrorsRoutes:
         assert resp.status_code == 404
 
     @pytest.mark.unit
-    async def test_patch_forbidden_for_other_user(
+    async def test_patch_forbidden_for_other_account(
         self, client: AsyncClient, db_session
     ):
-        """PATCH d'un error appartenant à un autre user → 403."""
-        error = await _create_error(db_session, user_id=OTHER_USER_ID)
+        """PATCH d'une erreur appartenant à un AUTRE compte → 403 (multicomptes)."""
+        error = await _create_error(
+            db_session, user_id=OTHER_USER_ID, account_id=OTHER_ACCOUNT_ID
+        )
         resp = await client.patch(
             f"/api/v1/macro-errors/{error.slug}",
             json={"resolved_name": "test"},

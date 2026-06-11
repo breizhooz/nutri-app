@@ -128,6 +128,33 @@ class LocalizedHTTPException(AppException):
         )
 
     @staticmethod
+    def account_context_required(request: Request) -> "LocalizedHTTPException":
+        return LocalizedHTTPException(
+            403,
+            "recipe.errors.account_context_required",
+            request,
+            code="ACCOUNT_CONTEXT_REQUIRED",
+        )
+
+    @staticmethod
+    def recipe_push_forbidden(request: Request) -> "LocalizedHTTPException":
+        return LocalizedHTTPException(
+            403,
+            "recipe.errors.push_forbidden",
+            request,
+            code="RECIPE_PUSH_FORBIDDEN",
+        )
+
+    @staticmethod
+    def recipe_push_same_account(request: Request) -> "LocalizedHTTPException":
+        return LocalizedHTTPException(
+            400,
+            "recipe.errors.push_same_account",
+            request,
+            code="RECIPE_PUSH_SAME_ACCOUNT",
+        )
+
+    @staticmethod
     def service_es_failed(
         request: Request, translation_key: str, e: Exception
     ) -> "LocalizedHTTPException":

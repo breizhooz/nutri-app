@@ -50,6 +50,7 @@ class UserOut(BaseModel):
     is_active: bool
     two_factor_enabled: bool
     user_admin: bool = False
+    is_coach: bool = False
     user_right: dict = {}
 
     model_config = {"from_attributes": True}
@@ -62,6 +63,9 @@ class UserAdminOut(BaseModel):
     email: str
     is_active: bool
     user_admin: bool
+    is_coach: bool = False
+    # Rôles de compte distincts détenus par l'identité (memberships actifs).
+    account_roles: list[str] = []
     user_right: dict
 
     model_config = {"from_attributes": True}
@@ -70,10 +74,11 @@ class UserAdminOut(BaseModel):
 class UserRightsUpdate(BaseModel):
     """Payload for an admin updating another user's RBAC rights.
 
-    Both fields are optional so an admin can update one without the other.
+    Tous les champs sont optionnels : un admin peut n'en modifier qu'un.
     """
 
     user_admin: Optional[bool] = None
+    is_coach: Optional[bool] = None
     user_right: Optional[UserRights] = None
 
 

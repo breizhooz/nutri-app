@@ -50,15 +50,19 @@ async def init_elasticsearch():
                     "nutrition": {"type": "keyword"},
                     "types": {"type": "keyword"},
                     "created_by_user_id": {"type": "keyword"},
+                    "account_id": {"type": "keyword"},
+                    "source_recipe_id": {"type": "integer"},
                     "created_at": {"type": "date"},
                     **MACRO_PROPERTIES,
                 }
             },
         )
     else:
-        # Ajout idempotent des champs macros sur un index pré-existant.
+        # Ajout idempotent des champs sur un index pré-existant (macros + provenance
+        # coaching). put_mapping n'écrase pas les champs déjà présents.
         await es_client.indices.put_mapping(
-            index=index_name, properties=MACRO_PROPERTIES
+            index=index_name,
+            properties={**MACRO_PROPERTIES, "source_recipe_id": {"type": "integer"}},
         )
 
 

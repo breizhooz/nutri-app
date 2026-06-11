@@ -78,7 +78,7 @@ def _make_service(summary=None, engine=None):
 class TestNutritionRulesService:
     async def test_apply_rules_false_skips_profile(self):
         svc, profile, nutrition, search = _make_service()
-        await svc.search(user_id=USER_ID, apply_rules=False, query="poulet", limit=5)
+        await svc.search(user_id=USER_ID, account_id=USER_ID, apply_rules=False, query="poulet", limit=5)
         profile.get_nutrition_summary.assert_not_called()
         nutrition.compute_targets.assert_not_called()
         search.search_recipes.assert_awaited_once()
@@ -86,24 +86,24 @@ class TestNutritionRulesService:
 
     async def test_no_summary_falls_back_to_standard(self):
         svc, _, nutrition, search = _make_service(summary=None)
-        await svc.search(user_id=USER_ID)
+        await svc.search(user_id=USER_ID, account_id=USER_ID)
         nutrition.compute_targets.assert_not_called()
         assert "extra_must_not" not in search.search_recipes.call_args.kwargs
 
     async def test_rules_disabled_falls_back(self):
         svc, _, nutrition, search = _make_service(summary=_summary(rules_enabled=False))
-        await svc.search(user_id=USER_ID)
+        await svc.search(user_id=USER_ID, account_id=USER_ID)
         nutrition.compute_targets.assert_not_called()
         assert "extra_must_not" not in search.search_recipes.call_args.kwargs
 
     async def test_missing_calculation_falls_back(self):
         svc, _, nutrition, search = _make_service(summary=_summary(with_calc=False))
-        await svc.search(user_id=USER_ID)
+        await svc.search(user_id=USER_ID, account_id=USER_ID)
         nutrition.compute_targets.assert_not_called()
 
     async def test_engine_none_falls_back(self):
         svc, _, nutrition, search = _make_service(summary=_summary(), engine=None)
-        await svc.search(user_id=USER_ID)
+        await svc.search(user_id=USER_ID, account_id=USER_ID)
         nutrition.compute_targets.assert_awaited_once()
         assert "extra_must_not" not in search.search_recipes.call_args.kwargs
 
@@ -112,7 +112,7 @@ class TestNutritionRulesService:
         svc, _, nutrition, search = _make_service(
             summary=_summary(), engine=_engine_result()
         )
-        out = await svc.search(user_id=USER_ID, query="curry")
+        out = await svc.search(user_id=USER_ID, account_id=USER_ID, query="curry")
 
         # entrées du moteur dérivées du résumé
         eng_kwargs = nutrition.compute_targets.call_args.kwargs
@@ -138,7 +138,7 @@ class TestNutritionRulesService:
         svc, _, nutrition, _ = _make_service(
             summary=_summary(rules_aggr=0.5, rules_var=0.2), engine=_engine_result()
         )
-        await svc.search(user_id=USER_ID)
+        await svc.search(user_id=USER_ID, account_id=USER_ID)
         adj = nutrition.compute_targets.call_args.kwargs["adjustment"]
         assert adj["aggressiveness_factor"] == 0.5
         assert adj["tolerances"] == {"calories_pct": 0.2, "macros_pct": 0.25}
@@ -147,7 +147,7 @@ class TestNutritionRulesService:
         svc, _, nutrition, _ = _make_service(
             summary=_summary(rules_aggr=0.5), engine=_engine_result()
         )
-        await svc.search(user_id=USER_ID, aggressiveness=1.5)
+        await svc.search(user_id=USER_ID, account_id=USER_ID, aggressiveness=1.5)
         adj = nutrition.compute_targets.call_args.kwargs["adjustment"]
         assert adj["aggressiveness_factor"] == 1.5  # live gagne sur le défaut
 
@@ -161,7 +161,7 @@ class TestNutritionRulesService:
             main_goal="weight_loss", diet_type="standard", excluded_foods=[]
         )
         svc._profile.get_nutrition_summary.return_value = svc_summary
-        await svc.search(user_id=USER_ID)
+        await svc.search(user_id=USER_ID, account_id=USER_ID)
         assert nutrition.compute_targets.call_args.kwargs["adjustment"] is None
 
     async def test_cursors_build_adjustment(self):
@@ -169,7 +169,7 @@ class TestNutritionRulesService:
             summary=_summary(), engine=_engine_result()
         )
         await svc.search(
-            user_id=USER_ID,
+            user_id=USER_ID, account_id=USER_ID,
             aggressiveness=1.5,
             variety_pct=0.2,
             override_calories=2200,
@@ -184,7 +184,7 @@ class TestNutritionRulesService:
     async def test_scoring_enabled_passes_functions(self, monkeypatch):
         monkeypatch.setattr(settings, "APPLY_NUTRITION_SCORING", True)
         svc, _, _, search = _make_service(summary=_summary(), engine=_engine_result())
-        await svc.search(user_id=USER_ID)
+        await svc.search(user_id=USER_ID, account_id=USER_ID)
         kw = search.search_recipes.call_args.kwargs
         assert kw["scoring_functions"] == [
             {"gauss": {"calories": {"origin": 2000, "scale": 200}}}

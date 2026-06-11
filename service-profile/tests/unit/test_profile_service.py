@@ -29,26 +29,28 @@ class TestProfileServiceCreate:
     @pytest.mark.unit
     async def test_create_returns_profile(self):
         """create() retourne le profil créé."""
+        account_id = uuid.uuid4()
         user_id = uuid.uuid4()
         data = ProfileCreate(height_cm=180.0, weight_kg=75.0)
 
         session = _make_session()
         with patch("app.services.profile_service.ProfileRepository") as MockRepo:
             repo = AsyncMock()
-            repo.get_by_user_id = AsyncMock(return_value=None)
+            repo.get_by_account_id = AsyncMock(return_value=None)
             repo.resolve_slug = AsyncMock(return_value="profile-abc")
             repo.add = MagicMock()
             MockRepo.return_value = repo
 
             service = ProfileService(session)
-            await service.create(user_id, data)
+            await service.create(account_id, user_id, data)
 
         repo.add.assert_called_once()
         session.commit.assert_awaited_once()
 
     @pytest.mark.unit
     async def test_create_raises_if_profile_already_exists(self):
-        """create() lève ValueError('already_exists') si le profil existe déjà."""
+        """create() lève ValueError('already_exists') si le dossier existe déjà."""
+        account_id = uuid.uuid4()
         user_id = uuid.uuid4()
         data = ProfileCreate(height_cm=175.0)
         existing_profile = _make_profile(user_id)
@@ -56,29 +58,30 @@ class TestProfileServiceCreate:
         session = _make_session()
         with patch("app.services.profile_service.ProfileRepository") as MockRepo:
             repo = AsyncMock()
-            repo.get_by_user_id = AsyncMock(return_value=existing_profile)
+            repo.get_by_account_id = AsyncMock(return_value=existing_profile)
             MockRepo.return_value = repo
 
             service = ProfileService(session)
             with pytest.raises(ValueError, match="already_exists"):
-                await service.create(user_id, data)
+                await service.create(account_id, user_id, data)
 
     @pytest.mark.unit
     async def test_create_calls_resolve_slug(self):
         """create() résout le slug avant d'ajouter le profil."""
+        account_id = uuid.uuid4()
         user_id = uuid.uuid4()
         data = ProfileCreate()
 
         session = _make_session()
         with patch("app.services.profile_service.ProfileRepository") as MockRepo:
             repo = AsyncMock()
-            repo.get_by_user_id = AsyncMock(return_value=None)
+            repo.get_by_account_id = AsyncMock(return_value=None)
             repo.resolve_slug = AsyncMock(return_value="profile-slug")
             repo.add = MagicMock()
             MockRepo.return_value = repo
 
             service = ProfileService(session)
-            await service.create(user_id, data)
+            await service.create(account_id, user_id, data)
 
         repo.resolve_slug.assert_awaited_once()
 
@@ -121,25 +124,25 @@ class TestProfileServiceGetByUserId:
 class TestProfileServiceUpdate:
     @pytest.mark.unit
     async def test_update_returns_none_when_profile_not_found(self):
-        """update() retourne None si le profil est introuvable."""
-        user_id = uuid.uuid4()
+        """update() retourne None si le dossier est introuvable."""
+        account_id = uuid.uuid4()
         data = ProfileUpdate(weight_kg=80.0)
 
         session = _make_session()
         with patch("app.services.profile_service.ProfileRepository") as MockRepo:
             repo = AsyncMock()
-            repo.get_by_user_id = AsyncMock(return_value=None)
+            repo.get_by_account_id = AsyncMock(return_value=None)
             MockRepo.return_value = repo
 
             service = ProfileService(session)
-            result = await service.update(user_id, data)
+            result = await service.update(account_id, data)
 
         assert result is None
 
     @pytest.mark.unit
     async def test_update_applies_fields(self):
         """update() applique les champs fournis au profil."""
-        user_id = uuid.uuid4()
+        account_id = uuid.uuid4()
         profile = MagicMock()
         profile.weight_kg = 70.0
         profile.updated_at = None
@@ -148,11 +151,11 @@ class TestProfileServiceUpdate:
         session = _make_session()
         with patch("app.services.profile_service.ProfileRepository") as MockRepo:
             repo = AsyncMock()
-            repo.get_by_user_id = AsyncMock(return_value=profile)
+            repo.get_by_account_id = AsyncMock(return_value=profile)
             MockRepo.return_value = repo
 
             service = ProfileService(session)
-            await service.update(user_id, data)
+            await service.update(account_id, data)
 
         assert profile.weight_kg == 85.0
         session.commit.assert_awaited_once()
@@ -160,17 +163,17 @@ class TestProfileServiceUpdate:
     @pytest.mark.unit
     async def test_update_sets_updated_at(self):
         """update() met à jour le champ updated_at."""
-        user_id = uuid.uuid4()
+        account_id = uuid.uuid4()
         profile = MagicMock()
         data = ProfileUpdate(height_cm=182.0)
 
         session = _make_session()
         with patch("app.services.profile_service.ProfileRepository") as MockRepo:
             repo = AsyncMock()
-            repo.get_by_user_id = AsyncMock(return_value=profile)
+            repo.get_by_account_id = AsyncMock(return_value=profile)
             MockRepo.return_value = repo
 
             service = ProfileService(session)
-            await service.update(user_id, data)
+            await service.update(account_id, data)
 
         assert profile.updated_at is not None
