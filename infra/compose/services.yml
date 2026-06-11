@@ -1,0 +1,270 @@
+# ══════════════════════════════════════════════════════════
+# SERVICES MÉTIER — les 7 API FastAPI
+# Chemins relatifs à CE fichier (infra/compose/).
+# Les anchors YAML (&/*) ont une portée limitée à ce fichier.
+# ══════════════════════════════════════════════════════════
+
+# Healthcheck API standard (services qui démarrent vite).
+x-healthcheck-api: &healthcheck-api
+  test: ["CMD-SHELL", "curl -f http://localhost:8000/health"]
+  interval: 5s
+  timeout: 3s
+  retries: 5
+  start_period: 20s
+
+# Variante tolérante (menu/crawler : démarrage + migrations plus longs).
+x-healthcheck-api-slow: &healthcheck-api-slow
+  test: ["CMD-SHELL", "curl -f http://localhost:8000/health"]
+  interval: 5s
+  timeout: 5s
+  retries: 20
+  start_period: 20s
+
+services:
+# ══════════════════════════════════════════════════════════
+# SERVICE — user  →  http://api-users.localhost
+# ══════════════════════════════════════════════════════════
+  service-user:
+    build:
+      context: ../..
+      dockerfile: service-user/Dockerfile
+    container_name: nutriplanner-service-user
+    ports:
+      - "8001:8000"
+    volumes:
+      - ../../service-user:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER_USER}:${POSTGRES_USER_PASSWORD}@postgres:5432/${POSTGRES_USER_DB}
+    env_file:
+      - ../../.env
+      - ../../service-user/conf/.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.svc-user.loadbalancer.server.port=8000"
+      - "traefik.http.routers.svc-user.rule=Host(`api-users.localhost`)"
+      - "traefik.http.routers.svc-user.entrypoints=websecure"
+      - "traefik.http.routers.svc-user.tls=true"
+      - "traefik.http.routers.svc-user.service=svc-user"
+      - "traefik.http.routers.svc-user.middlewares=cors@file"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck: *healthcheck-api
+    networks:
+      - nutriplanner
+
+# ══════════════════════════════════════════════════════════
+# SERVICE — recipe  →  http://api-recipe.localhost
+# ══════════════════════════════════════════════════════════
+  service-recipe:
+    build:
+      context: ../..
+      dockerfile: service-recipe/Dockerfile
+    container_name: nutriplanner-service-recipe
+    ports:
+      - "8002:8000"
+    volumes:
+      - ../../service-recipe:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@postgres:5432/${POSTGRES_RECIPE_DB}
+      - SERVICE_USER_URL=http://service-user:8000
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    env_file:
+      - ../../.env
+      - ../../service-recipe/conf/.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.svc-recipe.loadbalancer.server.port=8000"
+      - "traefik.http.routers.svc-recipe.rule=Host(`api-recipe.localhost`)"
+      - "traefik.http.routers.svc-recipe.entrypoints=websecure"
+      - "traefik.http.routers.svc-recipe.tls=true"
+      - "traefik.http.routers.svc-recipe.service=svc-recipe"
+      - "traefik.http.routers.svc-recipe.middlewares=cors@file"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      service-user:
+        condition: service_healthy
+    healthcheck: *healthcheck-api
+    networks:
+      - nutriplanner
+
+# ══════════════════════════════════════════════════════════
+# SERVICE — menu  →  http://api-menu.localhost
+# ══════════════════════════════════════════════════════════
+  service-menu:
+    build:
+      context: ../..
+      dockerfile: service-menu/Dockerfile
+    container_name: nutriplanner-service-menu
+    ports:
+      - "8003:8000"
+    volumes:
+      - ../../service-menu:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_MENU_USER}:${POSTGRES_MENU_PASSWORD}@postgres:5432/${POSTGRES_MENU_DB}
+      - SERVICE_USER_URL=http://service-user:8000
+      - SERVICE_RECIPE_URL=http://service-recipe:8000
+    env_file:
+      - ../../.env
+      - ../../service-menu/conf/.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.svc-menu.loadbalancer.server.port=8000"
+      - "traefik.http.routers.svc-menu.rule=Host(`api-menu.localhost`)"
+      - "traefik.http.routers.svc-menu.entrypoints=websecure"
+      - "traefik.http.routers.svc-menu.tls=true"
+      - "traefik.http.routers.svc-menu.service=svc-menu"
+      - "traefik.http.routers.svc-menu.middlewares=cors@file"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-user:
+        condition: service_healthy
+      service-recipe:
+        condition: service_healthy
+    healthcheck: *healthcheck-api-slow
+    networks:
+      - nutriplanner
+
+# ══════════════════════════════════════════════════════════
+# SERVICE — crawler  →  http://api-crawler.localhost
+# ══════════════════════════════════════════════════════════
+  service-crawler:
+    build:
+      context: ../..
+      dockerfile: service-crawler/Dockerfile
+    container_name: nutriplanner-service-crawler
+    ports:
+      - "8004:8000"
+    volumes:
+      - ../../service-crawler:/app
+      - instagram-session:/data
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres:5432/${POSTGRES_CRAWLER_DB}
+    env_file:
+      - ../../.env
+      - ../../service-crawler/conf/.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.svc-crawler.loadbalancer.server.port=8000"
+      - "traefik.http.routers.svc-crawler.rule=Host(`api-crawler.localhost`)"
+      - "traefik.http.routers.svc-crawler.entrypoints=websecure"
+      - "traefik.http.routers.svc-crawler.tls=true"
+      - "traefik.http.routers.svc-crawler.service=svc-crawler"
+      - "traefik.http.routers.svc-crawler.middlewares=cors@file"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck: *healthcheck-api-slow
+    networks:
+      - nutriplanner
+
+# ══════════════════════════════════════════════════════════
+# SERVICE — notification  →  http://api-notification.localhost
+# ══════════════════════════════════════════════════════════
+  service-notification:
+    build:
+      context: ../..
+      dockerfile: service-notification/Dockerfile
+    container_name: nutriplanner-service-notification
+    ports:
+      - "8006:8000"
+    volumes:
+      - ../../service-notification:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NOTIFICATION_USER}:${POSTGRES_NOTIFICATION_PASSWORD}@postgres:5432/${POSTGRES_NOTIFICATION_DB}
+    env_file:
+      - ../../.env
+      - ../../service-notification/conf/.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.svc-notif.loadbalancer.server.port=8000"
+      - "traefik.http.routers.svc-notif.rule=Host(`api-notification.localhost`)"
+      - "traefik.http.routers.svc-notif.entrypoints=websecure"
+      - "traefik.http.routers.svc-notif.tls=true"
+      - "traefik.http.routers.svc-notif.service=svc-notif"
+      - "traefik.http.routers.svc-notif.middlewares=cors@file"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck: *healthcheck-api
+    networks:
+      - nutriplanner
+
+# ══════════════════════════════════════════════════════════
+# SERVICE — nutrition  →  http://api-nutrition.localhost
+# ══════════════════════════════════════════════════════════
+  service-nutrition:
+    build:
+      context: ../..
+      dockerfile: service-nutrition/Dockerfile
+    container_name: nutriplanner-service-nutrition
+    ports:
+      - "8005:8000"
+    volumes:
+      - ../../service-nutrition:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NUTRITION_USER}:${POSTGRES_NUTRITION_PASSWORD}@postgres:5432/${POSTGRES_NUTRITION_DB}
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - SERVICE_NOTIFICATION_URL=http://service-notification:8000
+    env_file:
+      - ../../.env
+      - ../../service-nutrition/conf/.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.svc-nutrition.loadbalancer.server.port=8000"
+      - "traefik.http.routers.svc-nutrition.rule=Host(`api-nutrition.localhost`)"
+      - "traefik.http.routers.svc-nutrition.entrypoints=websecure"
+      - "traefik.http.routers.svc-nutrition.tls=true"
+      - "traefik.http.routers.svc-nutrition.service=svc-nutrition"
+      - "traefik.http.routers.svc-nutrition.middlewares=cors@file"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      service-notification:
+        condition: service_healthy
+    healthcheck: *healthcheck-api
+    networks:
+      - nutriplanner
+
+# ══════════════════════════════════════════════════════════
+# SERVICE — profile  →  http://api-profile.localhost
+# ══════════════════════════════════════════════════════════
+  service-profile:
+    build:
+      context: ../..
+      dockerfile: service-profile/Dockerfile
+    container_name: nutriplanner-service-profile
+    ports:
+      - "8007:8000"
+    volumes:
+      - ../../service-profile:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_PROFILE_USER}:${POSTGRES_PROFILE_PASSWORD}@postgres:5432/${POSTGRES_PROFILE_DB}
+    env_file:
+      - ../../.env
+      - ../../service-profile/conf/.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.svc-profile.loadbalancer.server.port=8000"
+      - "traefik.http.routers.svc-profile.rule=Host(`api-profile.localhost`)"
+      - "traefik.http.routers.svc-profile.entrypoints=websecure"
+      - "traefik.http.routers.svc-profile.tls=true"
+      - "traefik.http.routers.svc-profile.service=svc-profile"
+      - "traefik.http.routers.svc-profile.middlewares=cors@file"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck: *healthcheck-api
+    networks:
+      - nutriplanner

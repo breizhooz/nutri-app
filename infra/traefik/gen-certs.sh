@@ -10,7 +10,7 @@
 #   - installer mkcert : https://github.com/FiloSottile/mkcert
 #   - installer la CA locale de confiance :  mkcert -install
 #
-# Usage :  ./traefik/gen-certs.sh
+# Usage :  ./infra/traefik/gen-certs.sh
 set -euo pipefail
 
 CERT_DIR="$(cd "$(dirname "$0")" && pwd)/certs"

@@ -32,7 +32,7 @@ coverage.xml
 !.env.*.example
 .secrets
 #  Dumps Postgres (données + hash de mots de passe) — jamais versionnés
-postgres/dump/
+infra/postgres/dump/
 #  Docker (optionnel si tu en as)
 *.log
 docker-compose.override.yml
@@ -58,7 +58,7 @@ frontend/
 SECURITY*
 
 # HTTPS dev — certificats mkcert (ne jamais commiter la clé privée)
-traefik/certs/
+infra/traefik/certs/
 
 #  Docs / études internes (non versionnées)
 docs/
