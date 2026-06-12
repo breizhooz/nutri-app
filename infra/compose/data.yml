@@ -1,0 +1,103 @@
+# ══════════════════════════════════════════════════════════
+# DONNÉES — Postgres, Elasticsearch, Redis, MinIO
+# Chemins relatifs à CE fichier (infra/compose/).
+# ══════════════════════════════════════════════════════════
+
+services:
+# ══════════════════════════════════════════════════════════
+# SGBD
+# ══════════════════════════════════════════════════════════
+  # Moteur Postgres UNIQUE multi-bases (consolidation : 1 process, 7 bases).
+  # Les rôles + bases sont créés au 1er boot par infra/postgres/initdb/*.sh.
+  # Chaque base garde son rôle/mot de passe → isolation dure inchangée.
+  postgres:
+    image: postgres:16-alpine
+    container_name: nutriplanner-postgres
+    # Secrets plateforme : l'initdb consomme les POSTGRES_<SVC>_{DB,USER,PASSWORD}
+    env_file: ../env/secrets/platform.secrets.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_SUPERUSER}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD}
+      POSTGRES_DB: postgres
+    # SEC-01 : binding loopback uniquement — le port n'est plus exposé sur toutes
+    # les interfaces de l'hôte. En prod, retirer entièrement `ports:` (accès via
+    # le réseau Docker interne `nutriplanner` seulement).
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../postgres/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_SUPERUSER} -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - nutriplanner
+
+# ══════════════════════════════════════════════════════════
+# SEARCH ENGINE
+# ══════════════════════════════════════════════════════════
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: nutriplanner-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    mem_limit: 1g
+    # SEC-01 : loopback uniquement (cf. postgres).
+    ports:
+      - "127.0.0.1:9200:9200"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - nutriplanner
+
+  redis:
+    image: redis:7-alpine
+    container_name: nutriplanner-redis
+    # SEC-01 : loopback uniquement (cf. postgres).
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    mem_limit: 64m
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - nutriplanner
+
+# ══════════════════════════════════════════════════════════
+# OBJECT STORAGE — MinIO
+# ══════════════════════════════════════════════════════════
+  minio:
+    image: minio/minio:latest
+    container_name: nutriplanner-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    # SEC-01 : loopback uniquement (API S3 + console). En prod, exposer la console
+    # (9001) derrière Traefik avec auth plutôt qu'en direct sur l'hôte.
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio-data:/data
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nutriplanner

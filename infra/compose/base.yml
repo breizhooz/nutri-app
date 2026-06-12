@@ -1,0 +1,19 @@
+# ══════════════════════════════════════════════════════════
+# SOCLE — réseau + volumes nommés, partagés par tous les fragments
+# assemblés via `include:` par le docker-compose.yml racine.
+# ══════════════════════════════════════════════════════════
+
+networks:
+  nutriplanner:
+    driver: bridge
+
+volumes:
+  instagram-session:
+  pgdata:
+  es-data:
+  redis-data:
+  minio-data:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+  tempo-data:

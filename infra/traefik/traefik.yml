@@ -29,11 +29,9 @@ metrics:
     addRoutersLabels: true
     addServicesLabels: true
 
+# Provider docker supprimé (phase 4 infra) : le routage est déclaré dans
+# dynamic/routers.yml → plus besoin d'exposer docker.sock à Traefik.
 providers:
-  docker:
-    endpoint: "unix:///var/run/docker.sock"
-    exposedByDefault: false
-    network: nutriplanner
   file:
     directory: /etc/traefik/dynamic
     watch: true
