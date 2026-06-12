@@ -140,3 +140,145 @@ class TestWeeklyMenuRoutes:
                 json={"nb_persons": 3},
             )
         assert resp.status_code == 404
+
+
+class _FakeProfileClient:
+    """Double de ServicesProfileClient : résumé fixe ou erreur simulée."""
+
+    def __init__(self, summary: dict | None = None, raise_unavailable: bool = False):
+        self._summary = summary
+        self._raise = raise_unavailable
+
+    async def get_nutrition_summary(self, user_id: str) -> dict | None:
+        if self._raise:
+            from app.core.http_client import ServiceUnavailableError
+
+            raise ServiceUnavailableError("service-profile unavailable: down")
+        return self._summary
+
+
+class TestGenerateMenuRoute:
+    """POST /menus/generate — intégration des contraintes profil."""
+
+    def _override_clients(self, app, recipes: list[dict], profile_client):
+        from tests.conftest import MockRecipeClient
+        from app.core.http_client import get_profile_client, get_recipe_client
+
+        app.dependency_overrides[get_recipe_client] = lambda: MockRecipeClient(recipes)
+        app.dependency_overrides[get_profile_client] = lambda: profile_client
+
+    @pytest.mark.unit
+    async def test_generate_returns_503_when_profile_service_down(
+        self, client: AsyncClient
+    ):
+        from app.main import app
+        from tests.conftest import make_recipe
+
+        self._override_clients(
+            app,
+            [make_recipe(i) for i in range(1, 25)],
+            _FakeProfileClient(raise_unavailable=True),
+        )
+        resp = await client.post(
+            "/api/v1/menus/generate",
+            json={"start_date": "2026-06-02", "nb_persons": 2, "slots": []},
+        )
+        assert resp.status_code == 503
+        assert resp.json()["error"]["code"] == "SERVICE_PROFILE_UNAVAILABLE"
+
+    @pytest.mark.unit
+    async def test_generate_without_profile_still_works(self, client: AsyncClient):
+        """Pas de profil (404 → None) : génération sans contraintes."""
+        from app.main import app
+        from tests.conftest import make_recipe
+
+        self._override_clients(
+            app, [make_recipe(i) for i in range(1, 25)], _FakeProfileClient(None)
+        )
+        menu = _make_menu_response()
+        with (
+            patch(
+                "app.repositories.menu_service.get_menu_by_account_and_date",
+                new=AsyncMock(return_value=None),
+            ),
+            patch(
+                "app.repositories.menu_service.create_menu",
+                new=AsyncMock(return_value=MagicMock(**menu)),
+            ) as created,
+        ):
+            resp = await client.post(
+                "/api/v1/menus/generate",
+                json={"start_date": "2026-06-02", "nb_persons": 2, "slots": []},
+            )
+        assert resp.status_code == 201
+        assert len(created.call_args.args[1].slots) == 35
+
+    @pytest.mark.unit
+    async def test_generate_applies_profile_food_exclusions(self, client: AsyncClient):
+        """Un aliment exclu dans le profil n'apparaît dans aucun slot généré."""
+        from app.main import app
+        from tests.conftest import make_recipe
+
+        pork = make_recipe(1)
+        pork["recipe_ingredients"][0]["ingredient"]["name"] = "Jambon blanc"
+        recipes = [pork] + [make_recipe(i) for i in range(10, 35)]
+        summary = {
+            "allergies": [],
+            "excluded_foods": [{"slug": "e-1", "food_name": "jambon"}],
+            "nutrition_preferences": None,
+            "calculation": None,
+        }
+        self._override_clients(app, recipes, _FakeProfileClient(summary))
+        menu = _make_menu_response()
+        with (
+            patch(
+                "app.repositories.menu_service.get_menu_by_account_and_date",
+                new=AsyncMock(return_value=None),
+            ),
+            patch(
+                "app.repositories.menu_service.create_menu",
+                new=AsyncMock(return_value=MagicMock(**menu)),
+            ) as created,
+        ):
+            resp = await client.post(
+                "/api/v1/menus/generate",
+                json={"start_date": "2026-06-02", "nb_persons": 2, "slots": []},
+            )
+        assert resp.status_code == 201
+        generated = created.call_args.args[1].slots
+        assert generated and all(s.recipe_id != 1 for s in generated)
+
+    @pytest.mark.unit
+    async def test_generate_defaults_caloric_target_from_profile(
+        self, client: AsyncClient
+    ):
+        """Sans cible calorique dans le payload, la cible calculée du profil est utilisée."""
+        from app.main import app
+        from tests.conftest import make_recipe
+
+        summary = {
+            "allergies": [],
+            "excluded_foods": [],
+            "nutrition_preferences": None,
+            "calculation": {"target_calories_kcal": 2200},
+        }
+        self._override_clients(
+            app, [make_recipe(i) for i in range(1, 25)], _FakeProfileClient(summary)
+        )
+        menu = _make_menu_response()
+        with (
+            patch(
+                "app.repositories.menu_service.get_menu_by_account_and_date",
+                new=AsyncMock(return_value=None),
+            ),
+            patch(
+                "app.repositories.menu_service.create_menu",
+                new=AsyncMock(return_value=MagicMock(**menu)),
+            ) as created,
+        ):
+            resp = await client.post(
+                "/api/v1/menus/generate",
+                json={"start_date": "2026-06-02", "nb_persons": 2, "slots": []},
+            )
+        assert resp.status_code == 201
+        assert created.call_args.args[1].caloric_target == 2200

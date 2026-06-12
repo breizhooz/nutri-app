@@ -2,8 +2,7 @@
   "errors": {
     "token_invalid": "Token invalide ou expiré"
   },
-  "enums": {
-  },
+  "enums": {},
   "recipe": {
     "errors": {
       "not_found": "Recette non trouvée",
@@ -45,15 +44,20 @@
       "slug_no_spaces": "Le slug ne doit pas contenir d'espaces."
     }
   },
-  "http_client":{
-    "service_user":{
-      "errors":{
+  "http_client": {
+    "service_user": {
+      "errors": {
         "unavailable": "Service utilisateur indisponible"
       }
     },
-    "recipe":{
-      "errors":{
-        "unavailable": "Service utilisateur indisponible"
+    "recipe": {
+      "errors": {
+        "unavailable": "Service recettes indisponible"
+      }
+    },
+    "profile": {
+      "errors": {
+        "unavailable": "Service profil indisponible"
       }
     }
   }

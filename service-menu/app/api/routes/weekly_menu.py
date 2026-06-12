@@ -11,7 +11,9 @@ from app.core.deps import (
     get_write_context,
 )
 from app.core.http_client import (
+    ServicesProfileClient,
     ServicesRecipeClient,
+    get_profile_client,
     get_recipe_client,
     ServiceUnavailableError,
 )
@@ -21,6 +23,7 @@ from app.schemas.weekly_menu import (
     WeeklyMenuResponse,
 )
 from app.repositories import menu_service
+from app.services.profile_constraints import build_constraints
 from app.services.randomizer import generate_slots
 from app.i18n import LocalizedHTTPException
 
@@ -46,8 +49,24 @@ async def generate_menu(
     request: Request,
     session: AsyncSession = Depends(get_session),
     recipe_client: ServicesRecipeClient = Depends(get_recipe_client),
+    profile_client: ServicesProfileClient = Depends(get_profile_client),
     ctx: AccessContext = Depends(get_write_context),
 ):
+    # Contraintes du profil (allergies, aliments exclus, régime, cible
+    # calorique). Fail-closed : service-profile en erreur → 503, plutôt que de
+    # générer un menu qui ignore des allergies déclarées. Pas de profil (404)
+    # ou intégration désactivée → contraintes vides. Les exclusions du payload
+    # restent les seules persistées sur le menu ; celles du profil sont
+    # réappliquées dynamiquement à chaque génération.
+    try:
+        summary = await profile_client.get_nutrition_summary(ctx.sub)
+    except ServiceUnavailableError:
+        raise LocalizedHTTPException.service_profile_unavailable(request)
+    constraints = build_constraints(summary)
+
+    if menu_data.caloric_target is None:
+        menu_data.caloric_target = constraints.target_calories
+
     try:
         menu_data.slots = await generate_slots(
             recipe_client=recipe_client,
@@ -55,6 +74,7 @@ async def generate_menu(
             start_date=menu_data.start_date,
             exclusions=menu_data.exclusions,
             caloric_target=menu_data.caloric_target,
+            constraints=constraints,
         )
     except ServiceUnavailableError:
         raise LocalizedHTTPException.service_recipe_unavailable(request)
