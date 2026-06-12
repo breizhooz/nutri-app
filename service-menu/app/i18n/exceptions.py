@@ -50,6 +50,15 @@ class LocalizedHTTPException(AppException):
         )
 
     @staticmethod
+    def service_profile_unavailable(request: Request) -> "LocalizedHTTPException":
+        return LocalizedHTTPException(
+            503,
+            "http_client.profile.errors.unavailable",
+            request,
+            code="SERVICE_PROFILE_UNAVAILABLE",
+        )
+
+    @staticmethod
     def service_failed(
         request: Request, translation_key: str, e: Exception
     ) -> "LocalizedHTTPException":

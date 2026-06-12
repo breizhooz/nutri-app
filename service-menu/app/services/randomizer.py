@@ -3,6 +3,7 @@ from datetime import date
 from app.models.enums import DayOfWeek, MealType
 from app.core.http_client import ServicesRecipeClient
 from app.schemas.menu_slot import MenuSlotCreate
+from app.services.profile_constraints import ProfileConstraints
 
 _DAY_ORDER = list(DayOfWeek)
 _DEFAULT_MEALS = [
@@ -75,6 +76,19 @@ def _has_excluded_allergen(recipe: dict, exclusions: set[str]) -> bool:
     return False
 
 
+def _has_excluded_ingredient_name(
+    recipe: dict, constraints: ProfileConstraints | None
+) -> bool:
+    """Vrai si un ingrédient de la recette porte un nom d'aliment exclu du profil."""
+    if constraints is None or not constraints.excluded_food_terms:
+        return False
+    for ri in recipe.get("recipe_ingredients", []):
+        name = (ri.get("ingredient") or {}).get("name") or ""
+        if constraints.matches_excluded_name(name):
+            return True
+    return False
+
+
 def _pool_for_meal(
     available: list[dict],
     meal_type: MealType,
@@ -112,14 +126,27 @@ async def generate_slots(
     caloric_target: int | None = None,
     meal_types: list[MealType] | None = None,
     duration_days: int = 7,
+    constraints: ProfileConstraints | None = None,
 ) -> list[MenuSlotCreate]:
     if meal_types is None:
         meal_types = _DEFAULT_MEALS
 
+    # Exclusions par tags : celles du payload ∪ celles du profil (allergies
+    # déclarées + régime alimentaire). Les exclusions par nom d'aliment du
+    # profil sont appliquées en plus, ingrédient par ingrédient.
     exclusion_values = {e.value if hasattr(e, "value") else e for e in exclusions}
+    if constraints is not None:
+        exclusion_values |= constraints.excluded_tags
+        if caloric_target is None:
+            caloric_target = constraints.target_calories
 
     recipes = await recipe_client.get_recipes(max_recipes=200)
-    available = [r for r in recipes if not _has_excluded_allergen(r, exclusion_values)]
+    available = [
+        r
+        for r in recipes
+        if not _has_excluded_allergen(r, exclusion_values)
+        and not _has_excluded_ingredient_name(r, constraints)
+    ]
 
     if not available:
         raise ValueError("Aucune recette disponible après application des exclusions.")
