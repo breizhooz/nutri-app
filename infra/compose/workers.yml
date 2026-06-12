@@ -1,0 +1,179 @@
+# ══════════════════════════════════════════════════════════
+# ASYNC — workers et schedulers Celery + Flower
+# Chemins relatifs à CE fichier (infra/compose/).
+# ══════════════════════════════════════════════════════════
+
+services:
+# ──────────────────────────────────────────────────────────
+# WORKER — recipe (import asynchrone des recettes)  ·  queue "recipe"
+# ──────────────────────────────────────────────────────────
+  celery-worker-recipe:
+    build:
+      context: ../..
+      dockerfile: service-recipe/Dockerfile
+    container_name: nutriplanner-celery-worker-recipe
+    # Dev : watchmedo redémarre le worker à chaque modif *.py (Celery ne recharge
+    # pas le code tout seul). En prod, remplacer par la commande celery directe.
+    # `-B` embarque le scheduler beat (fetch Spoonacular quotidien) dans ce worker
+    # unique. En prod multi-worker, lancer un process `celery beat` séparé à la place.
+    command: sh -c "pip install --no-cache-dir watchdog==4.0.2 && watchmedo auto-restart --directory=/app --patterns='*.py' --recursive --debug-force-polling --debounce-interval=1 -- celery -A celery_app worker -B --loglevel=info -Q recipe --concurrency=2"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_RECIPE_USER}:${POSTGRES_RECIPE_PASSWORD}@postgres:5432/${POSTGRES_RECIPE_DB}
+      - SERVICE_USER_URL=http://service-user:8000
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    env_file:
+      - ../env/platform.env
+      - ../env/services/recipe.env
+      - ../env/secrets/recipe.secrets.env
+    volumes:
+      - ../../service-recipe:/app
+    mem_limit: 1g
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-recipe:
+        condition: service_started
+    networks:
+      - nutriplanner
+
+# ══════════════════════════════════════════════════════════
+# ASYNC SCHEDULER — Celery
+# ══════════════════════════════════════════════════════════
+  celery-beat:
+    build:
+      context: ../..
+      dockerfile: service-crawler/Dockerfile
+    container_name: nutriplanner-celery-beat
+    command: celery -A celery_app beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres:5432/${POSTGRES_CRAWLER_DB}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    env_file:
+      - ../env/platform.env
+      - ../env/services/crawler.env
+      - ../env/secrets/crawler.secrets.env
+    volumes:
+      - ../../service-crawler:/app
+    mem_limit: 128m
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-crawler:
+        condition: service_started
+    networks:
+      - nutriplanner
+
+  celery-worker-crawler:
+    build:
+      context: ../..
+      dockerfile: service-crawler/Dockerfile
+    container_name: nutriplanner-celery-worker-crawler
+    # Dev : watchmedo redémarre le worker à chaque modif *.py (Celery ne recharge pas
+    # le code à chaud). watchdog est dans requirements.txt → `pip install` instantané
+    # après un rebuild, sinon installé au 1er démarrage. --debug-force-polling car les
+    # événements inotify ne traversent pas toujours le bind mount.
+    # NB : commande sur une seule ligne (un bloc YAML `>` casserait le `--` de watchmedo).
+    command: sh -c "pip install --no-cache-dir watchdog==4.0.2 && watchmedo auto-restart --directory=/app --patterns='*.py' --recursive --debug-force-polling --debounce-interval=1 -- celery -A celery_app worker --loglevel=info -Q crawler --concurrency=2"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_CRAWLER_USER}:${POSTGRES_CRAWLER_PASSWORD}@postgres:5432/${POSTGRES_CRAWLER_DB}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    env_file:
+      - ../env/platform.env
+      - ../env/services/crawler.env
+      - ../env/secrets/crawler.secrets.env
+    volumes:
+      - ../../service-crawler:/app
+      - instagram-session:/data
+    mem_limit: 1g
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-crawler:
+        condition: service_started
+    networks:
+      - nutriplanner
+
+  celery-beat-nutrition:
+    build:
+      context: ../..
+      dockerfile: service-nutrition/Dockerfile
+    container_name: nutriplanner-celery-beat-nutrition
+    command: celery -A celery_app beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NUTRITION_USER}:${POSTGRES_NUTRITION_PASSWORD}@postgres:5432/${POSTGRES_NUTRITION_DB}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    env_file:
+      - ../env/platform.env
+      - ../env/services/nutrition.env
+      - ../env/secrets/nutrition.secrets.env
+    mem_limit: 128m
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-nutrition:
+        condition: service_started
+    networks:
+      - nutriplanner
+
+  celery-worker-nutrition:
+    build:
+      context: ../..
+      dockerfile: service-nutrition/Dockerfile
+    container_name: nutriplanner-celery-worker-nutrition
+    command: celery -A celery_app worker --loglevel=info -Q celery
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NUTRITION_USER}:${POSTGRES_NUTRITION_PASSWORD}@postgres:5432/${POSTGRES_NUTRITION_DB}
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    env_file:
+      - ../env/platform.env
+      - ../env/services/nutrition.env
+      - ../env/secrets/nutrition.secrets.env
+    mem_limit: 1g
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-nutrition:
+        condition: service_started
+    networks:
+      - nutriplanner
+
+  celery-flower:
+    build:
+      context: ../..
+      dockerfile: service-nutrition/Dockerfile
+    container_name: nutriplanner-celery-flower
+    entrypoint: ["celery"]
+    # SEC-02 : Flower exige désormais une auth basique. `FLOWER_BASIC_AUTH` (format
+    # "user:password") est lu depuis le `.env` racine ; valeur de repli volontairement
+    # à changer pour éviter tout démarrage sans auth réelle.
+    command: ["-A", "celery_app", "flower", "--port=5555", "--broker=redis://redis:6379/0", "--basic-auth=${FLOWER_BASIC_AUTH:-flower:change-me-in-env}"]
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    env_file:
+      - ../env/platform.env
+      - ../env/services/nutrition.env
+      - ../env/secrets/nutrition.secrets.env
+    # SEC-01/02 : loopback uniquement, en complément de l'auth basique ci-dessus.
+    ports:
+      - "127.0.0.1:5555:5555"
+    mem_limit: 256m
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - nutriplanner

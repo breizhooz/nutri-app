@@ -1,0 +1,125 @@
+# ── Routage statique (file provider) ───────────────────────────────────────
+# Remplace les labels Docker des conteneurs (phase 4 infra) : le provider docker
+# est désactivé et Traefik n'a plus accès à docker.sock. Les cibles sont les noms
+# DNS des services compose sur le réseau `nutriplanner`.
+#
+# Trade-off assumé : les routeurs existent même si le conteneur cible est arrêté
+# (ex. profil `monitoring` non lancé) → 502/504 sur ces hôtes-là au lieu d'un 404.
+
+http:
+  routers:
+    # ── APIs métier ────────────────────────────────────────
+    svc-user:
+      rule: Host(`api-users.localhost`)
+      entryPoints: [websecure]
+      tls: true
+      middlewares: [cors]
+      service: svc-user
+    svc-recipe:
+      rule: Host(`api-recipe.localhost`)
+      entryPoints: [websecure]
+      tls: true
+      middlewares: [cors]
+      service: svc-recipe
+    svc-menu:
+      rule: Host(`api-menu.localhost`)
+      entryPoints: [websecure]
+      tls: true
+      middlewares: [cors]
+      service: svc-menu
+    svc-crawler:
+      rule: Host(`api-crawler.localhost`)
+      entryPoints: [websecure]
+      tls: true
+      middlewares: [cors]
+      service: svc-crawler
+    svc-notif:
+      rule: Host(`api-notification.localhost`)
+      entryPoints: [websecure]
+      tls: true
+      middlewares: [cors]
+      service: svc-notif
+    svc-nutrition:
+      rule: Host(`api-nutrition.localhost`)
+      entryPoints: [websecure]
+      tls: true
+      middlewares: [cors]
+      service: svc-nutrition
+    svc-profile:
+      rule: Host(`api-profile.localhost`)
+      entryPoints: [websecure]
+      tls: true
+      middlewares: [cors]
+      service: svc-profile
+
+    # ── Portail Swagger + dashboard Traefik ────────────────
+    portal:
+      rule: Host(`api.localhost`)
+      entryPoints: [websecure]
+      tls: true
+      service: portal
+    traefik-dash:
+      rule: Host(`traefik.localhost`)
+      entryPoints: [websecure]
+      tls: true
+      service: api@internal
+
+    # ── Monitoring (profil compose `monitoring`) ───────────
+    prometheus:
+      rule: Host(`prometheus.localhost`)
+      entryPoints: [websecure]
+      tls: true
+      service: prometheus
+    grafana:
+      rule: Host(`grafana.localhost`)
+      entryPoints: [websecure]
+      tls: true
+      service: grafana
+    loki:
+      rule: Host(`loki.localhost`)
+      entryPoints: [websecure]
+      tls: true
+      service: loki
+    tempo:
+      rule: Host(`tempo.localhost`)
+      entryPoints: [websecure]
+      tls: true
+      service: tempo
+
+  services:
+    svc-user:
+      loadBalancer:
+        servers: [{ url: "http://service-user:8000" }]
+    svc-recipe:
+      loadBalancer:
+        servers: [{ url: "http://service-recipe:8000" }]
+    svc-menu:
+      loadBalancer:
+        servers: [{ url: "http://service-menu:8000" }]
+    svc-crawler:
+      loadBalancer:
+        servers: [{ url: "http://service-crawler:8000" }]
+    svc-notif:
+      loadBalancer:
+        servers: [{ url: "http://service-notification:8000" }]
+    svc-nutrition:
+      loadBalancer:
+        servers: [{ url: "http://service-nutrition:8000" }]
+    svc-profile:
+      loadBalancer:
+        servers: [{ url: "http://service-profile:8000" }]
+    portal:
+      loadBalancer:
+        servers: [{ url: "http://portal:80" }]
+    prometheus:
+      loadBalancer:
+        servers: [{ url: "http://prometheus:9090" }]
+    grafana:
+      loadBalancer:
+        servers: [{ url: "http://grafana:3000" }]
+    loki:
+      loadBalancer:
+        servers: [{ url: "http://loki:3100" }]
+    tempo:
+      loadBalancer:
+        servers: [{ url: "http://tempo:3200" }]

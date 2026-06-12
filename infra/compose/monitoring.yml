@@ -1,0 +1,181 @@
+# ══════════════════════════════════════════════════════════
+# MONITORING — métriques, logs, traces (profile `monitoring`)
+# Démarrage : docker compose --profile monitoring up
+# Chemins relatifs à CE fichier (infra/compose/).
+# ══════════════════════════════════════════════════════════
+
+services:
+# ══════════════════════════════════════════════════════════
+# FILEBEAT — filebeat logs
+# ══════════════════════════════════════════════════════════
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.11.0
+    container_name: nutriplanner-filebeat
+    profiles: [monitoring]
+    user: root
+    # filebeat.yml est bind-mounté depuis l'hôte (uid 1000) alors que filebeat
+    # tourne en root → le contrôle de permissions strict refuse de démarrer.
+    # --strict.perms=false le désactive (recommandé Elastic pour configs montées).
+    command: ["--strict.perms=false", "-environment", "container"]
+    volumes:
+      - ../monitoring/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+# ══════════════════════════════════════════════════════════
+# MONITORING — Prometheus + Grafana + Exporters
+# ══════════════════════════════════════════════════════════
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: nutriplanner-prometheus
+    profiles: [monitoring]
+    volumes:
+      - ../monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=15d'
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: nutriplanner-grafana
+    profiles: [monitoring]
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://grafana.localhost
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ../monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+# ══════════════════════════════════════════════════════════
+# LOGS LIVE — Loki + Promtail
+# ══════════════════════════════════════════════════════════
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: nutriplanner-loki
+    profiles: [monitoring]
+    command: -config.file=/etc/loki/loki.yml
+    volumes:
+      - ../monitoring/loki:/etc/loki:ro
+      - loki-data:/loki
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: nutriplanner-promtail
+    profiles: [monitoring]
+    command: -config.file=/etc/promtail/promtail.yml
+    volumes:
+      - ../monitoring/promtail:/etc/promtail:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+# ══════════════════════════════════════════════════════════
+# TRACES — Tempo
+# ══════════════════════════════════════════════════════════
+  tempo:
+    image: grafana/tempo:2.4.0
+    container_name: nutriplanner-tempo
+    profiles: [monitoring]
+    command: ["-config.file=/etc/tempo/tempo.yml"]
+    volumes:
+      - ../monitoring/tempo:/etc/tempo:ro
+      - tempo-data:/var/tempo
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: nutriplanner-cadvisor
+    profiles: [monitoring]
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /cgroup:/cgroup:ro
+    command:
+      - '--housekeeping_interval=10s'
+      - '--docker_only=true'
+      - '--disable_metrics=percpu,sched,tcp,udp,disk,diskIO,hugetlb,referenced_memory,resctrl,cpuset,advtcp,memory_numa'
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: nutriplanner-redis-exporter
+    profiles: [monitoring]
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      REDIS_EXPORTER_CHECK_KEYS: "celery"
+      REDIS_EXPORTER_CHECK_KEY_GROUPS: "celery.*"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  elasticsearch-exporter:
+    image: quay.io/prometheuscommunity/elasticsearch-exporter:latest
+    container_name: nutriplanner-elasticsearch-exporter
+    profiles: [monitoring]
+    command:
+      - '--es.uri=http://elasticsearch:9200'
+      - '--es.all'
+      - '--es.indices'
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+  # Exporter Postgres UNIQUE : se connecte en superuser et auto-découvre toutes
+  # les bases du moteur (7 → 1 exporter). Chaque base apparaît via le label
+  # `datname` sur les métriques (au lieu d'un target par base).
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    container_name: nutriplanner-postgres-exporter
+    profiles: [monitoring]
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_SUPERUSER}:${POSTGRES_SUPERUSER_PASSWORD}@postgres:5432/postgres?sslmode=disable"
+      PG_EXPORTER_AUTO_DISCOVER_DATABASES: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - nutriplanner
+    restart: unless-stopped

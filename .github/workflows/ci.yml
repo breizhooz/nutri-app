@@ -9,6 +9,32 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   
 jobs:
+  # Contrôles statiques infra (phase 5) : le rendu compose passe et la chaîne
+  # env_file couvre les champs requis des Settings pydantic (make check).
+  infra-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+
+      - name: Secrets factices
+        # Les *.secrets.env sont gitignorés donc absents en CI. On les recrée
+        # avec les clés requises listées dans les examples générés (lignes
+        # non commentées) pour que env-check et le rendu compose passent.
+        run: |
+          for svc in user recipe menu crawler notification nutrition profile; do
+            grep -E '^[A-Z_]+=' "infra/env/examples/${svc}.env.example" > "infra/env/secrets/${svc}.secrets.env"
+          done
+          touch infra/env/secrets/platform.secrets.env
+
+      - name: make check (compose config + env-check)
+        run: |
+          pip install pyyaml
+          make check
+
   analyze-user:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-user')
     runs-on: ubuntu-latest
@@ -502,29 +528,19 @@ jobs:
 
             
 
-            mkdir -p service-user/conf
-            mkdir -p service-recipe/conf
-            mkdir -p service-menu/conf
-            mkdir -p service-crawler/conf
-            mkdir -p service-notification/conf
-            mkdir -p service-nutrition/conf
-            mkdir -p service-profile/conf
+            # Env stratifiés (infra/env/) : la chaîne env_file de chaque service
+            # référence secrets/<svc>.secrets.env, gitignorés donc absents en CI.
+            # On y copie le superset .env (même approche que l'ancien conf/.env) ;
+            # chargé en dernier, il garde la précédence sur services/<svc>.env.
+            for svc in platform user recipe menu crawler notification nutrition profile; do
+              cp .env "infra/env/secrets/${svc}.secrets.env"
+            done
 
-            cp .env service-user/conf/.env
-            cp .env service-recipe/conf/.env
-            cp .env service-menu/conf/.env
-            cp .env service-crawler/conf/.env
-            cp .env service-notification/conf/.env
-            cp .env service-nutrition/conf/.env
-            cp .env service-profile/conf/.env
-        
-        - name: Verify .env file
+        - name: Verify env files
           run: |
-            echo "=== Root .env ==="
-            cat .env
-            echo ""
-            echo "=== service-user/.env ==="
-            cat service-user/conf/.env
+            echo "=== Fichiers d'env en place ==="
+            ls -la infra/env/secrets/
+            wc -l .env
 
         - name: Spin up containers
           run: docker compose up -d || true 

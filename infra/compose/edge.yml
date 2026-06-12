@@ -1,0 +1,40 @@
+# ══════════════════════════════════════════════════════════
+# EDGE — reverse proxy Traefik + portail Swagger
+# Chemins relatifs à CE fichier (infra/compose/).
+# ══════════════════════════════════════════════════════════
+
+services:
+# ══════════════════════════════════════════════════════════
+# REVERSE PROXY — Traefik v3.7
+# ══════════════════════════════════════════════════════════
+  traefik:
+    image: traefik:v3.7
+    container_name: nutriplanner-traefik
+    ports:
+      - "80:80"
+      - "127.0.0.1:443:443"   # HTTPS dev (loopback, cf. SEC-01)
+    # Plus de montage docker.sock : le routage vit dans ../traefik/dynamic/routers.yml
+    # (file provider), le provider docker est désactivé (phase 4 infra).
+    volumes:
+      - ../traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ../traefik/dynamic:/etc/traefik/dynamic:ro
+      - ../traefik/certs:/etc/traefik/certs:ro   # certs mkcert (*.localhost)
+    networks:
+      - nutriplanner
+    restart: unless-stopped
+
+# ══════════════════════════════════════════════════════════
+# PORTAIL — Swagger UI multi-specs
+# ══════════════════════════════════════════════════════════
+  portal:
+    image: nginx:alpine
+    container_name: nutriplanner-portal
+    volumes:
+      - ../portal/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../portal/index.html:/usr/share/nginx/html/index.html:ro
+    depends_on:
+      service-user:
+        condition: service_healthy
+    networks:
+      - nutriplanner
+    restart: unless-stopped

@@ -1,5 +1,5 @@
 # HTTPS en dev : certificat de confiance généré par mkcert pour *.localhost.
-# Générer les certs : ./traefik/gen-certs.sh (puis `mkcert -install` une fois).
+# Générer les certs : ./infra/traefik/gen-certs.sh (puis `mkcert -install` une fois).
 # Le dossier traefik/certs/ est ignoré par git (ne jamais commiter la clé privée).
 tls:
   certificates:
