@@ -11,7 +11,12 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import get_locale, read_profile_id, write_profile_id
+from app.core.deps import (
+    get_locale,
+    read_profile_id,
+    require_health_consent,
+    write_profile_id,
+)
 from app.db.session import get_session
 from app.i18n import t
 from app.schemas.medical import (
@@ -36,6 +41,7 @@ router = APIRouter()
 async def create_injury(
     data: InjuryCreate,
     profile_id: uuid.UUID = Depends(write_profile_id),
+    _consent: None = Depends(require_health_consent),  # RGPD art. 9
     session: AsyncSession = Depends(get_session),
 ) -> InjuryResponse:
     """Enregistre une blessure pour le dossier du compte actif."""
@@ -76,6 +82,7 @@ async def delete_injury(
 async def create_condition(
     data: MedicalConditionCreate,
     profile_id: uuid.UUID = Depends(write_profile_id),
+    _consent: None = Depends(require_health_consent),  # RGPD art. 9
     session: AsyncSession = Depends(get_session),
 ) -> MedicalConditionResponse:
     """Enregistre une condition médicale pour le dossier du compte actif."""
@@ -106,6 +113,7 @@ async def delete_condition(
 async def create_allergy(
     data: FoodAllergyCreate,
     profile_id: uuid.UUID = Depends(write_profile_id),
+    _consent: None = Depends(require_health_consent),  # RGPD art. 9
     session: AsyncSession = Depends(get_session),
 ) -> FoodAllergyResponse:
     """Enregistre une allergie alimentaire pour le dossier du compte actif."""
@@ -146,6 +154,7 @@ async def delete_allergy(
 async def create_medication(
     data: MedicationCreate,
     profile_id: uuid.UUID = Depends(write_profile_id),
+    _consent: None = Depends(require_health_consent),  # RGPD art. 9
     session: AsyncSession = Depends(get_session),
 ) -> MedicationResponse:
     """Enregistre un médicament pour le dossier du compte actif."""

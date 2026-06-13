@@ -109,8 +109,21 @@ class AccessService:
         If the user has a default account with an active membership, the token
         is context-ready (carries ``act_account``/``role``/``scopes``). Falls
         back gracefully to the bare identity claims otherwise, so authentication
-        never breaks because of an access-layer hiccup.
+        never breaks because of an access-layer hiccup. Always carries
+        ``health_consent`` (RGPD art. 9) so service-profile peut autoriser ou
+        refuser localement le traitement des données de santé.
         """
+        claims = await self._base_login_claims(user)
+        # Import différé : évite un cycle access_service ↔ consent_service éventuel.
+        from app.services.consent_service import ConsentService
+
+        claims["health_consent"] = await ConsentService(
+            self._session
+        ).has_active_health_consent(user.id)
+        return claims
+
+    async def _base_login_claims(self, user: User) -> dict[str, Any]:
+        """Claims RBAC (contexte de compte si dispo, sinon identité nue)."""
         if user.default_account_id is None:
             return UserService.build_token_claims(user)
         membership = await self.get_active_membership(

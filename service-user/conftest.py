@@ -96,6 +96,7 @@ async def db_session() -> AsyncSession:  # type: ignore[misc]
     Yields:
         An async SQLAlchemy session backed by SQLite.
     """
+    from app.models.consent import Consent  # noqa: F401
     from app.models.mfa_pending_code import MfaPendingCode  # noqa: F401
     from app.models.oauth_account import OAuthAccount  # noqa: F401
     from app.models.user import User  # noqa: F401

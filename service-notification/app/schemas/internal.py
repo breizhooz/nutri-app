@@ -1,6 +1,7 @@
 """Schémas des endpoints internes (inter-service)."""
 
 import uuid
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -24,3 +25,18 @@ class ErasureResponse(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     deleted: int
+
+
+class ExportRequest(BaseModel):
+    """Demande d'export RGPD (art. 20). service-notification exporte par ``user_id``."""
+
+    model_config = ConfigDict(frozen=True)
+
+    account_ids: list[uuid.UUID] = Field(default_factory=list)
+    user_id: uuid.UUID | None = None
+
+
+class ExportResponse(BaseModel):
+    """Données exportées (structure libre, JSON-sérialisable)."""
+
+    data: dict[str, Any] = Field(default_factory=dict)
