@@ -7,6 +7,7 @@ from nutri_shared.errors import register_error_handlers
 from app.db.session import get_engine
 from app.i18n.loader import t
 from app.i18n.middleware import LocaleMiddleware
+from app.api.routes import internal as internal_router
 from app.api.routes import shopping_list as shopping_list_router
 from app.api.routes import weekly_menu as weekly_menu_router
 
@@ -34,6 +35,7 @@ app.include_router(weekly_menu_router.router, prefix="/api/v1/menus", tags=["men
 app.include_router(
     shopping_list_router.router, prefix="/api/v1/menus", tags=["shopping-list"]
 )
+app.include_router(internal_router.router, prefix="/api/v1/internal", tags=["internal"])
 
 
 @app.get("/health")

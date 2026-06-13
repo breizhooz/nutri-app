@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     SERVICE_PROFILE_URL: str = "http://service-profile:8000"
     SERVICE_PROFILE_TOKEN: str = ""
 
+    # Token de service entrant : garde l'endpoint interne d'effacement (RGPD).
+    SERVICE_MENU_TOKEN: str = ""
+
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
 

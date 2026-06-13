@@ -1,14 +1,37 @@
+import hmac
+
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jwt.exceptions import InvalidTokenError
 
 from nutri_shared.core.context import AccessContext, require_scope
 
+from app.core.config import settings
 from app.core.security import decode_token
 from app.i18n.exceptions import LocalizedHTTPException
 from app.i18n.loader import t
 
 bearer_scheme = HTTPBearer()
+
+
+async def verify_service_token(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+) -> None:
+    """Vérifie le token de service pour les appels inter-services (fail-closed).
+
+    Si le token n'est pas configuré, on refuse (503) plutôt que d'ouvrir
+    l'endpoint. Comparaison à temps constant pour ne pas fuiter le secret.
+    """
+    if not settings.SERVICE_MENU_TOKEN:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="service token not configured",
+        )
+    if not hmac.compare_digest(credentials.credentials, settings.SERVICE_MENU_TOKEN):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="invalid service token",
+        )
 
 
 def get_locale(request: Request) -> str:

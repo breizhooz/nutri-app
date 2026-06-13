@@ -40,6 +40,38 @@ services:
     networks:
       - nutriplanner
 
+# ──────────────────────────────────────────────────────────
+# WORKER — user (effacement RGPD cross-service, art. 17)  ·  queue par défaut
+# ──────────────────────────────────────────────────────────
+  celery-worker-user:
+    build:
+      context: ../..
+      dockerfile: service-user/Dockerfile
+    container_name: nutriplanner-celery-worker-user
+    # Dev : watchmedo redémarre le worker à chaque modif *.py (Celery ne recharge
+    # pas le code à chaud). En prod, remplacer par la commande celery directe.
+    command: sh -c "pip install --no-cache-dir watchdog==4.0.2 && watchmedo auto-restart --directory=/app --patterns='*.py' --recursive --debug-force-polling --debounce-interval=1 -- celery -A celery_app worker --loglevel=info --concurrency=2"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER_USER}:${POSTGRES_USER_PASSWORD}@postgres:5432/${POSTGRES_USER_DB}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    env_file:
+      - ../env/platform.env
+      - ../env/services/user.env
+      - ../env/secrets/user.secrets.env
+    volumes:
+      - ../../service-user:/app
+    mem_limit: 512m
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-user:
+        condition: service_started
+    networks:
+      - nutriplanner
+
 # ══════════════════════════════════════════════════════════
 # ASYNC SCHEDULER — Celery
 # ══════════════════════════════════════════════════════════

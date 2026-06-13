@@ -32,6 +32,19 @@ class UserRepository:
         result = await self.session.execute(select(User).order_by(User.email))
         return list(result.scalars().all())
 
+    async def list_personal_account_ids(self, user: User) -> list[uuid.UUID]:
+        """Comptes personnels de l'identité (créés par elle, ou compte par défaut).
+
+        Périmètre de l'effacement RGPD : on ne purge que les dossiers personnels,
+        jamais les comptes où l'identité n'a qu'une adhésion (ex. client d'un
+        coach).
+        """
+        conditions = [Account.created_by == user.id]
+        if user.default_account_id is not None:
+            conditions.append(Account.id == user.default_account_id)
+        rows = await self.session.execute(select(Account.id).where(or_(*conditions)))
+        return [r[0] for r in rows.all()]
+
     async def delete_personal_accounts(self, user: User) -> None:
         """Supprime le(s) compte(s) personnel(s) de l'identité avant de la supprimer.
 
@@ -40,11 +53,7 @@ class UserRepository:
         de le voir. Le DELETE sur ``accounts`` cascade les memberships (FK
         ondelete CASCADE), nettoyant aussi les liens de coaching.
         """
-        conditions = [Account.created_by == user.id]
-        if user.default_account_id is not None:
-            conditions.append(Account.id == user.default_account_id)
-        rows = await self.session.execute(select(Account.id).where(or_(*conditions)))
-        account_ids = [r[0] for r in rows.all()]
+        account_ids = await self.list_personal_account_ids(user)
         if not account_ids:
             return
 
