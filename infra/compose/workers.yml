@@ -73,6 +73,39 @@ services:
     networks:
       - nutriplanner
 
+# ──────────────────────────────────────────────────────────
+# WORKER — notification (purge de rétention RGPD, art. 5.1.e)  ·  queue par défaut
+# ──────────────────────────────────────────────────────────
+  celery-worker-notification:
+    build:
+      context: ../..
+      dockerfile: service-notification/Dockerfile
+    container_name: nutriplanner-celery-worker-notification
+    # Dev : watchmedo redémarre le worker à chaque modif *.py (Celery ne recharge
+    # pas le code à chaud). En prod, remplacer par la commande celery directe.
+    # -B : beat embarqué (purge des notifications > 12 mois, Phase 4) dans ce worker.
+    command: sh -c "pip install --no-cache-dir watchdog==4.0.2 && watchmedo auto-restart --directory=/app --patterns='*.py' --recursive --debug-force-polling --debounce-interval=1 -- celery -A celery_app worker -B --loglevel=info --concurrency=2"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NOTIFICATION_USER}:${POSTGRES_NOTIFICATION_PASSWORD}@postgres:5432/${POSTGRES_NOTIFICATION_DB}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    env_file:
+      - ../env/platform.env
+      - ../env/services/notification.env
+      - ../env/secrets/notification.secrets.env
+    volumes:
+      - ../../service-notification:/app
+    mem_limit: 512m
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      service-notification:
+        condition: service_started
+    networks:
+      - nutriplanner
+
 # ══════════════════════════════════════════════════════════
 # ASYNC SCHEDULER — Celery
 # ══════════════════════════════════════════════════════════

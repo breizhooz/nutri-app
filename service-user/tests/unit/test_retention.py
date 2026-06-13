@@ -9,7 +9,8 @@ from sqlalchemy import func, select
 from app.models.access import AuditLog, Invitation
 from app.models.mfa_pending_code import MfaPendingCode
 from app.models.password_reset_token import PasswordResetToken
-from app.services import retention_service
+from app.models.user import User
+from app.services import erasure_service, retention_service
 
 
 def _dt(days: int) -> datetime:
@@ -83,3 +84,42 @@ async def test_purge_old_audit_logs(db_session):
     assert deleted == 1
     remaining = (await db_session.execute(select(AuditLog.action))).scalars().all()
     assert remaining == ["recent"]
+
+
+@pytest.mark.unit
+async def test_purge_inactive_accounts(db_session, monkeypatch):
+    """Seuls les comptes inactifs (et non-admin) au-delà du seuil sont effacés."""
+    # On neutralise la programmation Celery : le test vérifie la purge locale.
+    monkeypatch.setattr(erasure_service, "schedule_erasure", lambda rid: None)
+
+    inactive = User(
+        email="inactive@x.io", hashed_password="x", last_login_at=_dt(-800)
+    )
+    # Jamais reconnecté mais créé il y a longtemps → retombe sur created_at.
+    never = User(email="never@x.io", hashed_password="x", created_at=_dt(-900))
+    active = User(email="active@x.io", hashed_password="x", last_login_at=_dt(-10))
+    admin = User(
+        email="admin@x.io", hashed_password="x", user_admin=True, last_login_at=_dt(-800)
+    )
+    db_session.add_all([inactive, never, active, admin])
+    await db_session.commit()
+
+    purged = await retention_service.purge_inactive_accounts(
+        db_session, retention_days=730
+    )
+    assert purged == 2
+    remaining = (await db_session.execute(select(User.email))).scalars().all()
+    assert set(remaining) == {"active@x.io", "admin@x.io"}
+
+
+@pytest.mark.unit
+async def test_purge_inactive_accounts_idempotent(db_session, monkeypatch):
+    """Aucun compte inactif → rien à effacer (idempotent)."""
+    monkeypatch.setattr(erasure_service, "schedule_erasure", lambda rid: None)
+    db_session.add(User(email="fresh@x.io", hashed_password="x", last_login_at=_dt(-1)))
+    await db_session.commit()
+
+    purged = await retention_service.purge_inactive_accounts(
+        db_session, retention_days=730
+    )
+    assert purged == 0

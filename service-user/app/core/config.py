@@ -72,6 +72,8 @@ class Settings(BaseSettings):
     # Rétention (RGPD art. 5.1.e) — purges périodiques (Phase 4)
     AUDIT_LOG_RETENTION_DAYS: int = 1095  # ~3 ans
     INVITATION_RETENTION_DAYS: int = 90
+    # Comptes inactifs : effacement cross-service après 24 mois (recommandation CNIL)
+    INACTIVE_ACCOUNT_RETENTION_DAYS: int = 730
 
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 30
     PASSWORD_RESET_BASE_URL: str = "http://localhost:3000"

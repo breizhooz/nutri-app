@@ -34,4 +34,8 @@ celery_app.conf.beat_schedule = {
         "task": "retention.purge_old_audit_logs",
         "schedule": 86400.0,  # quotidien
     },
+    "purge-inactive-accounts": {
+        "task": "retention.purge_inactive_accounts",
+        "schedule": 86400.0,  # quotidien — comptes inactifs > 24 mois
+    },
 }

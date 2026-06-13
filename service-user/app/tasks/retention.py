@@ -53,3 +53,13 @@ def purge_old_audit_logs() -> int:
             s, settings.AUDIT_LOG_RETENTION_DAYS
         )
     )
+
+
+@celery_app.task(name="retention.purge_inactive_accounts")
+def purge_inactive_accounts() -> int:
+    """Efface quotidiennement les comptes inactifs au-delà de la rétention."""
+    return _run(
+        lambda s: retention_service.purge_inactive_accounts(
+            s, settings.INACTIVE_ACCOUNT_RETENTION_DAYS
+        )
+    )
