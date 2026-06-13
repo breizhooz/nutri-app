@@ -14,7 +14,24 @@ celery_app = Celery(
     "service-user",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
-    include=["app.tasks.erasure"],
+    include=["app.tasks.erasure", "app.tasks.retention"],
 )
 
 celery_app.conf.timezone = "Europe/Paris"
+
+# Purges de rétention (RGPD art. 5.1.e) — Phase 4. Exécutées par le worker
+# lancé avec ``-B`` (beat embarqué).
+celery_app.conf.beat_schedule = {
+    "purge-expired-auth-tokens": {
+        "task": "retention.purge_expired_auth_tokens",
+        "schedule": 3600.0,  # toutes les heures
+    },
+    "purge-stale-invitations": {
+        "task": "retention.purge_stale_invitations",
+        "schedule": 86400.0,  # quotidien
+    },
+    "purge-old-audit-logs": {
+        "task": "retention.purge_old_audit_logs",
+        "schedule": 86400.0,  # quotidien
+    },
+}

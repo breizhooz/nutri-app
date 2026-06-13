@@ -50,7 +50,8 @@ services:
     container_name: nutriplanner-celery-worker-user
     # Dev : watchmedo redémarre le worker à chaque modif *.py (Celery ne recharge
     # pas le code à chaud). En prod, remplacer par la commande celery directe.
-    command: sh -c "pip install --no-cache-dir watchdog==4.0.2 && watchmedo auto-restart --directory=/app --patterns='*.py' --recursive --debug-force-polling --debounce-interval=1 -- celery -A celery_app worker --loglevel=info --concurrency=2"
+    # -B : beat embarqué (purges de rétention RGPD, Phase 4) dans ce worker unique.
+    command: sh -c "pip install --no-cache-dir watchdog==4.0.2 && watchmedo auto-restart --directory=/app --patterns='*.py' --recursive --debug-force-polling --debounce-interval=1 -- celery -A celery_app worker -B --loglevel=info --concurrency=2"
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER_USER}:${POSTGRES_USER_PASSWORD}@postgres:5432/${POSTGRES_USER_DB}
       - CELERY_BROKER_URL=redis://redis:6379/0

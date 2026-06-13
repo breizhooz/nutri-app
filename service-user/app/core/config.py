@@ -69,6 +69,10 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str = "redis://redis:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://redis:6379/1"
 
+    # Rétention (RGPD art. 5.1.e) — purges périodiques (Phase 4)
+    AUDIT_LOG_RETENTION_DAYS: int = 1095  # ~3 ans
+    INVITATION_RETENTION_DAYS: int = 90
+
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 30
     PASSWORD_RESET_BASE_URL: str = "http://localhost:3000"
     PASSWORD_HISTORY_COUNT: int = 5
