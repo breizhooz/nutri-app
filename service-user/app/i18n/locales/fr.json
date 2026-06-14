@@ -58,5 +58,10 @@
     "coach_capability_required": "Seul un coach (habilité par un administrateur) peut créer un lien de coaching",
     "not_owner": "Action réservée au propriétaire de ce compte",
     "nothing_to_update": "Aucune modification fournie"
+  },
+  "keys": {
+    "not_enrolled": "Matériel de clés non inscrit pour cet utilisateur",
+    "already_enrolled": "Le matériel de clés est déjà inscrit",
+    "material_invalid": "Matériel de clés invalide (base64 attendu)"
   }
 }
