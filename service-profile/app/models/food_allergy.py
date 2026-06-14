@@ -3,10 +3,12 @@
 import logging
 import uuid
 
-from sqlalchemy import Text, String
+from sqlalchemy import String
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
+
+from nutri_shared.db.encrypted import EncryptedText
 
 from app.db.base_class import Base
 from app.models.base_model import SlugMixin, TimestampMixin
@@ -27,4 +29,6 @@ class FoodAllergy(Base, SlugMixin, TimestampMixin):
     severity: Mapped[AllergySeverity] = mapped_column(
         SQLEnum(AllergySeverity, native_enum=False, length=15), nullable=False
     )
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notes: Mapped[str | None] = mapped_column(
+        EncryptedText("PROFILE_FIELD_ENCRYPTION_KEY"), nullable=True
+    )

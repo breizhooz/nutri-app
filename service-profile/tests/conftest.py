@@ -9,6 +9,11 @@ os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 os.environ.setdefault("JWT_SECRET", "test-secret-key-for-testing-only")
 os.environ.setdefault("SERVICE_PROFILE_TOKEN", "test-service-token-12345")
 
+# Clé Fernet jetable pour le chiffrement at-rest des champs santé en test.
+from cryptography.fernet import Fernet  # noqa: E402
+
+os.environ.setdefault("PROFILE_FIELD_ENCRYPTION_KEY", Fernet.generate_key().decode())
+
 import asyncio
 
 import pytest

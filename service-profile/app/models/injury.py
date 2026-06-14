@@ -4,9 +4,11 @@ import logging
 import uuid
 from datetime import date
 
-from sqlalchemy import Boolean, Date, Text, String
+from sqlalchemy import Boolean, Date, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
+
+from nutri_shared.db.encrypted import EncryptedText
 
 from app.db.base_class import Base
 from app.models.base_model import SlugMixin, TimestampMixin
@@ -27,4 +29,6 @@ class Injury(Base, SlugMixin, TimestampMixin):
     is_current: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_chronic: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     diagnosed_at: Mapped[date | None] = mapped_column(Date, nullable=True)
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notes: Mapped[str | None] = mapped_column(
+        EncryptedText("PROFILE_FIELD_ENCRYPTION_KEY"), nullable=True
+    )
