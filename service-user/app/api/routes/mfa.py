@@ -240,6 +240,8 @@ async def verify_mfa(
 
     set_refresh_cookie(response, create_refresh_token(str(user.id)))
     claims = await AccessService(session).build_login_claims(user)
+    user.last_login_at = datetime.now(timezone.utc)  # rétention RGPD (Phase 4)
+    await session.commit()
     return TokenResponse(
         access_token=create_access_token(str(user.id), claims),
     )

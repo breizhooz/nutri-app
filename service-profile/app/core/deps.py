@@ -71,6 +71,37 @@ async def verify_service_token(
         )
 
 
+async def require_health_consent(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(_bearer),
+) -> None:
+    """Garde-fou RGPD (art. 9) : refuse le traitement santé sans consentement.
+
+    Lit le claim ``health_consent`` du JWT (posé par service-user d'après le
+    journal ``consents``). Lève HTTP 403 s'il est absent/faux. La révocation
+    prend effet au prochain rafraîchissement du token (claim recalculé).
+    """
+    try:
+        payload = jwt.decode(
+            credentials.credentials,
+            settings.JWT_SECRET,
+            algorithms=[settings.JWT_ALGORITHM],
+        )
+    except (InvalidTokenError, ValueError) as exc:
+        logger.warning("Échec de validation du token : %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=t.get("errors.token_invalid", get_locale(request)),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    if not payload.get("health_consent"):
+        logger.info("Écriture santé refusée : consentement (art. 9) absent ou retiré")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=t.get("errors.health_consent_required", get_locale(request)),
+        )
+
+
 # ── Multicomptes : contexte de compte + gardes de scope ──────────────────────
 # Les routes /me* sont bornées par le compte actif (act_account du JWT). Le scope
 # autorise l'action ; account_id borne le périmètre (cf. docs/roles/, phase 2).

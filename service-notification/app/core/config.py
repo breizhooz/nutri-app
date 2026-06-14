@@ -20,6 +20,12 @@ class Settings(BaseSettings):
 
     SERVICE_NOTIFICATION_TOKEN: str = ""
 
+    # Celery / Redis — purges de rétention RGPD (Phase 4)
+    CELERY_BROKER_URL: str = "redis://redis:6379/0"
+    CELERY_RESULT_BACKEND: str = "redis://redis:6379/1"
+    # Rétention de l'historique des notifications : 12 mois (cf. docs/rgpd/retention.md)
+    NOTIFICATION_RETENTION_DAYS: int = 365
+
     SMTP_HOST: str = ""
     SMTP_PORT: int = 587
     SMTP_USER: str = ""

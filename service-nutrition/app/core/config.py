@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str = "redis://redis:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://redis:6379/1"
 
+    # Rétention RGPD (art. 5.1.e, Phase 4) — purge des diagnostics macro_errors.
+    MACRO_ERROR_RETENTION_DAYS: int = 90
+
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "llama-3.1-8b-instant"
 

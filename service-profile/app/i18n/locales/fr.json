@@ -2,7 +2,8 @@
   "errors": {
     "token_invalid": "Token invalide ou expiré",
     "service_token_invalid": "Token de service invalide",
-    "no_account_context": "Aucun compte actif dans le contexte"
+    "no_account_context": "Aucun compte actif dans le contexte",
+    "health_consent_required": "Consentement au traitement des données de santé requis"
   },
   "validation": {
     "rpe_range": "Le RPE doit être compris entre 1 et 10"

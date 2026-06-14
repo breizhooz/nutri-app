@@ -12,11 +12,12 @@ from sqlalchemy import (
     Numeric,
     SmallInteger,
     String,
-    Text,
 )
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
+
+from nutri_shared.db.encrypted import EncryptedText
 
 from app.db.base_class import Base
 from app.models.base_model import SlugMixin, UpdatedAtMixin
@@ -60,7 +61,9 @@ class NutritionPreferences(Base, SlugMixin, UpdatedAtMixin):
     budget_per_day_eur: Mapped[Decimal | None] = mapped_column(
         Numeric(7, 2), nullable=True
     )
-    medical_contraindications: Mapped[str | None] = mapped_column(Text, nullable=True)
+    medical_contraindications: Mapped[str | None] = mapped_column(
+        EncryptedText("PROFILE_FIELD_ENCRYPTION_KEY"), nullable=True
+    )
     excluded_foods: Mapped[list[str]] = mapped_column(
         JSON, nullable=False, default=list
     )

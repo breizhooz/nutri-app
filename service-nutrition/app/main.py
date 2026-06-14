@@ -11,6 +11,7 @@ from nutri_shared.errors import register_error_handlers
 from app.api.routes import (
     admin,
     calculate,
+    internal,
     macro_errors,
     nutrition_items,
     nutrition_targets,
@@ -82,6 +83,7 @@ def create_app() -> FastAPI:
     app.include_router(macro_errors.router, prefix="/api/v1")
     app.include_router(stats.router, prefix="/api/v1")
     app.include_router(admin.router, prefix="/api/v1")
+    app.include_router(internal.router, prefix="/api/v1/internal", tags=["internal"])
 
     @app.get("/health")
     async def health():

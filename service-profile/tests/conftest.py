@@ -9,6 +9,11 @@ os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 os.environ.setdefault("JWT_SECRET", "test-secret-key-for-testing-only")
 os.environ.setdefault("SERVICE_PROFILE_TOKEN", "test-service-token-12345")
 
+# Clé Fernet jetable pour le chiffrement at-rest des champs santé en test.
+from cryptography.fernet import Fernet  # noqa: E402
+
+os.environ.setdefault("PROFILE_FIELD_ENCRYPTION_KEY", Fernet.generate_key().decode())
+
 import asyncio
 
 import pytest
@@ -25,6 +30,7 @@ from app.core.deps import (
     get_read_account_id,
     get_write_account_id,
     get_write_context,
+    require_health_consent,
 )
 from app.db.base import Base
 from app.db.session import get_session
@@ -113,6 +119,9 @@ def make_context_token(
         "scopes": scopes,
         "user_admin": user_admin,
         "user_right": {},
+        # Token « pleinement autorisé » par défaut : le consentement santé (art. 9)
+        # est testé séparément (test_health_consent_guard) avec des tokens dédiés.
+        "health_consent": True,
     }
     if account_id is not None:
         payload["act_account"] = str(account_id)
@@ -181,10 +190,16 @@ async def client(
             capabilities={},
         )
 
+    # Garde RGPD (art. 9) neutralisée ici : ce fixture teste la logique métier,
+    # pas le consentement (couvert séparément avec raw_client + tokens forgés).
+    async def _override_health_consent() -> None:
+        return None
+
     app.dependency_overrides[get_session] = _override_session
     app.dependency_overrides[get_read_account_id] = _override_read_account
     app.dependency_overrides[get_write_account_id] = _override_write_account
     app.dependency_overrides[get_write_context] = _override_write_context
+    app.dependency_overrides[require_health_consent] = _override_health_consent
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"

@@ -84,3 +84,10 @@ class User(Base):
         DateTime(timezone=True),
         server_default=func.now(),
     )
+    # Dernière activité authentifiée (login/refresh/MFA). Sert à la purge des
+    # comptes inactifs > 24 mois (RGPD art. 5.1.e, Phase 4). Nullable : les
+    # comptes jamais reconnectés retombent sur ``created_at`` côté purge.
+    last_login_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )

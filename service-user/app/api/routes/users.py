@@ -14,6 +14,7 @@ from app.repositories.user_repository import UserRepository
 from app.schemas.password import PasswordChangeSchema, PasswordResetMessage
 from app.schemas.user import UserAdminOut, UserCreate, UserOut, UserRightsUpdate
 from app.services.access_service import AccessService
+from app.services.export_service import ExportService
 from app.services.password_reset_service import PasswordResetService
 from app.services.user_service import UserService
 
@@ -59,6 +60,20 @@ async def get_me(
     current_user: User = Depends(get_current_user),  # ← injecte l'user connecté
 ):
     return current_user
+
+
+@router.get("/me/export")
+async def export_my_data(
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Export RGPD (art. 20) : agrège les données personnelles de l'utilisateur.
+
+    Rassemble l'identité (service-user) et les données détenues par les autres
+    microservices (profil/santé, menus, notifications, nutrition) en un seul
+    document JSON portable.
+    """
+    return await ExportService(session).build_export(current_user)
 
 
 @router.post(

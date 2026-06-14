@@ -55,6 +55,26 @@ class Settings(BaseSettings):
     NOTIFICATION_SERVICE_URL: str = ""
     NOTIFICATION_SERVICE_TOKEN: str = ""
 
+    # ── Effacement RGPD (art. 17) — orchestration cross-service via Celery ──────
+    # URL + token de service de chaque microservice détenant des données du
+    # compte. Le token doit valoir le SERVICE_<X>_TOKEN attendu par la cible.
+    # notification réutilise NOTIFICATION_SERVICE_URL / NOTIFICATION_SERVICE_TOKEN.
+    PROFILE_SERVICE_URL: str = "http://service-profile:8000"
+    PROFILE_SERVICE_TOKEN: str = ""
+    MENU_SERVICE_URL: str = "http://service-menu:8000"
+    MENU_SERVICE_TOKEN: str = ""
+    NUTRITION_SERVICE_URL: str = "http://service-nutrition:8000"
+    NUTRITION_SERVICE_TOKEN: str = ""
+
+    CELERY_BROKER_URL: str = "redis://redis:6379/0"
+    CELERY_RESULT_BACKEND: str = "redis://redis:6379/1"
+
+    # Rétention (RGPD art. 5.1.e) — purges périodiques (Phase 4)
+    AUDIT_LOG_RETENTION_DAYS: int = 1095  # ~3 ans
+    INVITATION_RETENTION_DAYS: int = 90
+    # Comptes inactifs : effacement cross-service après 24 mois (recommandation CNIL)
+    INACTIVE_ACCOUNT_RETENTION_DAYS: int = 730
+
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 30
     PASSWORD_RESET_BASE_URL: str = "http://localhost:3000"
     PASSWORD_HISTORY_COUNT: int = 5

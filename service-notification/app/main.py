@@ -3,7 +3,7 @@ from sqlalchemy import text
 
 from nutri_shared.errors import register_error_handlers
 
-from app.api.routes import history, notify, subscriptions
+from app.api.routes import history, internal, notify, subscriptions
 from app.db.session import get_engine
 from app.i18n.middleware import LocaleMiddleware
 
@@ -25,6 +25,7 @@ app.include_router(
 )
 app.include_router(notify.router, prefix="/api/v1/notify", tags=["notify"])
 app.include_router(history.router, prefix="/api/v1/users", tags=["history"])
+app.include_router(internal.router, prefix="/api/v1/internal", tags=["internal"])
 
 
 @app.get("/health")

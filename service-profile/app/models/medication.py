@@ -3,9 +3,11 @@
 import logging
 import uuid
 
-from sqlalchemy import Boolean, Text, String
+from sqlalchemy import Boolean, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
+
+from nutri_shared.db.encrypted import EncryptedText
 
 from app.db.base_class import Base
 from app.models.base_model import SlugMixin, TimestampMixin
@@ -25,4 +27,6 @@ class Medication(Base, SlugMixin, TimestampMixin):
     impacts_metabolism: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
     )
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notes: Mapped[str | None] = mapped_column(
+        EncryptedText("PROFILE_FIELD_ENCRYPTION_KEY"), nullable=True
+    )
