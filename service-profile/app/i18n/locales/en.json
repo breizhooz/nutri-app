@@ -3,7 +3,11 @@
     "token_invalid": "Invalid or expired token",
     "service_token_invalid": "Invalid service token",
     "no_account_context": "No active account in context",
-    "health_consent_required": "Consent to health data processing is required"
+    "health_consent_required": "Consent to health data processing is required",
+    "blob_not_found": "Encrypted resource not found",
+    "blob_version_conflict": "Version conflict: the resource was modified elsewhere",
+    "blob_collection_unknown": "Unknown collection",
+    "blob_ciphertext_invalid": "Invalid ciphertext (base64 expected)"
   },
   "validation": {
     "rpe_range": "RPE must be between 1 and 10"
