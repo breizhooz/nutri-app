@@ -45,11 +45,15 @@ def register_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(HTTPException)
     async def _http_exc(request: Request, exc: HTTPException) -> JSONResponse:
+        # Propage les en-têtes portés par l'HTTPException (ex. WWW-Authenticate sur
+        # un 401, ETag/If-Match sur un 412) : sans cela ils étaient silencieusement
+        # perdus en reconstruisant la réponse.
         return JSONResponse(
             status_code=exc.status_code,
             content={
                 "error": {"code": f"HTTP_{exc.status_code}", "message": str(exc.detail)}
             },
+            headers=exc.headers,
         )
 
     @app.exception_handler(RequestValidationError)

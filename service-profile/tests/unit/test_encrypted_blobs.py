@@ -54,7 +54,7 @@ class TestEncryptedBlobs:
 
     @pytest.mark.unit
     async def test_stale_if_match_conflict(self, client: AsyncClient) -> None:
-        """If-Match périmé → 412 ; le blob n'est pas écrasé (version inchangée)."""
+        """If-Match périmé → 412 + ETag de la version courante ; pas d'écrasement."""
         await client.put("/api/v1/profiles/me/blobs/health/default", json={"ciphertext": _B64})
         conflict = await client.put(
             "/api/v1/profiles/me/blobs/health/default",
@@ -62,7 +62,7 @@ class TestEncryptedBlobs:
             headers={"If-Match": "99"},
         )
         assert conflict.status_code == 412
-        # le client re-GET pour relire la version courante (toujours 1)
+        assert conflict.headers["ETag"] == "1"  # en-tête propagé par le handler
         get = await client.get("/api/v1/profiles/me/blobs/health/default")
         assert get.json()["content_version"] == 1
 

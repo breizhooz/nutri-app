@@ -126,14 +126,11 @@ async def put_blob(
     try:
         record = await store.put(account_id, collection, ref_key, ciphertext, expected)
     except BlobConflictError as exc:
-        # NB : le handler d'erreur partagé (nutri_shared) ne propage pas les
-        # en-têtes d'HTTPException → pas de ETag fiable sur le 412. Le client
-        # re-GET la ressource pour relire content_version et fusionner. `exc`
-        # porte la version courante si on enrichit le handler plus tard.
-        _ = exc.current_version
+        # ETag = version courante → le client peut fusionner sans re-GET.
         raise HTTPException(
             status_code=status.HTTP_412_PRECONDITION_FAILED,
             detail=t.get("errors.blob_version_conflict", get_locale(request)),
+            headers={"ETag": str(exc.current_version)},
         )
     response.headers["ETag"] = str(record.content_version)
     return BlobOut(
