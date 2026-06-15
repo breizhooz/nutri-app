@@ -4,6 +4,10 @@ Le store range et rend des **octets opaques** ; il ne chiffre/déchiffre JAMAIS
 (le chiffrement est exclusivement côté client — E2E zero-knowledge). L'abstraction
 permet de remplacer le backend de stockage (PG sur VPS aujourd'hui ; Materia KV
 HDS demain) sans toucher aux routes : cf. docs/rgpd/plan_dpo.md §3.
+
+L'adaptateur PG est paramétré par la **classe modèle** du service (qui lie
+:class:`~nutri_shared.blobs.models.EncryptedBlobMixin` à sa ``Base`` et sa table),
+afin d'être réutilisable tel quel par chaque service (santé, menu, …).
 """
 
 from abc import ABC, abstractmethod
@@ -13,8 +17,6 @@ import uuid
 
 from sqlalchemy import delete as sa_delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.encrypted_blob import EncryptedBlob
 
 
 @dataclass(frozen=True)
@@ -75,19 +77,19 @@ class EncryptedBlobStore(ABC):
 
 
 class PgEncryptedBlobStore(EncryptedBlobStore):
-    """Adaptateur PostgreSQL (via SQLAlchemy async)."""
+    """Adaptateur PostgreSQL (via SQLAlchemy async), paramétré par la classe modèle."""
 
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: AsyncSession, model: type) -> None:
         self._session = session
+        self._model = model
 
-    async def _fetch(
-        self, account_id: uuid.UUID, collection: str, ref_key: str
-    ) -> EncryptedBlob | None:
+    async def _fetch(self, account_id: uuid.UUID, collection: str, ref_key: str):
+        model = self._model
         result = await self._session.execute(
-            select(EncryptedBlob).where(
-                EncryptedBlob.account_id == account_id,
-                EncryptedBlob.collection == collection,
-                EncryptedBlob.ref_key == ref_key,
+            select(model).where(
+                model.account_id == account_id,
+                model.collection == collection,
+                model.ref_key == ref_key,
             )
         )
         return result.scalar_one_or_none()
@@ -124,7 +126,7 @@ class PgEncryptedBlobStore(EncryptedBlobStore):
         if row is None:
             if expected_version not in (None, 0):
                 raise BlobConflictError(current_version=0)
-            row = EncryptedBlob(
+            row = self._model(
                 account_id=account_id,
                 collection=collection,
                 ref_key=ref_key,
@@ -150,28 +152,28 @@ class PgEncryptedBlobStore(EncryptedBlobStore):
     async def delete(
         self, account_id: uuid.UUID, collection: str, ref_key: str
     ) -> bool:
+        model = self._model
         result = await self._session.execute(
-            sa_delete(EncryptedBlob).where(
-                EncryptedBlob.account_id == account_id,
-                EncryptedBlob.collection == collection,
-                EncryptedBlob.ref_key == ref_key,
+            sa_delete(model).where(
+                model.account_id == account_id,
+                model.collection == collection,
+                model.ref_key == ref_key,
             )
         )
         await self._session.commit()
         return (result.rowcount or 0) > 0
 
-    async def list(
-        self, account_id: uuid.UUID, collection: str
-    ) -> list[BlobEnvelope]:
+    async def list(self, account_id: uuid.UUID, collection: str) -> list[BlobEnvelope]:
+        model = self._model
         result = await self._session.execute(
             select(
-                EncryptedBlob.collection,
-                EncryptedBlob.ref_key,
-                EncryptedBlob.content_version,
-                EncryptedBlob.updated_at,
+                model.collection,
+                model.ref_key,
+                model.content_version,
+                model.updated_at,
             ).where(
-                EncryptedBlob.account_id == account_id,
-                EncryptedBlob.collection == collection,
+                model.account_id == account_id,
+                model.collection == collection,
             )
         )
         return [

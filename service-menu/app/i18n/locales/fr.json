@@ -1,6 +1,10 @@
 {
   "errors": {
-    "token_invalid": "Token invalide ou expiré"
+    "token_invalid": "Token invalide ou expiré",
+    "blob_not_found": "Ressource chiffrée introuvable",
+    "blob_version_conflict": "Conflit de version : la ressource a été modifiée ailleurs",
+    "blob_collection_unknown": "Collection inconnue",
+    "blob_ciphertext_invalid": "Ciphertext invalide (base64 attendu)"
   },
   "enums": {},
   "recipe": {

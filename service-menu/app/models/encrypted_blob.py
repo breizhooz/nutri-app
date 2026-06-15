@@ -2,7 +2,8 @@
 
 Les colonnes sont mutualisées dans :class:`nutri_shared.blobs.EncryptedBlobMixin`
 (le serveur ne stocke que du ciphertext opaque + une enveloppe d'adressage). Ce
-service expose la collection « health ». Cf. ../../../docs/rgpd/plan_dpo.md.
+service expose la collection « weekly_menu » : le menu hebdomadaire est désormais
+généré et chiffré côté client. Cf. ../../../docs/rgpd/plan_dpo.md.
 """
 
 from nutri_shared.blobs import EncryptedBlobMixin

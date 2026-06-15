@@ -1,6 +1,10 @@
 {
   "errors": {
-    "token_invalid": "Invalid or expired token"
+    "token_invalid": "Invalid or expired token",
+    "blob_not_found": "Encrypted resource not found",
+    "blob_version_conflict": "Version conflict: the resource was modified elsewhere",
+    "blob_collection_unknown": "Unknown collection",
+    "blob_ciphertext_invalid": "Invalid ciphertext (base64 expected)"
   },
   "enums": {},
   "recipe": {
