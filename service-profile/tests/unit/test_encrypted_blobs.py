@@ -41,9 +41,13 @@ class TestEncryptedBlobs:
         assert get.headers["ETag"] == "1"
 
     @pytest.mark.unit
-    async def test_update_increments_version_with_if_match(self, client: AsyncClient) -> None:
+    async def test_update_increments_version_with_if_match(
+        self, client: AsyncClient
+    ) -> None:
         """Mise à jour avec If-Match correct → version incrémentée."""
-        await client.put("/api/v1/profiles/me/blobs/health/default", json={"ciphertext": _B64})
+        await client.put(
+            "/api/v1/profiles/me/blobs/health/default", json={"ciphertext": _B64}
+        )
         upd = await client.put(
             "/api/v1/profiles/me/blobs/health/default",
             json={"ciphertext": _B64},
@@ -55,7 +59,9 @@ class TestEncryptedBlobs:
     @pytest.mark.unit
     async def test_stale_if_match_conflict(self, client: AsyncClient) -> None:
         """If-Match périmé → 412 + ETag de la version courante ; pas d'écrasement."""
-        await client.put("/api/v1/profiles/me/blobs/health/default", json={"ciphertext": _B64})
+        await client.put(
+            "/api/v1/profiles/me/blobs/health/default", json={"ciphertext": _B64}
+        )
         conflict = await client.put(
             "/api/v1/profiles/me/blobs/health/default",
             json={"ciphertext": _B64},
@@ -84,7 +90,9 @@ class TestEncryptedBlobs:
 
     @pytest.mark.unit
     async def test_delete_then_absent(self, client: AsyncClient) -> None:
-        await client.put("/api/v1/profiles/me/blobs/health/default", json={"ciphertext": _B64})
+        await client.put(
+            "/api/v1/profiles/me/blobs/health/default", json={"ciphertext": _B64}
+        )
         assert (
             await client.delete("/api/v1/profiles/me/blobs/health/default")
         ).status_code == 204
@@ -97,9 +105,15 @@ class TestEncryptedBlobs:
         ).status_code == 404
 
     @pytest.mark.unit
-    async def test_list_returns_envelopes_without_ciphertext(self, client: AsyncClient) -> None:
-        await client.put("/api/v1/profiles/me/blobs/health/a", json={"ciphertext": _B64})
-        await client.put("/api/v1/profiles/me/blobs/health/b", json={"ciphertext": _B64})
+    async def test_list_returns_envelopes_without_ciphertext(
+        self, client: AsyncClient
+    ) -> None:
+        await client.put(
+            "/api/v1/profiles/me/blobs/health/a", json={"ciphertext": _B64}
+        )
+        await client.put(
+            "/api/v1/profiles/me/blobs/health/b", json={"ciphertext": _B64}
+        )
         resp = await client.get("/api/v1/profiles/me/blobs/health")
         assert resp.status_code == 200
         items = resp.json()

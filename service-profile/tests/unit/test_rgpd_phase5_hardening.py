@@ -65,7 +65,7 @@ def test_two_keys_are_incompatible():
 # ── Scrubbing des logs ──────────────────────────────────────────────────────
 def test_redact_masks_health_and_secret_fields():
     payload = {
-        "condition_name": "diabète",          # non sensible (nom de clé)
+        "condition_name": "diabète",  # non sensible (nom de clé)
         "notes": "détails médicaux intimes",
         "medical_contraindications": "ne pas prescrire X",
         "password": "hunter2",
