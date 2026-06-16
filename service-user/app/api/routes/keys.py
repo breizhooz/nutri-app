@@ -22,6 +22,7 @@ from app.schemas.key_material import (
     KeyMaterialOut,
     KeyRotateIn,
     RecoveryMaterialOut,
+    RecoveryRotateIn,
 )
 from app.services.key_material_service import (
     KeyMaterialAlreadyExists,
@@ -131,6 +132,36 @@ async def rotate_my_keys(
         salt=_b64(material.salt),
         kdf_params=_params(material),
         wrapped_uk=_b64(material.wrapped_uk),
+    )
+
+
+@router.put("/me/keys/recovery", response_model=RecoveryMaterialOut)
+async def rotate_my_recovery(
+    request: Request,
+    data: RecoveryRotateIn,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> RecoveryMaterialOut:
+    """Régénère le code de récupération (invalide l'ancien). 404 si non inscrit.
+
+    La UK et le wrap par mot de passe sont inchangés (aucun blob re-chiffré) ;
+    seule la voie de récupération est ré-enveloppée côté client.
+    """
+    try:
+        material = await KeyMaterialService(session).rotate_recovery(
+            current_user.id,
+            recovery_salt=_decode(request, data.recovery_salt),
+            wrapped_uk_recovery=_decode(request, data.wrapped_uk_recovery),
+        )
+    except KeyMaterialNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=t.get("keys.not_enrolled", get_locale(request)),
+        )
+    return RecoveryMaterialOut(
+        recovery_salt=_b64(material.recovery_salt),
+        kdf_params=_params(material),
+        wrapped_uk_recovery=_b64(material.wrapped_uk_recovery),
     )
 
 

@@ -56,7 +56,8 @@
       "side_dish": "accompagnement",
       "breakfast": "petit-déjeuner",
       "soup": "soupe",
-      "salad": "salade"
+      "salad": "salade",
+      "fruit": "fruit"
     },
     "seasonality":{
       "spring": "printemps",

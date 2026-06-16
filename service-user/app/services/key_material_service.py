@@ -86,3 +86,26 @@ class KeyMaterialService:
         await self._session.commit()
         await self._session.refresh(material)
         return material
+
+    async def rotate_recovery(
+        self,
+        user_id: uuid.UUID,
+        *,
+        recovery_salt: bytes,
+        wrapped_uk_recovery: bytes,
+    ) -> UserKeyMaterial:
+        """Régénère la voie de récupération (nouveau code de récup).
+
+        Seuls ``recovery_salt`` et ``wrapped_uk_recovery`` changent ; la UK et le
+        wrap par mot de passe restent identiques (aucun blob re-chiffré). Les
+        params Argon2id sont partagés et inchangés : le client réutilise ceux du
+        compte pour dériver la nouvelle Recovery Key.
+        """
+        material = await self.get(user_id)
+        if material is None:
+            raise KeyMaterialNotFound()
+        material.recovery_salt = recovery_salt
+        material.wrapped_uk_recovery = wrapped_uk_recovery
+        await self._session.commit()
+        await self._session.refresh(material)
+        return material

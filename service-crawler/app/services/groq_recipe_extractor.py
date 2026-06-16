@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import re
 from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
 
@@ -89,6 +90,8 @@ _SYSTEM_PROMPT = (
     '"servings": integer, "prep_time_minutes": integer ou null, '
     '"cook_time_minutes": integer ou null, '
     '"ingredients": [{"name": string, "quantity": float, "unit": string}]}. '
+    "quantity DOIT être un nombre unique (ex: 1.2) ou null — JAMAIS une plage "
+    "(pas de \"1.2-1.4\", pas de fraction) : en cas de plage, donne la borne basse. "
     "is_recipe doit être true uniquement si le contenu décrit clairement une recette de cuisine. "
     "recipe_confidence exprime ta certitude que c'est une recette (1.0 = totalement certain). "
     "Si ce n'est pas une recette, laisse title, instructions et ingredients vides. "
@@ -161,6 +164,16 @@ class GroqRecipeExtractor:
             lines = stripped.splitlines()
             end = len(lines) - 1 if lines[-1].strip() == "```" else len(lines)
             stripped = "\n".join(lines[1:end])
+
+        # Filet de sécurité : malgré la consigne, le LLM produit parfois une PLAGE
+        # numérique (ex. "quantity": 1.2-1.4) qui n'est pas un JSON valide → on
+        # garde la borne basse. Sans ça, json.loads échoue et l'extraction renvoie
+        # un 500 sur une recette parfaitement valide par ailleurs.
+        stripped = re.sub(
+            r"(:\s*)(\d+(?:\.\d+)?)\s*-\s*\d+(?:\.\d+)?",
+            r"\1\2",
+            stripped,
+        )
 
         try:
             raw = json.loads(stripped)

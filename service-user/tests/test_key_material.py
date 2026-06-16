@@ -115,6 +115,39 @@ async def test_rotate_updates_wrap_keeps_recovery(
 
 
 @pytest.mark.unit
+async def test_rotate_recovery_updates_recovery_keeps_wrap(
+    auth_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _seed_user(db_session)
+    await auth_client.post("/api/v1/users/me/keys", json=_ENROLL)
+
+    new_rec_salt = base64.b64encode(b"\x0b" * 16).decode()
+    new_wrapped_rec = base64.b64encode(b"\xbb" * 64).decode()
+    rot = await auth_client.put(
+        "/api/v1/users/me/keys/recovery",
+        json={"recovery_salt": new_rec_salt, "wrapped_uk_recovery": new_wrapped_rec},
+    )
+    assert rot.status_code == 200
+    assert rot.json()["recovery_salt"] == new_rec_salt
+    assert rot.json()["wrapped_uk_recovery"] == new_wrapped_rec
+    # le wrap par mot de passe (UK) est inchangé
+    get = await auth_client.get("/api/v1/users/me/keys")
+    assert get.json()["wrapped_uk"] == _WRAPPED
+
+
+@pytest.mark.unit
+async def test_rotate_recovery_before_enroll_404(
+    auth_client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _seed_user(db_session)
+    rot = await auth_client.put(
+        "/api/v1/users/me/keys/recovery",
+        json={"recovery_salt": _REC_SALT, "wrapped_uk_recovery": _WRAPPED_REC},
+    )
+    assert rot.status_code == 404
+
+
+@pytest.mark.unit
 async def test_rotate_before_enroll_404(
     auth_client: AsyncClient, db_session: AsyncSession
 ) -> None:

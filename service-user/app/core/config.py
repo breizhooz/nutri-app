@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     MFA_TOKEN_EXPIRE_MINUTES: int = 5
     MFA_EMAIL_CODE_EXPIRE_MINUTES: int = 5
     # Title shown in the authenticator app for TOTP entries (the QR issuer).
-    MFA_ISSUER: str = "NutriPlanner"
+    MFA_ISSUER: str = "Rost.r"
     # Logo embedded at the centre of the 2FA QR code. Empty = bundled brand logo.
     MFA_QR_LOGO_PATH: str = ""
 

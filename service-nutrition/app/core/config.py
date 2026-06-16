@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     GROQ_MODEL: str = "llama-3.1-8b-instant"
 
     OFF_BASE_URL: str = "https://world.openfoodfacts.org"
-    OFF_USER_AGENT: str = "NutriPlanner/1.0 (contact@nutriplanner.fr)"
+    OFF_USER_AGENT: str = "Rost.r/1.0 (contact@nutriplanner.fr)"
 
     CIQUAL_DOWNLOAD_URL: str = (
         "https://ciqual.anses.fr/cms/sites/default/files/inline-files/2025_11_03.7z"

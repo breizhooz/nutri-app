@@ -35,6 +35,19 @@ class KeyRotateIn(BaseModel):
     wrapped_uk: str = Field(..., description="UK ré-enveloppée par la nouvelle MK (base64).")
 
 
+class RecoveryRotateIn(BaseModel):
+    """Régénération du code de récupération (la UK ne change pas).
+
+    Seule la voie de récupération est mise à jour ; les params Argon2id (partagés
+    avec la Master Key) et le wrap par mot de passe restent inchangés.
+    """
+
+    recovery_salt: str = Field(..., description="Nouveau salt du code de récup (base64).")
+    wrapped_uk_recovery: str = Field(
+        ..., description="UK ré-enveloppée par la nouvelle Recovery Key (base64)."
+    )
+
+
 class KeyMaterialOut(BaseModel):
     """Matériel nécessaire à un appareil pour dériver la MK et déchiffrer la UK."""
 

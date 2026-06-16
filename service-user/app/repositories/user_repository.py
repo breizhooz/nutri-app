@@ -11,6 +11,8 @@ from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.access import Account, Invitation, Membership
+from app.models.key_material import UserKeyMaterial
+from app.models.oauth_account import OAuthAccount
 from app.models.user import User
 
 
@@ -75,6 +77,18 @@ class UserRepository:
     async def delete(self, user: User) -> None:
         """Permanently remove a user account (and its personal account)."""
         await self.delete_personal_accounts(user)
+        # Matériel de clés E2E (sel, params KDF, wrapped UK + récupération) : aucune
+        # FK CASCADE vers users → suppression explicite, sinon il reste orphelin
+        # après l'effacement du compte (RGPD art. 17).
+        await self.session.execute(
+            delete(UserKeyMaterial).where(UserKeyMaterial.user_id == user.id)
+        )
+        # Comptes OAuth liés (Google/Facebook) : sans purge, un oauth_account
+        # orphelin pointe vers l'utilisateur supprimé → la reconnexion sociale
+        # trouve le lien, ne résout aucun user et renvoie « Compte inactif ».
+        await self.session.execute(
+            delete(OAuthAccount).where(OAuthAccount.user_id == user.id)
+        )
         await self.session.delete(user)
         await self.session.commit()
 

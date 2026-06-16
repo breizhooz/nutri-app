@@ -1,5 +1,5 @@
 {
-  "title": "NutriPlanner — Crawler",
+  "title": "Rost.r — Crawler",
   "uid": "nutriplanner-crawler",
   "tags": ["crawler", "celery", "instagram"],
   "timezone": "Europe/Paris",

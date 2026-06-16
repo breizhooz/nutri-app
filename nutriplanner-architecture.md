@@ -1,4 +1,4 @@
-# NutriPlanner — Architecture Technique
+# Rost.r — Architecture Technique
 
 **Version 1.0 · Mars 2025**
 
@@ -21,7 +21,7 @@
 
 ## Contexte du projet
 
-NutriPlanner est une application de gestion de menus pour le suivi nutritionnel. Elle permet de :
+Rost.r est une application de gestion de menus pour le suivi nutritionnel. Elle permet de :
 - Stocker des recettes
 - Gérer des aliments avec leurs poids et portions
 - Générer des plannings hebdomadaires aléatoires
@@ -625,4 +625,4 @@ nutriplanner/
 
 ---
 
-**Document confidentiel · NutriPlanner v1.0 · Mars 2025**
+**Document confidentiel · Rost.r v1.0 · Mars 2025**

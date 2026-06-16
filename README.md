@@ -1,4 +1,4 @@
-# NutriPlanner — Architecture Microservices
+# Rost.r — Architecture Microservices
 
 Application de planification nutritionnelle et de gestion de recettes, construite sur une architecture microservices Python/FastAPI.
 
@@ -758,7 +758,7 @@ docker compose up -d
 
 | Dashboard | Description |
 |-----------|-------------|
-| NutriPlanner — Crawler | Taux HTTP, codes, tasks Celery, erreurs Instagram, logs payloads |
+| Rost.r — Crawler | Taux HTTP, codes, tasks Celery, erreurs Instagram, logs payloads |
 
 Accès : `http://grafana.localhost` → Dashboards
 

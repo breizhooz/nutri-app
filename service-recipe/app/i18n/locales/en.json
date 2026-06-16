@@ -56,7 +56,8 @@
       "side_dish": "side dish",
       "breakfast": "breakfast",
       "soup": "soup",
-      "salad": "salad"
+      "salad": "salad",
+      "fruit": "fruit"
     },
     "seasonality":{
       "spring": "spring",
