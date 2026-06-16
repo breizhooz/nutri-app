@@ -6,7 +6,7 @@ sur `platform.env` et `services/<svc>.env`.
 
 | Fichier | Consommé par |
 |---|---|
-| `platform.secrets.env` | postgres (initdb), minio, grafana, postgres-exporter, flower — et l'interpolation `${...}` de Compose via le symlink `.env` à la racine |
+| `platform.secrets.env` | postgres (initdb), seaweedfs (S3), grafana, postgres-exporter, flower — et l'interpolation `${...}` de Compose via le symlink `.env` à la racine |
 | `<svc>.secrets.env` | le service métier + ses workers celery |
 
 Sur un poste neuf : copier les `.env.example` (générés en phase 3 par

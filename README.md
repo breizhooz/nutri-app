@@ -35,8 +35,8 @@ Application de planification nutritionnelle et de gestion de recettes, construit
    └───────────────────────┘ │ └──────────────────┘
                              │
                       ┌──────▼──────┐
-                      │    MinIO    │  S3-compatible
-                      │  :9000/9001 │
+                      │  SeaweedFS  │  S3-compatible
+                      │    :8333    │
                       └─────────────┘
 
    ┌──────────────────────────────────────────────────┐
@@ -86,7 +86,7 @@ Application de planification nutritionnelle et de gestion de recettes, construit
 | http://prometheus.localhost | Interface Prometheus | aucune |
 | http://grafana.localhost | Dashboards Grafana | `admin` / `${GRAFANA_ADMIN_PASSWORD}` |
 | `localhost:9200` | Elasticsearch (interne) | aucune (xpack désactivé) |
-| `localhost:9001` | Console MinIO | `${MINIO_ROOT_USER}` / `${MINIO_ROOT_PASSWORD}` |
+| `localhost:8333` | Endpoint S3 SeaweedFS | clés `${S3_APP_ACCESS_KEY}` / `${S3_APP_SECRET_KEY}` (pas de console web) |
 
 ---
 
@@ -306,7 +306,7 @@ Le code à 6 chiffres est généré avec `secrets.randbelow` (cryptographiquemen
 | `SERVICE_RECIPE_URL` | URL interne de service-recipe (ex: `http://service-recipe:8000`) |
 | `SERVICE_PROFILE_TOKEN` | Token partagé pour les appels vers service-profile |
 
-### Infrastructure (Redis, Elasticsearch, MinIO)
+### Infrastructure (Redis, Elasticsearch, SeaweedFS)
 
 | Variable | Description | Exemple |
 |----------|-------------|---------|
@@ -314,11 +314,11 @@ Le code à 6 chiffres est généré avec `secrets.randbelow` (cryptographiquemen
 | `CELERY_RESULT_BACKEND` | Backend des résultats Celery | `redis://redis:6379/1` |
 | `ELASTICSEARCH_URL` | URL Elasticsearch | `http://elasticsearch:9200` |
 | `ELASTICSEARCH_INDEX_RECIPES` | Nom de l'index des recettes | `recipes` |
-| `MINIO_ENDPOINT` | Endpoint MinIO (sans http://) | `minio:9000` |
-| `MINIO_ACCESS_KEY` | Clé d'accès MinIO | — |
-| `MINIO_SECRET_KEY` | Clé secrète MinIO | — |
-| `MINIO_BUCKET_CRAWLER` | Bucket pour les médias du crawler | `crawler-media` |
-| `MINIO_SECURE` | TLS vers MinIO | `False` en dev |
+| `S3_ENDPOINT` | Endpoint S3 SeaweedFS (sans http://) | `seaweedfs:8333` |
+| `S3_ACCESS_KEY` | Clé d'accès S3 | — |
+| `S3_SECRET_KEY` | Clé secrète S3 | — |
+| `S3_BUCKET_CRAWLER` | Bucket pour les médias du crawler | `crawler-media` |
+| `S3_SECURE` | TLS vers l'endpoint S3 | `False` en dev |
 
 ### Notifications (SMTP + Push VAPID)
 
@@ -475,8 +475,8 @@ Déclenché après la réussite de **tous** les jobs par service. Spin up de la 
 |--------|-------------|
 | `SONAR_TOKEN` | Authentification SonarQube |
 | `JWT_SECRET` | Stack smoke tests |
-| `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD` | Stack smoke tests |
-| `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY` | Stack smoke tests |
+| `S3_APP_ACCESS_KEY` / `S3_APP_SECRET_KEY` | Identité S3 SeaweedFS (smoke tests) |
+| `S3_ACCESS_KEY` / `S3_SECRET_KEY` | Clés S3 côté service (smoke tests) |
 | `VAPID_PRIVATE_KEY` / `VAPID_PUBLIC_KEY` | Stack smoke tests |
 | `POSTGRES_*` (×7) | Credentials PostgreSQL par service |
 
@@ -651,7 +651,7 @@ docker compose exec postgres-recipe psql -U nutrirecipe -d nutriplanner_recipe \
 | Recherche | Elasticsearch 8.11 |
 | Cache / Queue | Redis 7 |
 | Tâches async | Celery |
-| Stockage objet | MinIO |
+| Stockage objet | SeaweedFS (S3) |
 | Reverse proxy | Traefik v3.7 |
 | Monitoring | Prometheus + Grafana |
 | Logs | structlog → Filebeat → Elasticsearch |

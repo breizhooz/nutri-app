@@ -1,7 +1,7 @@
 """Garde anti-SSRF pour les fetch sortants du crawler (SEC-03).
 
 Le crawler récupère des URLs **fournies par l'utilisateur**. Sans contrôle, il
-peut être détourné pour atteindre le réseau interne (Postgres, Redis, MinIO…) ou
+peut être détourné pour atteindre le réseau interne (Postgres, Redis, SeaweedFS…) ou
 les métadonnées cloud (169.254.169.254) — c'est une SSRF.
 
 ``assert_public_url`` n'autorise que http(s) vers une cible dont **toutes** les IP

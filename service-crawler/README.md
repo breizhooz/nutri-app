@@ -6,7 +6,7 @@ Service de crawling web pour l'import automatique de recettes. Tâches planifié
 - **Domaine Traefik** : `http://api-crawler.localhost`
 - **Swagger** : `http://api-crawler.localhost/docs`
 - **Base de données** : PostgreSQL sur `localhost:5436`
-- **Dépend de** : `redis` (broker Celery), `minio` (stockage médias)
+- **Dépend de** : `redis` (broker Celery), `seaweedfs` (stockage médias S3)
 
 ---
 
@@ -196,6 +196,6 @@ service-crawler/
 | `DATABASE_URL` | `postgresql+asyncpg://...@postgres-crawler:5432/...` |
 | `CELERY_BROKER_URL` | `redis://redis:6379/0` |
 | `CELERY_RESULT_BACKEND` | `redis://redis:6379/1` |
-| `MINIO_ENDPOINT` | `minio:9000` |
-| `MINIO_ROOT_USER` | Credentials MinIO |
-| `MINIO_ROOT_PASSWORD` | Credentials MinIO |
+| `S3_ENDPOINT` | `seaweedfs:8333` (endpoint S3 SeaweedFS) |
+| `S3_ACCESS_KEY` | Clé d'accès S3 |
+| `S3_SECRET_KEY` | Clé secrète S3 |

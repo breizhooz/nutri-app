@@ -486,13 +486,16 @@ jobs:
             echo "ELASTICSEARCH_URL=http://elasticsearch:9200" >> .env
             echo "ELASTICSEARCH_INDEX_RECIPES=recipes" >> .env
 
-            echo "MINIO_ROOT_USER=${{ secrets.MINIO_ROOT_USER }}" >> .env
-            echo "MINIO_ROOT_PASSWORD=${{ secrets.MINIO_ROOT_PASSWORD }}" >> .env
-            echo "MINIO_ENDPOINT=minio:9000" >> .env
-            echo "MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}" >> .env
-            echo "MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}" >> .env
-            echo "MINIO_BUCKET_CRAWLER=crawler-media" >> .env
-            echo "MINIO_SECURE=False" >> .env
+            # SeaweedFS (S3) : l'identité serveur S3_APP_* doit valoir ce que les
+            # services envoient (S3_ACCESS_KEY/SECRET) → on réutilise les mêmes secrets
+            # GitHub (nommés MINIO_* dans les repo secrets, valeurs inchangées).
+            echo "S3_ENDPOINT=seaweedfs:8333" >> .env
+            echo "S3_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}" >> .env
+            echo "S3_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}" >> .env
+            echo "S3_APP_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}" >> .env
+            echo "S3_APP_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}" >> .env
+            echo "S3_BUCKET_CRAWLER=crawler-media" >> .env
+            echo "S3_SECURE=False" >> .env
             echo "SERVICE_RECIPE_URL=http://service-recipe:8000" >> .env
             echo "CELERY_BROKER_URL=redis://redis:6379/0" >> .env
             echo "CELERY_RESULT_BACKEND=redis://redis:6379/1" >> .env

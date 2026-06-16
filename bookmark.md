@@ -315,8 +315,7 @@ POST    /api/v1/profiles/me/preferences         Définir préférences alimentai
 | service-profile | `localhost:8007` |
 | Elasticsearch | `localhost:9200` |
 | Redis | `localhost:6379` |
-| MinIO API | `localhost:9000` |
-| MinIO Console | `localhost:9001` |
+| SeaweedFS S3 | `localhost:8333` |
 | Prometheus | `localhost:9090` |
 | Grafana | `localhost:3000` |
 | postgres-user | `localhost:5433` |

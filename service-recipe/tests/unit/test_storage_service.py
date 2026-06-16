@@ -1,22 +1,23 @@
-"""Tests for StorageService — mocks Minio client, no real MinIO needed."""
+"""Tests for StorageService — mocks the boto3 S3 client, no real server needed."""
 
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from app.core.exceptions import ImageTooLarge, UnsupportedImageType
-from app.services.storage_service import StorageService
+from app.services.storage_service import ClientError, StorageService
 
 
 def _make_service() -> StorageService:
-    with patch("app.services.storage_service.Minio"):
+    with patch("app.services.storage_service.boto3"):
         svc = StorageService(
-            endpoint="minio:9000",
+            endpoint="seaweedfs:8333",
             access_key="key",
             secret_key="secret",
             bucket="recipes",
-            public_url="http://localhost:9000",
+            public_url="http://localhost:8333",
         )
+    # boto3.client(...) est mocké → _client est un MagicMock.
     return svc
 
 
@@ -24,12 +25,12 @@ def _make_service() -> StorageService:
 @pytest.mark.asyncio
 async def test_upload_returns_url():
     svc = _make_service()
-    svc._client.bucket_exists = MagicMock(return_value=True)
+    svc._client.head_bucket = MagicMock()  # bucket présent
     svc._client.put_object = MagicMock()
 
     url = await svc.upload_image(b"fakeimage", "image/png")
 
-    assert url.startswith("http://localhost:9000/recipes/")
+    assert url.startswith("http://localhost:8333/recipes/")
     assert url.endswith(".png")
     svc._client.put_object.assert_called_once()
 
@@ -38,15 +39,15 @@ async def test_upload_returns_url():
 @pytest.mark.asyncio
 async def test_upload_creates_bucket_when_missing():
     svc = _make_service()
-    svc._client.bucket_exists = MagicMock(return_value=False)
-    svc._client.make_bucket = MagicMock()
-    svc._client.set_bucket_policy = MagicMock()
+    svc._client.head_bucket = MagicMock(
+        side_effect=ClientError({"Error": {"Code": "404"}}, "HeadBucket")
+    )
+    svc._client.create_bucket = MagicMock()
     svc._client.put_object = MagicMock()
 
     await svc.upload_image(b"data", "image/jpeg")
 
-    svc._client.make_bucket.assert_called_once_with("recipes")
-    svc._client.set_bucket_policy.assert_called_once()
+    svc._client.create_bucket.assert_called_once_with(Bucket="recipes")
 
 
 @pytest.mark.unit
@@ -70,7 +71,7 @@ async def test_oversized_file_raises():
 @pytest.mark.asyncio
 async def test_correct_extension_for_webp():
     svc = _make_service()
-    svc._client.bucket_exists = MagicMock(return_value=True)
+    svc._client.head_bucket = MagicMock()
     svc._client.put_object = MagicMock()
 
     url = await svc.upload_image(b"data", "image/webp")

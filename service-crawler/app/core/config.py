@@ -10,11 +10,11 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str
     CELERY_RESULT_BACKEND: str
 
-    MINIO_ENDPOINT: str
-    MINIO_ACCESS_KEY: str
-    MINIO_SECRET_KEY: str
-    MINIO_BUCKET_CRAWLER: str
-    MINIO_SECURE: bool = False
+    S3_ENDPOINT: str
+    S3_ACCESS_KEY: str
+    S3_SECRET_KEY: str
+    S3_BUCKET_CRAWLER: str
+    S3_SECURE: bool = False
 
     SERVICE_RECIPE_URL: str
     SERVICE_RECIPE_TOKEN: str = ""
