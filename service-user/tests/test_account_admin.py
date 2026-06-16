@@ -190,9 +190,7 @@ async def test_accept_unknown_token_404(
 
 
 @pytest.mark.unit
-async def test_list_members(
-    anon_client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_list_members(anon_client: AsyncClient, db_session: AsyncSession) -> None:
     owner, account, _ = await _setup_account(db_session)
     token = _ctx_token(owner.id, account.id, "OWNER")
     resp = await anon_client.get(

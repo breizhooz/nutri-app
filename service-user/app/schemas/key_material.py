@@ -20,8 +20,12 @@ class KeyMaterialEnrollIn(BaseModel):
 
     salt: str = Field(..., description="Salt Argon2id (base64).")
     kdf_params: KdfParams
-    wrapped_uk: str = Field(..., description="User Key chiffrée par la Master Key (base64).")
-    recovery_salt: str = Field(..., description="Salt Argon2id du code de récup (base64).")
+    wrapped_uk: str = Field(
+        ..., description="User Key chiffrée par la Master Key (base64)."
+    )
+    recovery_salt: str = Field(
+        ..., description="Salt Argon2id du code de récup (base64)."
+    )
     wrapped_uk_recovery: str = Field(
         ..., description="User Key chiffrée par la Recovery Key (base64)."
     )
@@ -32,7 +36,9 @@ class KeyRotateIn(BaseModel):
 
     salt: str = Field(..., description="Nouveau salt (base64).")
     kdf_params: KdfParams
-    wrapped_uk: str = Field(..., description="UK ré-enveloppée par la nouvelle MK (base64).")
+    wrapped_uk: str = Field(
+        ..., description="UK ré-enveloppée par la nouvelle MK (base64)."
+    )
 
 
 class RecoveryRotateIn(BaseModel):
@@ -42,7 +48,9 @@ class RecoveryRotateIn(BaseModel):
     avec la Master Key) et le wrap par mot de passe restent inchangés.
     """
 
-    recovery_salt: str = Field(..., description="Nouveau salt du code de récup (base64).")
+    recovery_salt: str = Field(
+        ..., description="Nouveau salt du code de récup (base64)."
+    )
     wrapped_uk_recovery: str = Field(
         ..., description="UK ré-enveloppée par la nouvelle Recovery Key (base64)."
     )

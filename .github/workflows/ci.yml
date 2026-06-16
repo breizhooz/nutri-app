@@ -7,7 +7,10 @@ on:
     branches: [ main ]
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  
+  # Pas de collecteur (tempo) en CI : on coupe le SDK OpenTelemetry pour éviter
+  # le bruit « Failed to export span batch … tempo:4318 » dans les logs de test.
+  OTEL_SDK_DISABLED: "true"
+
 jobs:
   # Contrôles statiques infra (phase 5) : le rendu compose passe et la chaîne
   # env_file couvre les champs requis des Settings pydantic (make check).
@@ -24,9 +27,12 @@ jobs:
         # Les *.secrets.env sont gitignorés donc absents en CI. On les recrée
         # avec les clés requises listées dans les examples générés (lignes
         # non commentées) pour que env-check et le rendu compose passent.
+        # NB : la classe inclut les chiffres ([A-Z0-9_]) — sans quoi les clés
+        # renommées MINIO_*→S3_* (S3_ACCESS_KEY, S3_SECRET_KEY…) seraient
+        # ignorées et env-check échouerait sur service-crawler.
         run: |
           for svc in user recipe menu crawler notification nutrition profile; do
-            grep -E '^[A-Z_]+=' "infra/env/examples/${svc}.env.example" > "infra/env/secrets/${svc}.secrets.env"
+            grep -E '^[A-Z0-9_]+=' "infra/env/examples/${svc}.env.example" > "infra/env/secrets/${svc}.secrets.env"
           done
           touch infra/env/secrets/platform.secrets.env
 
@@ -51,7 +57,7 @@ jobs:
           cd service-user
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov ruff bandit
+          pip install pytest pytest-cov ruff==0.15.14 bandit
 
       - name: Run linter user
         run: |
@@ -108,7 +114,7 @@ jobs:
           cd service-recipe
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov ruff bandit
+          pip install pytest pytest-cov ruff==0.15.14 bandit
 
       - name: Run linter recipe
         run: |
@@ -165,7 +171,7 @@ jobs:
           cd service-menu
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov ruff bandit
+          pip install pytest pytest-cov ruff==0.15.14 bandit
 
       - name: Run linter menu
         run: |
@@ -222,7 +228,7 @@ jobs:
           cd service-crawler
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov ruff bandit
+          pip install pytest pytest-cov ruff==0.15.14 bandit
 
       - name: Run linter crawler
         run: |
@@ -279,7 +285,7 @@ jobs:
           cd service-notification
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov ruff bandit
+          pip install pytest pytest-cov ruff==0.15.14 bandit
 
       - name: Run linter notification
         run: |
@@ -336,7 +342,7 @@ jobs:
           cd service-nutrition
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov ruff bandit
+          pip install pytest pytest-cov ruff==0.15.14 bandit
 
       - name: Run linter nutrition
         run: |
@@ -393,7 +399,7 @@ jobs:
           cd service-profile
           pip install ../shared/
           pip install -r requirements.txt
-          pip install pytest pytest-cov ruff bandit
+          pip install pytest pytest-cov ruff==0.15.14 bandit
 
       - name: Run linter profile
         run: |

@@ -39,9 +39,7 @@ class SpoonacularClient:
         api_url: str | None = None,
         http_client: httpx.AsyncClient | None = None,
     ) -> None:
-        self._api_key = (
-            api_key if api_key is not None else settings.SPOONACULAR_API_KEY
-        )
+        self._api_key = api_key if api_key is not None else settings.SPOONACULAR_API_KEY
         self._api_url = (api_url or settings.SPOONACULAR_API_URL).rstrip("/")
         self._injected_client = http_client
 

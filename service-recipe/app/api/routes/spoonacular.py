@@ -33,9 +33,7 @@ class RecipeServiceFactory:
 
 @router.get("/shake", response_model=SpoonacularShakeResponse)
 async def shake_recipe(
-    service: SpoonacularCacheService = Depends(
-        SpoonacularCacheServiceFactory.inject
-    ),
+    service: SpoonacularCacheService = Depends(SpoonacularCacheServiceFactory.inject),
     _user: str = Depends(get_current_user_id),
 ) -> SpoonacularShakeResponse:
     """« Shake ta recette » : une recette du cache Spoonacular tirée au hasard.
@@ -61,9 +59,7 @@ async def shake_recipe(
 )
 async def add_to_personal_list(
     spoonacular_id: int,
-    service: SpoonacularCacheService = Depends(
-        SpoonacularCacheServiceFactory.inject
-    ),
+    service: SpoonacularCacheService = Depends(SpoonacularCacheServiceFactory.inject),
     recipe_service: RecipeService = Depends(RecipeServiceFactory.inject),
     ctx: AccessContext = Depends(get_write_context),
 ) -> RecipeResponse:

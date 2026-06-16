@@ -75,7 +75,9 @@ async def get_my_keys(
     )
 
 
-@router.post("/me/keys", response_model=KeyMaterialOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/me/keys", response_model=KeyMaterialOut, status_code=status.HTTP_201_CREATED
+)
 async def enroll_my_keys(
     request: Request,
     data: KeyMaterialEnrollIn,

@@ -110,9 +110,7 @@ class MembershipRepository:
             roles.setdefault(identity_id, []).append(role_code)
         return roles
 
-    async def get_active_coach(
-        self, account_id: uuid.UUID
-    ) -> Optional[Membership]:
+    async def get_active_coach(self, account_id: uuid.UUID) -> Optional[Membership]:
         """Coach actif d'un compte (modèle coach→client : 1 coach max)."""
         result = await self.session.execute(
             select(Membership).where(
@@ -159,9 +157,7 @@ class InvitationRepository:
         )
         return result.scalar_one_or_none()
 
-    async def list_pending_for_account(
-        self, account_id: uuid.UUID
-    ) -> list[Invitation]:
+    async def list_pending_for_account(self, account_id: uuid.UUID) -> list[Invitation]:
         result = await self.session.execute(
             select(Invitation)
             .where(

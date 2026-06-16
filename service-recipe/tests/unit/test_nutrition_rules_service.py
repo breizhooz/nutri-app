@@ -78,7 +78,13 @@ def _make_service(summary=None, engine=None):
 class TestNutritionRulesService:
     async def test_apply_rules_false_skips_profile(self):
         svc, profile, nutrition, search = _make_service()
-        await svc.search(user_id=USER_ID, account_id=USER_ID, apply_rules=False, query="poulet", limit=5)
+        await svc.search(
+            user_id=USER_ID,
+            account_id=USER_ID,
+            apply_rules=False,
+            query="poulet",
+            limit=5,
+        )
         profile.get_nutrition_summary.assert_not_called()
         nutrition.compute_targets.assert_not_called()
         search.search_recipes.assert_awaited_once()
@@ -169,7 +175,8 @@ class TestNutritionRulesService:
             summary=_summary(), engine=_engine_result()
         )
         await svc.search(
-            user_id=USER_ID, account_id=USER_ID,
+            user_id=USER_ID,
+            account_id=USER_ID,
             aggressiveness=1.5,
             variety_pct=0.2,
             override_calories=2200,

@@ -147,7 +147,7 @@ def build_requests(payload, model):
         listing = "\n".join(f"{start + k}. {name}" for k, name in enumerate(chunk))
         user = (
             "Traduis ces noms d'ingrédients en français (libellé court, canonique). "
-            "Réponds avec un objet {\"items\":[{\"i\":<index>,\"fr\":<traduction>}]} "
+            'Réponds avec un objet {"items":[{"i":<index>,"fr":<traduction>}]} '
             "couvrant chaque index fourni.\n\n" + listing
         )
         requests.append(
@@ -164,13 +164,11 @@ def build_requests(payload, model):
         for k, r in enumerate(chunk):
             idx = start + k
             desc = r.get("description") or ""
-            blocks.append(
-                f"[{idx}]\nTITRE: {r['title']}\nDESCRIPTION: {desc}"
-            )
+            blocks.append(f"[{idx}]\nTITRE: {r['title']}\nDESCRIPTION: {desc}")
         user = (
             "Traduis en français le TITRE et la DESCRIPTION de chaque recette. "
             "Si la description est vide, renvoie une chaîne vide. "
-            "Réponds avec {\"items\":[{\"i\":<index>,\"title\":...,\"description\":...}]} "
+            'Réponds avec {"items":[{"i":<index>,"title":...,"description":...}]} '
             "couvrant chaque index.\n\n" + "\n\n".join(blocks)
         )
         requests.append(
@@ -225,9 +223,7 @@ def apply_translations(payload, ing_tr, rec_tr):
     """Applique les traductions et redéduplique le catalogue."""
     # 1. nom original -> nom FR (fallback : garde l'original si non traduit)
     orig_names = [ing["name"] for ing in payload["ingredients"]]
-    translated = {
-        name: ing_tr.get(idx, name) for idx, name in enumerate(orig_names)
-    }
+    translated = {name: ing_tr.get(idx, name) for idx, name in enumerate(orig_names)}
 
     # 2. catalogue redédupliqué par clé FR normalisée -> libellé canonique
     canonical: "OrderedDict[str, dict]" = OrderedDict()

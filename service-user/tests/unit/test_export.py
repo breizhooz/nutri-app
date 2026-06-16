@@ -1,7 +1,5 @@
 """Tests de l'export RGPD (art. 20) + claim health_consent — service-user."""
 
-import uuid
-
 import pytest
 
 from app.models.access import Account

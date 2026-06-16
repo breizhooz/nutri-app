@@ -124,6 +124,7 @@ async def test_erasure_is_idempotent(service_client, session):
 @pytest.mark.unit
 async def test_erasure_requires_service_token(session):
     """Sans token de service, l'accès est refusé (403)."""
+
     async def _override():
         yield session
 

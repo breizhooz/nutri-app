@@ -67,6 +67,7 @@ def _error_redirect(message: str) -> RedirectResponse:
         status_code=302,
     )
 
+
 _CLIENT_IDS: dict[str, str] = {
     "google": settings.GOOGLE_CLIENT_ID,
     "facebook": settings.FACEBOOK_CLIENT_ID,
@@ -186,8 +187,7 @@ async def oauth_callback(
         return _error_redirect(t.get("oauth.userinfo_failed", locale))
     except Exception:
         logger.exception(
-            "OAuth2 code exchange / userinfo failed for provider %s "
-            "(redirect_uri=%s)",
+            "OAuth2 code exchange / userinfo failed for provider %s (redirect_uri=%s)",
             provider,
             _redirect_uri(provider),
         )

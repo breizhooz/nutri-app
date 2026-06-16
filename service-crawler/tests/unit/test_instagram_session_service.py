@@ -70,7 +70,9 @@ class TestInstagramSessionService:
         with open(session_file, "w", encoding="utf-8") as fh:
             fh.write("x")
         with open(session_file + ".meta.json", "w", encoding="utf-8") as fh:
-            json.dump({"username": "alice", "updated_at": "2026-05-30T10:00:00+00:00"}, fh)
+            json.dump(
+                {"username": "alice", "updated_at": "2026-05-30T10:00:00+00:00"}, fh
+            )
 
         info = InstagramSessionService().session_info()
 
@@ -122,9 +124,7 @@ class TestInstagramSessionService:
         loader.test_login.assert_not_called()
 
     def test_no_username_configured_raises(self, tmp_path, monkeypatch):
-        monkeypatch.setattr(
-            settings, "INSTAGRAM_SESSION_FILE", str(tmp_path / "s")
-        )
+        monkeypatch.setattr(settings, "INSTAGRAM_SESSION_FILE", str(tmp_path / "s"))
         monkeypatch.setattr(settings, "INSTAGRAM_USERNAME", "")
         loader = _fake_loader()
         service = InstagramSessionService(loader_factory=lambda: loader)

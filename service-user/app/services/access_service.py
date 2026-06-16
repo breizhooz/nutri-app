@@ -126,9 +126,7 @@ class AccessService:
         """Claims RBAC (contexte de compte si dispo, sinon identité nue)."""
         if user.default_account_id is None:
             return UserService.build_token_claims(user)
-        membership = await self.get_active_membership(
-            user.id, user.default_account_id
-        )
+        membership = await self.get_active_membership(user.id, user.default_account_id)
         if membership is None:
             return UserService.build_token_claims(user)
         scopes = await self.effective_scopes(membership)

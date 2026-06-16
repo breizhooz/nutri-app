@@ -43,7 +43,9 @@ async def test_update_session_forbidden_for_non_admin(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_update_session_ok_for_admin(client: AsyncClient):
     app.dependency_overrides[get_token_payload] = _admin_payload
-    app.dependency_overrides[InstagramSessionServiceFactory.inject] = lambda: _OkService()
+    app.dependency_overrides[InstagramSessionServiceFactory.inject] = lambda: (
+        _OkService()
+    )
 
     resp = await client.post(
         "/api/v1/crawler/admin/instagram/session", json={"session_id": "SID"}
@@ -56,7 +58,9 @@ async def test_update_session_ok_for_admin(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_update_session_invalid_returns_400(client: AsyncClient):
     app.dependency_overrides[get_token_payload] = _admin_payload
-    app.dependency_overrides[InstagramSessionServiceFactory.inject] = lambda: _FailService()
+    app.dependency_overrides[InstagramSessionServiceFactory.inject] = lambda: (
+        _FailService()
+    )
 
     resp = await client.post(
         "/api/v1/crawler/admin/instagram/session", json={"session_id": "SID"}
@@ -75,7 +79,9 @@ async def test_get_session_info_forbidden_for_non_admin(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_get_session_info_ok_for_admin(client: AsyncClient):
     app.dependency_overrides[get_token_payload] = _admin_payload
-    app.dependency_overrides[InstagramSessionServiceFactory.inject] = lambda: _OkService()
+    app.dependency_overrides[InstagramSessionServiceFactory.inject] = lambda: (
+        _OkService()
+    )
 
     resp = await client.get("/api/v1/crawler/admin/instagram/session")
 

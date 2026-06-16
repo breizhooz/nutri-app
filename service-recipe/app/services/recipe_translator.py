@@ -33,9 +33,7 @@ class RecipeTranslator:
     ) -> None:
         self._target = target
         self._source = source
-        self._enabled = (
-            settings.SPOONACULAR_TRANSLATE if enabled is None else enabled
-        )
+        self._enabled = settings.SPOONACULAR_TRANSLATE if enabled is None else enabled
         # Injection d'une fonction list[str] -> list[str] (tests) ; sinon Google.
         self._translate_batch = translate_batch
 

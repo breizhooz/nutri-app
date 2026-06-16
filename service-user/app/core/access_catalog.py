@@ -97,9 +97,7 @@ async def seed_access(session: AsyncSession) -> None:
     Safe to call on an already-seeded database: existing primary keys are
     skipped. Does not commit — the caller controls the transaction.
     """
-    existing_scopes = set(
-        (await session.execute(select(Scope.code))).scalars().all()
-    )
+    existing_scopes = set((await session.execute(select(Scope.code))).scalars().all())
     for code, label in SCOPES:
         if code not in existing_scopes:
             session.add(Scope(code=code, label=label))
@@ -112,9 +110,7 @@ async def seed_access(session: AsyncSession) -> None:
     await session.flush()
 
     existing_rs = set(
-        (
-            await session.execute(select(RoleScope.role_code, RoleScope.scope_code))
-        ).all()
+        (await session.execute(select(RoleScope.role_code, RoleScope.scope_code))).all()
     )
     for role_code, scope_code in role_scope_rows():
         if (role_code, scope_code) not in existing_rs:

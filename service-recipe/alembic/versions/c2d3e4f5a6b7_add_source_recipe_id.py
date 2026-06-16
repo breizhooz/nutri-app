@@ -26,9 +26,7 @@ def upgrade() -> None:
         "recipes",
         sa.Column("source_recipe_id", sa.Integer(), nullable=True),
     )
-    op.create_index(
-        "ix_recipes_source_recipe_id", "recipes", ["source_recipe_id"]
-    )
+    op.create_index("ix_recipes_source_recipe_id", "recipes", ["source_recipe_id"])
 
 
 def downgrade() -> None:

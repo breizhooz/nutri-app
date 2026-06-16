@@ -36,7 +36,9 @@ def upgrade() -> None:
         ),
         sa.Column("email", sa.String(length=255), nullable=False),
         sa.Column(
-            "role_code", sa.String(length=32), sa.ForeignKey("roles.code"),
+            "role_code",
+            sa.String(length=32),
+            sa.ForeignKey("roles.code"),
             nullable=False,
         ),
         sa.Column("token", sa.Text(), nullable=False, unique=True),

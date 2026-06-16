@@ -81,8 +81,12 @@ async def test_double_enroll_conflict(
     auth_client: AsyncClient, db_session: AsyncSession
 ) -> None:
     await _seed_user(db_session)
-    assert (await auth_client.post("/api/v1/users/me/keys", json=_ENROLL)).status_code == 201
-    assert (await auth_client.post("/api/v1/users/me/keys", json=_ENROLL)).status_code == 409
+    assert (
+        await auth_client.post("/api/v1/users/me/keys", json=_ENROLL)
+    ).status_code == 201
+    assert (
+        await auth_client.post("/api/v1/users/me/keys", json=_ENROLL)
+    ).status_code == 409
 
 
 @pytest.mark.unit
@@ -165,7 +169,9 @@ async def test_invalid_base64_400(
 ) -> None:
     await _seed_user(db_session)
     bad = {**_ENROLL, "wrapped_uk": "!!! pas du base64 !!!"}
-    assert (await auth_client.post("/api/v1/users/me/keys", json=bad)).status_code == 400
+    assert (
+        await auth_client.post("/api/v1/users/me/keys", json=bad)
+    ).status_code == 400
 
 
 @pytest.mark.unit

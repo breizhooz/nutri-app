@@ -40,7 +40,11 @@ async def send_notification(
     Raises:
         HTTPException: 422 if user_slug is not a valid UUID.
         HTTPException: 422 if recipient_email is missing for mfa_code type.
-        HTTPException: 404 if no push subscriptions exist (non-email types).
+
+    Note:
+        For non-email types, the notification is always persisted to the in-app
+        history and pushed best-effort; a user with no subscribed device yields
+        a 200 response with sent=0/failed=0 (status=failed), not a 404.
     """
     try:
         user_id = uuid.UUID(payload.user_slug)

@@ -188,9 +188,7 @@ async def test_coach_can_switch_into_client_account_with_coach_scopes(
         headers=_auth(_plain_token(coach.id)),
     )
     assert resp.status_code == 200, resp.text
-    claims = jwt.decode(
-        resp.json()["access_token"], _JWT_SECRET, algorithms=["HS256"]
-    )
+    claims = jwt.decode(resp.json()["access_token"], _JWT_SECRET, algorithms=["HS256"])
     assert claims["act_account"] == str(client_acc.id)
     assert claims["role"] == "COACH"
     assert "profile:write" in claims["scopes"]
@@ -272,13 +270,17 @@ async def test_coach_leaves_then_link_reestablished(
     assert reactivated.identity_id == coach.id
     # Toujours une seule ligne (identity, account) : on a réactivé, pas dupliqué.
     rows = (
-        await db_session.execute(
-            select(Membership).where(
-                Membership.identity_id == coach.id,
-                Membership.account_id == client_acc.id,
+        (
+            await db_session.execute(
+                select(Membership).where(
+                    Membership.identity_id == coach.id,
+                    Membership.account_id == client_acc.id,
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert len(rows) == 1
 
 
@@ -302,7 +304,9 @@ async def test_non_coach_cannot_create_coach_link(
     anon_client: AsyncClient, db_session: AsyncSession
 ) -> None:
     """Sans la capacité is_coach, créer un lien coach_link est refusé (403)."""
-    owner, account = await _setup_account(db_session, "owner@test.com")  # is_coach False
+    owner, account = await _setup_account(
+        db_session, "owner@test.com"
+    )  # is_coach False
     resp = await anon_client.post(
         f"/api/v1/accounts/{account.id}/invitations",
         json={"email": "client@test.com", "role": "VIEWER", "kind": "coach_link"},

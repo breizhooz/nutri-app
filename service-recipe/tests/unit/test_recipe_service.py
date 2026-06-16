@@ -100,20 +100,28 @@ class TestRecipeServiceCreateManual:
         return RecipeService(repo, search, nutrition_client=nutrition)
 
     async def test_returns_created_recipe(self, service, repo):
-        result = await service.create_manual(_make_data(), user_id="user-1", account_id="acc-user-1")
+        result = await service.create_manual(
+            _make_data(), user_id="user-1", account_id="acc-user-1"
+        )
         assert result is repo.create.return_value
 
     async def test_calls_repository_create(self, service, repo):
-        await service.create_manual(_make_data(), user_id="user-1", account_id="acc-user-1")
+        await service.create_manual(
+            _make_data(), user_id="user-1", account_id="acc-user-1"
+        )
         repo.create.assert_called_once()
 
     async def test_sets_user_id_on_recipe(self, service, repo):
-        await service.create_manual(_make_data(), user_id="user-42", account_id="acc-user-42")
+        await service.create_manual(
+            _make_data(), user_id="user-42", account_id="acc-user-42"
+        )
         recipe_arg = repo.create.call_args[0][0]
         assert recipe_arg.created_by_user_id == "user-42"
 
     async def test_defaults_course_type_to_main_course(self, service, repo):
-        await service.create_manual(_make_data(course_type=None), user_id="u", account_id="acc-u")
+        await service.create_manual(
+            _make_data(course_type=None), user_id="u", account_id="acc-u"
+        )
         recipe_arg = repo.create.call_args[0][0]
         assert recipe_arg.course_type == CourseType.MAIN_COURSE
 
@@ -162,7 +170,9 @@ class TestRecipeServiceCreateManual:
 
     async def test_es_failure_does_not_raise(self, service, repo, search):
         search.index_recipe.side_effect = Exception("ES down")
-        result = await service.create_manual(_make_data(), user_id="u", account_id="acc-u")
+        result = await service.create_manual(
+            _make_data(), user_id="u", account_id="acc-u"
+        )
         assert result is not None
 
     async def test_nutrition_called_when_ingredients_present(
@@ -206,7 +216,9 @@ class TestRecipeServiceCreateManual:
         repo.update_macros.assert_not_called()
 
     async def test_nutrition_not_called_when_no_ingredients(self, service, nutrition):
-        await service.create_manual(_make_data(ingredients=[]), user_id="u", account_id="acc-u")
+        await service.create_manual(
+            _make_data(ingredients=[]), user_id="u", account_id="acc-u"
+        )
         nutrition.calculate.assert_not_called()
 
     async def test_nutrition_failure_does_not_raise(self, repo, search):
@@ -249,7 +261,8 @@ class TestRecipeServiceCreateFull:
                 course_type=CourseType.DESSERT,
                 book_name="Larousse",
             ),
-            user_id="u", account_id="acc-u",
+            user_id="u",
+            account_id="acc-u",
         )
         recipe_arg = repo.create.call_args[0][0]
         assert recipe_arg.difficulty == DifficultyLevel.HARD
@@ -261,14 +274,17 @@ class TestRecipeServiceCreateFull:
     async def test_sets_image_url_and_tags(self, service, repo):
         await service.create_full(
             _make_import_item(image_url="http://img", free_tags=["bio"]),
-            user_id="u", account_id="acc-u",
+            user_id="u",
+            account_id="acc-u",
         )
         recipe_arg = repo.create.call_args[0][0]
         assert recipe_arg.image_url == "http://img"
         assert recipe_arg.free_tags == ["bio"]
 
     async def test_sets_user_id(self, service, repo):
-        await service.create_full(_make_import_item(), user_id="user-42", account_id="acc-user-42")
+        await service.create_full(
+            _make_import_item(), user_id="user-42", account_id="acc-user-42"
+        )
         recipe_arg = repo.create.call_args[0][0]
         assert recipe_arg.created_by_user_id == "user-42"
 
@@ -295,7 +311,9 @@ class TestRecipeServiceCreateFull:
         service = RecipeService(
             repo, search, nutrition_client=nutrition, unsplash=unsplash
         )
-        await service.create_full(_make_import_item(image_url="http://img"), user_id="u", account_id="acc-u")
+        await service.create_full(
+            _make_import_item(image_url="http://img"), user_id="u", account_id="acc-u"
+        )
         unsplash.search.assert_not_called()
 
     async def test_nutrition_called_when_ingredients_present(
@@ -330,7 +348,9 @@ class TestRecipeServiceCreateFull:
         )
 
     async def test_nutrition_not_called_when_no_ingredients(self, service, nutrition):
-        await service.create_full(_make_import_item(ingredients=[]), user_id="u", account_id="acc-u")
+        await service.create_full(
+            _make_import_item(ingredients=[]), user_id="u", account_id="acc-u"
+        )
         nutrition.calculate.assert_not_called()
 
 

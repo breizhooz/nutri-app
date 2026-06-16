@@ -137,7 +137,7 @@ def parse_qty_unit(line: str) -> tuple[float, str] | None:
         qty = _num(m.group(1))
     except (ValueError, ZeroDivisionError):
         return None
-    rest = line[m.end():].lstrip()
+    rest = line[m.end() :].lstrip()
     unit = ""
     for pattern, norm in UNIT_LEXICON:
         if re.match(rf"(?:{pattern})\b", rest, re.IGNORECASE):
@@ -201,7 +201,9 @@ def transform(records: list[dict], user_id: str) -> dict:
         seen_titles.add(key)
 
         raw_block = rec.get("ingredients") or ""
-        raw_lines = [l for l in re.split(r"[\n\r]+", str(raw_block)) if l.strip()]
+        raw_lines = [
+            line for line in re.split(r"[\n\r]+", str(raw_block)) if line.strip()
+        ]
 
         recipe_ings = []
         used_local: set[str] = set()

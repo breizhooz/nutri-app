@@ -34,7 +34,9 @@ async def test_purge_old_macro_errors(db_session):
     )
     await db_session.commit()
 
-    deleted = await retention_service.purge_old_macro_errors(db_session, retention_days=90)
+    deleted = await retention_service.purge_old_macro_errors(
+        db_session, retention_days=90
+    )
     assert deleted == 1
     remaining = (await db_session.execute(select(MacroError.slug))).scalars().all()
     assert remaining == ["me-recent"]
@@ -46,5 +48,7 @@ async def test_purge_is_idempotent(db_session):
     db_session.add(_macro("me-recent", _dt(-1)))
     await db_session.commit()
 
-    deleted = await retention_service.purge_old_macro_errors(db_session, retention_days=90)
+    deleted = await retention_service.purge_old_macro_errors(
+        db_session, retention_days=90
+    )
     assert deleted == 0

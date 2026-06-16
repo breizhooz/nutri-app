@@ -26,9 +26,7 @@ def upgrade() -> None:
     op.add_column(
         "weekly_menus", sa.Column("account_id", sa.String(length=36), nullable=True)
     )
-    op.create_index(
-        "ix_weekly_menus_account_id", "weekly_menus", ["account_id"]
-    )
+    op.create_index("ix_weekly_menus_account_id", "weekly_menus", ["account_id"])
 
 
 def downgrade() -> None:

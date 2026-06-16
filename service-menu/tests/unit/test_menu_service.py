@@ -85,7 +85,9 @@ class TestCreateMenu:
             "app.repositories.menu_service._load_with_slots",
             new=AsyncMock(return_value=created_menu),
         ):
-            result = await create_menu(session, menu_data, user_id="user-123", account_id="acc-123")
+            result = await create_menu(
+                session, menu_data, user_id="user-123", account_id="acc-123"
+            )
 
         session.add.assert_called()
         session.commit.assert_awaited_once()
@@ -118,7 +120,9 @@ class TestCreateMenu:
             "app.repositories.menu_service._load_with_slots",
             new=AsyncMock(return_value=created_menu),
         ):
-            result = await create_menu(session, menu_data, user_id="user-abc", account_id="acc-abc")
+            result = await create_menu(
+                session, menu_data, user_id="user-abc", account_id="acc-abc"
+            )
 
         assert result.slug == "my-custom-slug"
 
@@ -147,7 +151,9 @@ class TestCreateMenu:
             "app.repositories.menu_service._load_with_slots",
             new=AsyncMock(return_value=created_menu),
         ):
-            await create_menu(session, menu_data, user_id="user-abc", account_id="acc-abc")
+            await create_menu(
+                session, menu_data, user_id="user-abc", account_id="acc-abc"
+            )
 
         # 1 SELECT des ids existants + 2 DELETE (slots puis menus)
         assert session.execute.await_count == 3

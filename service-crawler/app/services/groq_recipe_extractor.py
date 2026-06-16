@@ -91,7 +91,7 @@ _SYSTEM_PROMPT = (
     '"cook_time_minutes": integer ou null, '
     '"ingredients": [{"name": string, "quantity": float, "unit": string}]}. '
     "quantity DOIT être un nombre unique (ex: 1.2) ou null — JAMAIS une plage "
-    "(pas de \"1.2-1.4\", pas de fraction) : en cas de plage, donne la borne basse. "
+    '(pas de "1.2-1.4", pas de fraction) : en cas de plage, donne la borne basse. '
     "is_recipe doit être true uniquement si le contenu décrit clairement une recette de cuisine. "
     "recipe_confidence exprime ta certitude que c'est une recette (1.0 = totalement certain). "
     "Si ce n'est pas une recette, laisse title, instructions et ingredients vides. "

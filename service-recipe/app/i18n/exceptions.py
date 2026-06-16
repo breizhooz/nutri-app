@@ -95,9 +95,7 @@ class LocalizedHTTPException(AppException):
         )
 
     @staticmethod
-    def import_invalid_json(
-        request: Request, message: str
-    ) -> "LocalizedHTTPException":
+    def import_invalid_json(request: Request, message: str) -> "LocalizedHTTPException":
         return LocalizedHTTPException(
             400,
             "recipe.errors.import_invalid_json",

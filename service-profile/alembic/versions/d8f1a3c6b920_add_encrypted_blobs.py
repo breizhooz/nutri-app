@@ -49,9 +49,7 @@ def upgrade() -> None:
             "account_id", "collection", "ref_key", name="uq_encrypted_blobs_addr"
         ),
     )
-    op.create_index(
-        "ix_encrypted_blobs_account_id", "encrypted_blobs", ["account_id"]
-    )
+    op.create_index("ix_encrypted_blobs_account_id", "encrypted_blobs", ["account_id"])
 
 
 def downgrade() -> None:

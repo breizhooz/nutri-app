@@ -51,12 +51,20 @@ _ROLE_SCOPES: dict[str, set[str]] = {
     "OWNER": set(_ALL),
     "ADMIN": _ALL - {"account:delete"},
     "EDITOR": {
-        "recipe:read", "recipe:write", "plan:read", "plan:write",
-        "journal:read", "journal:write", "profile:read",
+        "recipe:read",
+        "recipe:write",
+        "plan:read",
+        "plan:write",
+        "journal:read",
+        "journal:write",
+        "profile:read",
     },
     "CONTRIBUTOR": {
-        "recipe:read", "plan:read", "profile:read",
-        "journal:read", "journal:write",
+        "recipe:read",
+        "plan:read",
+        "profile:read",
+        "journal:read",
+        "journal:write",
     },
     "VIEWER": {"recipe:read", "plan:read", "profile:read", "journal:read"},
 }
@@ -119,9 +127,7 @@ def upgrade() -> None:
             server_default=sa.func.now(),
         ),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
-        sa.CheckConstraint(
-            "type IN ('personal','managed')", name="ck_account_type"
-        ),
+        sa.CheckConstraint("type IN ('personal','managed')", name="ck_account_type"),
     )
 
     # --- 3. Memberships -----------------------------------------------------
@@ -238,9 +244,7 @@ def upgrade() -> None:
     # --- 6. users.default_account_id (nullable, FK added after backfill) -----
     op.add_column(
         "users",
-        sa.Column(
-            "default_account_id", postgresql.UUID(as_uuid=True), nullable=True
-        ),
+        sa.Column("default_account_id", postgresql.UUID(as_uuid=True), nullable=True),
     )
 
     # --- 7. Backfill 1:1 — each user -> 1 account + 1 OWNER membership -------
