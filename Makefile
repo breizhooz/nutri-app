@@ -16,8 +16,8 @@ help: ## Liste les cibles disponibles
 up: ## Démarre la stack (build si nécessaire)
 	$(COMPOSE) up -d --build
 
-down: ## Arrête la stack (les volumes sont conservés)
-	$(COMPOSE) down
+down: ## Arrête la stack, monitoring inclus (les volumes sont conservés)
+	$(COMPOSE) --profile "*" down
 
 restart: ## Redémarre un service : make restart S=service-user
 	$(COMPOSE) restart $(S)
