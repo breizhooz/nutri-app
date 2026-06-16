@@ -12,7 +12,7 @@ volumes:
   pgdata:
   es-data:
   redis-data:
-  minio-data:
+  seaweedfs-data:
   prometheus-data:
   grafana-data:
   loki-data:

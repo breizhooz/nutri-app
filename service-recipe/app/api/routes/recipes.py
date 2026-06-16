@@ -70,11 +70,11 @@ class StorageServiceFactory:
     @staticmethod
     def inject() -> StorageService:
         return StorageService(
-            endpoint=settings.MINIO_ENDPOINT,
-            access_key=settings.MINIO_ACCESS_KEY,
-            secret_key=settings.MINIO_SECRET_KEY,
-            bucket=settings.MINIO_BUCKET,
-            public_url=settings.MINIO_PUBLIC_URL,
+            endpoint=settings.S3_ENDPOINT,
+            access_key=settings.S3_ACCESS_KEY,
+            secret_key=settings.S3_SECRET_KEY,
+            bucket=settings.S3_BUCKET,
+            public_url=settings.S3_PUBLIC_URL,
         )
 
 

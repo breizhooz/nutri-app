@@ -1,5 +1,5 @@
 # ══════════════════════════════════════════════════════════
-# DONNÉES — Postgres, Elasticsearch, Redis, MinIO
+# DONNÉES — Postgres, Elasticsearch, Redis, SeaweedFS
 # Chemins relatifs à CE fichier (infra/compose/).
 # ══════════════════════════════════════════════════════════
 
@@ -77,25 +77,28 @@ services:
       - nutriplanner
 
 # ══════════════════════════════════════════════════════════
-# OBJECT STORAGE — MinIO
+# OBJECT STORAGE — SeaweedFS (compatible S3, remplace MinIO)
 # ══════════════════════════════════════════════════════════
-  minio:
-    image: minio/minio:latest
-    container_name: nutriplanner-minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    # SEC-01 : loopback uniquement (API S3 + console). En prod, exposer la console
-    # (9001) derrière Traefik avec auth plutôt qu'en direct sur l'hôte.
+  # Mono-nœud all-in-one : master + volume + filer + gateway S3 dans un process
+  # (`weed server -s3`). L'entrypoint génère la config S3 (identités) depuis les
+  # secrets d'env, donc aucune clé n'est dans l'image ni committée.
+  # Endpoint S3 = port 8333 (l'app y parle via boto3, addressing path-style).
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.34
+    container_name: nutriplanner-seaweedfs
+    # platform.secrets.env porte S3_APP_ACCESS_KEY / S3_APP_SECRET_KEY.
+    env_file: ../env/secrets/platform.secrets.env
+    entrypoint: ["/bin/sh", "/etc/seaweedfs/entrypoint.sh"]
+    # SEC-01 : loopback uniquement (endpoint S3). Pas de console web (SeaweedFS
+    # n'a pas l'équivalent MinIO ; administration via `weed shell` / API).
     ports:
-      - "127.0.0.1:9000:9000"
-      - "127.0.0.1:9001:9001"
+      - "127.0.0.1:8333:8333"
     volumes:
-      - minio-data:/data
+      - seaweedfs-data:/data
+      - ../seaweedfs/entrypoint.sh:/etc/seaweedfs/entrypoint.sh:ro
     mem_limit: 256m
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:9333/cluster/healthz || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -24,11 +24,12 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str = "redis://redis:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://redis:6379/1"
 
-    MINIO_ENDPOINT: str = "minio:9000"
-    MINIO_ACCESS_KEY: str = "minioadmin"
-    MINIO_SECRET_KEY: str = "minioadmin"
-    MINIO_BUCKET: str = "recipes"
-    MINIO_PUBLIC_URL: str = "http://localhost:9000"
+    # Stockage objets S3 (SeaweedFS) — paramètres S3 génériques.
+    S3_ENDPOINT: str = "seaweedfs:8333"
+    S3_ACCESS_KEY: str = "user_admin"
+    S3_SECRET_KEY: str = "changeme"
+    S3_BUCKET: str = "recipes"
+    S3_PUBLIC_URL: str = "http://localhost:8333"
 
     SERVICE_NUTRITION_URL: str = ""
     SERVICE_NUTRITION_TOKEN: str = ""
