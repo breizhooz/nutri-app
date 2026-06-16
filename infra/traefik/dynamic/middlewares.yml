@@ -27,7 +27,11 @@ http:
           - "Content-Type"
           - "Authorization"
           - "Accept-Language"
+          # E2E : verrouillage optimiste des blobs chiffrés (PUT/DELETE avec If-Match).
+          - "If-Match"
         accessControlExposeHeaders:
           - "X-Trace-Id"
           - "X-Request-ID"
+          # ETag = version courante du blob (lecture côté client après PUT/GET/412).
+          - "ETag"
         accessControlMaxAge: 3600

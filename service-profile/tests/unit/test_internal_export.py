@@ -1,10 +1,18 @@
-"""Tests de l'endpoint interne d'export RGPD (art. 20, portabilité)."""
+"""Tests de l'endpoint interne d'export RGPD (art. 20, portabilité).
 
+Depuis la bascule E2E zero-knowledge, l'export ne renvoie que les blobs OPAQUES
+(ciphertext base64) du compte : le serveur n'a jamais accès au clair.
+"""
+
+import base64
 import os
 import uuid
 
 import pytest
 from httpx import AsyncClient
+
+_BYTES = bytes(range(64))
+_B64 = base64.b64encode(_BYTES).decode()
 
 
 def _service_headers() -> dict[str, str]:
@@ -15,18 +23,17 @@ class TestInternalExport:
     """POST /api/v1/internal/export."""
 
     @pytest.mark.unit
-    async def test_export_returns_profile_and_children(
+    async def test_export_returns_encrypted_blobs(
         self,
         client: AsyncClient,
         test_account_id: uuid.UUID,
         test_user_id: uuid.UUID,
     ) -> None:
-        """L'export renvoie le dossier et ses sous-ressources de santé."""
-        await client.post("/api/v1/profiles", json={"height_cm": 175.0})
-        await client.post(
-            "/api/v1/profiles/me/conditions",
-            json={"category": "metabolic", "condition_name": "Diabète type 2"},
+        """L'export renvoie les blobs chiffrés opaques du compte."""
+        put = await client.put(
+            "/api/v1/profiles/me/blobs/health/default", json={"ciphertext": _B64}
         )
+        assert put.status_code == 200
 
         resp = await client.post(
             "/api/v1/internal/export",
@@ -34,25 +41,25 @@ class TestInternalExport:
             json={"account_ids": [str(test_account_id)], "user_id": str(test_user_id)},
         )
         assert resp.status_code == 200
-        profiles = resp.json()["data"]["profiles"]
-        assert len(profiles) == 1
-        assert profiles[0]["height_cm"] == 175.0
-        conditions = profiles[0]["medical_conditions"]
-        assert len(conditions) == 1
-        assert conditions[0]["condition_name"] == "Diabète type 2"
+        blobs = resp.json()["data"]["encrypted_blobs"]
+        assert len(blobs) == 1
+        assert blobs[0]["collection"] == "health"
+        assert blobs[0]["ref_key"] == "default"
+        # Le ciphertext est rendu opaque (base64), identique à l'entrée.
+        assert blobs[0]["ciphertext"] == _B64
 
     @pytest.mark.unit
-    async def test_export_empty_when_no_profile(
+    async def test_export_empty_when_no_data(
         self, client: AsyncClient, test_account_id: uuid.UUID
     ) -> None:
-        """Sans dossier, l'export renvoie une liste vide (200)."""
+        """Sans donnée, l'export renvoie une liste vide (200)."""
         resp = await client.post(
             "/api/v1/internal/export",
             headers=_service_headers(),
             json={"account_ids": [str(test_account_id)], "user_id": None},
         )
         assert resp.status_code == 200
-        assert resp.json()["data"]["profiles"] == []
+        assert resp.json()["data"]["encrypted_blobs"] == []
 
     @pytest.mark.unit
     async def test_export_requires_service_token(

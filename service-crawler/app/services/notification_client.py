@@ -46,7 +46,7 @@ class NotificationClient:
         payload = {
             "user_slug": user_id,
             "type": "crawl_done",
-            "title": "NutriPlanner — Nouveaux contenus",
+            "title": "Rost.r — Nouveaux contenus",
             "body": body,
             "data": {"source_type": source_type, "new_count": new_count},
         }
@@ -61,7 +61,7 @@ class NotificationClient:
         payload = {
             "user_slug": user_id,
             "type": "system",
-            "title": "NutriPlanner — Erreur de crawl",
+            "title": "Rost.r — Erreur de crawl",
             "body": error,
             "data": None,
         }

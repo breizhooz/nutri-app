@@ -55,7 +55,7 @@ class NotificationClient:
         payload = {
             "user_slug": user_id,
             "type": "recipe_import_done",
-            "title": "NutriPlanner — Import de recettes terminé",
+            "title": "Rost.r — Import de recettes terminé",
             "body": body,
             "data": {
                 "recipes_created": recipes_created,
@@ -68,7 +68,7 @@ class NotificationClient:
         payload = {
             "user_slug": user_id,
             "type": "system",
-            "title": "NutriPlanner — Échec de l'import de recettes",
+            "title": "Rost.r — Échec de l'import de recettes",
             "body": error,
             "data": None,
         }

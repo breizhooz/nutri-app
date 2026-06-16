@@ -58,5 +58,10 @@
     "coach_capability_required": "Only a coach (enabled by an administrator) can create a coaching link",
     "not_owner": "Action restricted to the owner of this account",
     "nothing_to_update": "No change provided"
+  },
+  "keys": {
+    "not_enrolled": "Key material not enrolled for this user",
+    "already_enrolled": "Key material is already enrolled",
+    "material_invalid": "Invalid key material (base64 expected)"
   }
 }

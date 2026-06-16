@@ -10,6 +10,7 @@ from nutri_shared.core.telemetry import setup_telemetry
 from app.api.routes import accounts as accounts_routes
 from app.api.routes import auth as auth_routes
 from app.api.routes import consents as consents_routes
+from app.api.routes import keys as keys_routes
 from app.api.routes import users as users_routes
 from app.api.routes import mfa as mfa_routes
 from app.api.routes import oauth as oauth_routes
@@ -30,6 +31,7 @@ setup_telemetry("service-user", app)
 app.include_router(auth_routes.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(users_routes.router, prefix="/api/v1/users", tags=["users"])
 app.include_router(consents_routes.router, prefix="/api/v1/users", tags=["consents"])
+app.include_router(keys_routes.router, prefix="/api/v1/users", tags=["keys"])
 app.include_router(accounts_routes.router, prefix="/api/v1/accounts", tags=["accounts"])
 app.include_router(mfa_routes.router, prefix="/api/v1/auth/2fa", tags=["2fa"])
 app.include_router(oauth_routes.router, prefix="/api/v1/auth/oauth", tags=["oauth"])

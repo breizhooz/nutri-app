@@ -31,6 +31,7 @@ class CourseType(str, PyEnum):
     BREAKFAST = "enums.course_type.breakfast"
     SOUP = "enums.course_type.soup"
     SALAD = "enums.course_type.salad"
+    FRUIT = "enums.course_type.fruit"
 
 
 class CuisineOrigin(str, PyEnum):

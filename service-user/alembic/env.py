@@ -13,6 +13,7 @@ from app.models import (
     access as access,
     consent as consent,
     erasure as erasure,
+    key_material as key_material,
     mfa_pending_code as mfa_pending_code,
     oauth_account as oauth_account,
     password_history as password_history,

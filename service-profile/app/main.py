@@ -10,7 +10,7 @@ from starlette.responses import Response
 
 from nutri_shared.errors import register_error_handlers
 
-from app.api.routes import internal, medical, preferences, profile, tracker
+from app.api.routes import blobs, internal
 from app.db.session import get_engine
 from app.i18n.loader import t
 
@@ -38,10 +38,11 @@ app.state.translate = t.get
 register_error_handlers(app)
 setup_telemetry("service-profile", app)
 
-app.include_router(profile.router, prefix="/api/v1/profiles", tags=["profile"])
-app.include_router(tracker.router, prefix="/api/v1/profiles", tags=["tracker"])
-app.include_router(medical.router, prefix="/api/v1/profiles", tags=["medical"])
-app.include_router(preferences.router, prefix="/api/v1/profiles", tags=["preferences"])
+# E2E zero-knowledge (Phase 5) : service-profile n'expose plus que le coffre de
+# blobs chiffrés opaques + les endpoints internes RGPD (effacement/export). Toute
+# la santé en clair (profil, médical, préférences, suivi, calculs) a migré côté
+# client dans le coffre chiffré. Cf. docs/rgpd/plan_dpo.md.
+app.include_router(blobs.router, prefix="/api/v1/profiles", tags=["blobs"])
 app.include_router(internal.router, prefix="/api/v1/internal", tags=["internal"])
 
 

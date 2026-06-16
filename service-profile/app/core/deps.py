@@ -7,14 +7,11 @@ from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
 from jwt.exceptions import InvalidTokenError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from nutri_shared.core.context import AccessContext, require_scope
 
 from app.core.config import settings
-from app.db.session import get_session
 from app.i18n.loader import t
-from app.repositories.profile_repository import ProfileRepository
 
 logger = logging.getLogger(__name__)
 
@@ -146,32 +143,7 @@ async def get_write_context(
     return ctx
 
 
-async def _resolve_profile_id(
-    request: Request, account_id: uuid.UUID, session: AsyncSession
-) -> uuid.UUID:
-    """Résout le profile_id du compte actif. 404 si le dossier n'existe pas."""
-    profile = await ProfileRepository(session).get_by_account_id(account_id)
-    if profile is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=t.get("profile.not_found", get_locale(request)),
-        )
-    return profile.id
-
-
-async def read_profile_id(
-    request: Request,
-    account_id: uuid.UUID = Depends(get_read_account_id),
-    session: AsyncSession = Depends(get_session),
-) -> uuid.UUID:
-    """profile_id du compte actif pour une lecture (sous-ressources du dossier)."""
-    return await _resolve_profile_id(request, account_id, session)
-
-
-async def write_profile_id(
-    request: Request,
-    account_id: uuid.UUID = Depends(get_write_account_id),
-    session: AsyncSession = Depends(get_session),
-) -> uuid.UUID:
-    """profile_id du compte actif pour une écriture (sous-ressources du dossier)."""
-    return await _resolve_profile_id(request, account_id, session)
+# Les dépendances read_profile_id/write_profile_id (résolution d'un profil clair
+# par compte) ont été retirées avec la bascule E2E : il n'y a plus de table
+# ``profiles`` ni de sous-ressources santé. Seul subsiste le coffre de blobs,
+# borné par ``get_read_account_id``/``get_write_account_id``.

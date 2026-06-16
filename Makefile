@@ -1,4 +1,4 @@
-# ── NutriPlanner backend — point d'entrée unique de l'infra ────────────────
+# ── Rost.r backend — point d'entrée unique de l'infra ────────────────
 # `make` ou `make help` liste les cibles. La définition compose vit dans
 # infra/compose/*.yml (façade : docker-compose.yml), les env dans infra/env/.
 
@@ -7,7 +7,8 @@ PY      := python3
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up down restart ps logs config check env-examples env-check certs monitoring
+.PHONY: help up down restart ps logs config check env-examples env-check certs monitoring \
+        rgpd-clean rgpd-diagnose rgpd-replay rgpd-keys
 
 help: ## Liste les cibles disponibles
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -15,8 +16,8 @@ help: ## Liste les cibles disponibles
 up: ## Démarre la stack (build si nécessaire)
 	$(COMPOSE) up -d --build
 
-down: ## Arrête la stack (les volumes sont conservés)
-	$(COMPOSE) down
+down: ## Arrête la stack, monitoring inclus (les volumes sont conservés)
+	$(COMPOSE) --profile "*" down
 
 restart: ## Redémarre un service : make restart S=service-user
 	$(COMPOSE) restart $(S)
@@ -43,3 +44,16 @@ certs: ## (Re)génère les certificats mkcert pour Traefik (HTTPS dev)
 
 monitoring: ## Démarre la stack avec le profil monitoring
 	$(COMPOSE) --profile monitoring up -d
+
+# ── Remédiation RGPD (effacement incomplet / comptes orphelins) — cf. cleaner.md ──
+rgpd-clean: ## Remédiation complète : redeploy → diagnostic → rejeu → purge clés
+	./cleaner.sh all
+
+rgpd-diagnose: ## Compte les orphelins (matériel de clés + cibles d'effacement en attente)
+	./cleaner.sh diagnose
+
+rgpd-replay: ## Rejoue le journal d'effacement cross-service (idempotent)
+	./cleaner.sh replay
+
+rgpd-keys: ## Purge le matériel de clés orphelin (user_key_material sans user)
+	./cleaner.sh purge-keys

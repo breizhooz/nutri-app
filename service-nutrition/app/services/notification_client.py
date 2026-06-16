@@ -40,7 +40,7 @@ class NotificationClient:
         payload = {
             "user_slug": user_id,
             "type": "macro_error",
-            "title": "NutriPlanner — Ingrédient non reconnu",
+            "title": "Rost.r — Ingrédient non reconnu",
             "body": f"« {raw_ingredient} » n'a pas été trouvé dans notre base.",
             "data": {"macro_error_slug": macro_error_slug},
         }

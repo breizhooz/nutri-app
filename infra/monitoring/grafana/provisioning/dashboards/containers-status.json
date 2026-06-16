@@ -1,6 +1,6 @@
 {
   "annotations": { "list": [] },
-  "description": "État en temps réel des containers Docker NutriPlanner",
+  "description": "État en temps réel des containers Docker Rost.r",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -258,7 +258,7 @@
   "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "NutriPlanner — Containers Status",
+  "title": "Rost.r — Containers Status",
   "uid": "nutriplanner-containers",
   "version": 1
 }

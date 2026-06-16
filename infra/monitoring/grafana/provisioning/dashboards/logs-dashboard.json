@@ -4,7 +4,7 @@
     { "type": "datasource", "id": "elasticsearch", "name": "Elasticsearch", "version": "1.0.0" }
   ],
   "annotations": { "list": [] },
-  "description": "NutriPlanner — logs centralisés (structlog → Filebeat → Elasticsearch)",
+  "description": "Rost.r — logs centralisés (structlog → Filebeat → Elasticsearch)",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -205,7 +205,7 @@
   "time": { "from": "now-1h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "NutriPlanner — Logs",
+  "title": "Rost.r — Logs",
   "uid": "nutri-logs-001",
   "version": 1
 }
