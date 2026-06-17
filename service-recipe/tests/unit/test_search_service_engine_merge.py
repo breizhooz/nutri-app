@@ -46,9 +46,7 @@ class TestSearchEngineMerge:
             {"gauss": {"calories": {"origin": 2000, "scale": 200}}}
         ]
         # le bool reste à l'intérieur, avec le scoping user
-        assert {"term": {"account_id": "u1"}} in fs["query"]["bool"][
-            "filter"
-        ]
+        assert {"term": {"account_id": "u1"}} in fs["query"]["bool"]["filter"]
 
     async def test_no_extras_stays_plain_bool(self, mock_es):
         await search_service.search_recipes(account_id="u1")

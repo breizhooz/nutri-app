@@ -28,15 +28,11 @@ class ErasureTarget(Base):
     request_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), nullable=False, index=True
     )
-    user_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True
-    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     # JSON portable (SQLite tests / JSONB en migration) — liste de comptes (str).
     account_ids: Mapped[list[Any]] = mapped_column(JSON, nullable=False, default=list)
     service: Mapped[str] = mapped_column(String(32), nullable=False)
-    status: Mapped[str] = mapped_column(
-        String(16), nullable=False, default="pending"
-    )
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="pending")
     attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     deleted_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True)

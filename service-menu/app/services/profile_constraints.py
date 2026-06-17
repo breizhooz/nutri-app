@@ -118,14 +118,27 @@ _ALCOHOL_TAGS = {
 }
 
 # Pas de tag « porc » dans TypeOfIngredient → exclusion par noms (best-effort).
-_PORK_TERMS = {"porc", "pork", "jambon", "lard", "lardon", "bacon", "chorizo",
-               "saucisson", "pancetta"}
+_PORK_TERMS = {
+    "porc",
+    "pork",
+    "jambon",
+    "lard",
+    "lardon",
+    "bacon",
+    "chorizo",
+    "saucisson",
+    "pancetta",
+}
 _GELATIN_TERMS = {"gelatine", "gelatin"}
 
 # diet_type (valeurs de l'enum DietType de service-profile) → contraintes.
 # keto/omnivore/other : profils macro ou sans interdit strict → aucun filtre dur.
 _DIET_FORBIDDEN_TAGS: dict[str, set[str]] = {
-    "vegan": _MEAT_TAGS | _FISH_TAGS | _SEAFOOD_TAGS | _DAIRY_TAGS | _EGG_TAGS
+    "vegan": _MEAT_TAGS
+    | _FISH_TAGS
+    | _SEAFOOD_TAGS
+    | _DAIRY_TAGS
+    | _EGG_TAGS
     | _HONEY_TAGS,
     "vegetarian": _MEAT_TAGS | _FISH_TAGS | _SEAFOOD_TAGS,
     "pescatarian": _MEAT_TAGS,

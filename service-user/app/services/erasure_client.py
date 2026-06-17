@@ -50,7 +50,9 @@ class ErasureClient:
         """
         url, token = _service_target(service)
         if not url or not token:
-            raise RuntimeError(f"service '{service}' non configuré (URL/token manquant)")
+            raise RuntimeError(
+                f"service '{service}' non configuré (URL/token manquant)"
+            )
 
         endpoint = f"{url.rstrip('/')}/api/v1/internal/erasure"
         payload = {"account_ids": account_ids, "user_id": user_id}

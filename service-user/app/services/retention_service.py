@@ -53,9 +53,7 @@ async def purge_stale_invitations(session: AsyncSession, retention_days: int) ->
 async def purge_old_audit_logs(session: AsyncSession, retention_days: int) -> int:
     """Supprime les entrées d'audit au-delà de la rétention."""
     cutoff = _utcnow() - timedelta(days=retention_days)
-    result = await session.execute(
-        delete(AuditLog).where(AuditLog.created_at < cutoff)
-    )
+    result = await session.execute(delete(AuditLog).where(AuditLog.created_at < cutoff))
     await session.commit()
     deleted = result.rowcount or 0
     logger.info("Rétention : %d entrée(s) d'audit ancienne(s) purgée(s)", deleted)

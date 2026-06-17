@@ -48,22 +48,39 @@ async def test_purge_stale_invitations(db_session):
     db_session.add_all(
         [
             Invitation(
-                account_id=acc, email="old@x.io", role_code="OWNER", token="t-old",
-                status="expired", expires_at=_dt(-100), created_at=_dt(-100),
+                account_id=acc,
+                email="old@x.io",
+                role_code="OWNER",
+                token="t-old",
+                status="expired",
+                expires_at=_dt(-100),
+                created_at=_dt(-100),
             ),
             Invitation(
-                account_id=acc, email="recent@x.io", role_code="OWNER", token="t-recent",
-                status="pending", expires_at=_dt(5), created_at=_dt(-1),
+                account_id=acc,
+                email="recent@x.io",
+                role_code="OWNER",
+                token="t-recent",
+                status="pending",
+                expires_at=_dt(5),
+                created_at=_dt(-1),
             ),
             Invitation(
-                account_id=acc, email="acc@x.io", role_code="OWNER", token="t-acc",
-                status="accepted", expires_at=_dt(-100), created_at=_dt(-100),
+                account_id=acc,
+                email="acc@x.io",
+                role_code="OWNER",
+                token="t-acc",
+                status="accepted",
+                expires_at=_dt(-100),
+                created_at=_dt(-100),
             ),
         ]
     )
     await db_session.commit()
 
-    deleted = await retention_service.purge_stale_invitations(db_session, retention_days=90)
+    deleted = await retention_service.purge_stale_invitations(
+        db_session, retention_days=90
+    )
     assert deleted == 1
     remaining = (await db_session.execute(select(Invitation.token))).scalars().all()
     assert set(remaining) == {"t-recent", "t-acc"}
@@ -80,7 +97,9 @@ async def test_purge_old_audit_logs(db_session):
     )
     await db_session.commit()
 
-    deleted = await retention_service.purge_old_audit_logs(db_session, retention_days=1095)
+    deleted = await retention_service.purge_old_audit_logs(
+        db_session, retention_days=1095
+    )
     assert deleted == 1
     remaining = (await db_session.execute(select(AuditLog.action))).scalars().all()
     assert remaining == ["recent"]
@@ -92,14 +111,15 @@ async def test_purge_inactive_accounts(db_session, monkeypatch):
     # On neutralise la programmation Celery : le test vérifie la purge locale.
     monkeypatch.setattr(erasure_service, "schedule_erasure", lambda rid: None)
 
-    inactive = User(
-        email="inactive@x.io", hashed_password="x", last_login_at=_dt(-800)
-    )
+    inactive = User(email="inactive@x.io", hashed_password="x", last_login_at=_dt(-800))
     # Jamais reconnecté mais créé il y a longtemps → retombe sur created_at.
     never = User(email="never@x.io", hashed_password="x", created_at=_dt(-900))
     active = User(email="active@x.io", hashed_password="x", last_login_at=_dt(-10))
     admin = User(
-        email="admin@x.io", hashed_password="x", user_admin=True, last_login_at=_dt(-800)
+        email="admin@x.io",
+        hashed_password="x",
+        user_admin=True,
+        last_login_at=_dt(-800),
     )
     db_session.add_all([inactive, never, active, admin])
     await db_session.commit()

@@ -127,12 +127,15 @@ class TestMatchesExcludedName:
         assert self._c("celeri").matches_excluded_name("Céleri branche") is True
 
     def test_naive_plural_tolerated(self):
-        assert self._c("champignon").matches_excluded_name("Champignons de Paris") is True
+        assert (
+            self._c("champignon").matches_excluded_name("Champignons de Paris") is True
+        )
 
     def test_multi_word_term(self):
-        assert self._c("fruits a coque").matches_excluded_name(
-            "Mélange fruits à coque"
-        ) is True
+        assert (
+            self._c("fruits a coque").matches_excluded_name("Mélange fruits à coque")
+            is True
+        )
 
     def test_empty_terms_never_match(self):
         assert ProfileConstraints().matches_excluded_name("Poulet") is False

@@ -122,7 +122,9 @@ async def get_write_context(
 
 def is_trusted_service(token: str) -> bool:
     """Vrai si le Bearer correspond au secret de service de confiance configuré."""
-    return bool(settings.SERVICE_RECIPE_TOKEN) and token == settings.SERVICE_RECIPE_TOKEN
+    return (
+        bool(settings.SERVICE_RECIPE_TOKEN) and token == settings.SERVICE_RECIPE_TOKEN
+    )
 
 
 @dataclass(frozen=True)

@@ -59,9 +59,7 @@ def upgrade() -> None:
             "status IN ('pending','done','failed')", name="ck_erasure_target_status"
         ),
     )
-    op.create_index(
-        "ix_erasure_targets_request_id", "erasure_targets", ["request_id"]
-    )
+    op.create_index("ix_erasure_targets_request_id", "erasure_targets", ["request_id"])
 
 
 def downgrade() -> None:

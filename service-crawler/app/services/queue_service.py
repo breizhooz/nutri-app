@@ -74,9 +74,7 @@ class QueueService:
         res = self._app.AsyncResult(task_id)
         state = res.state
         info = res.result
-        error = (
-            str(info) if state in _FAILED_STATES and info is not None else None
-        )
+        error = str(info) if state in _FAILED_STATES and info is not None else None
         # Retour de la tâche (dict d'état) quand elle a réussi : ex. import oneshot
         # → {"status": "done"|"blocked", "message", ...}.
         result = info if state == "SUCCESS" and isinstance(info, dict) else None

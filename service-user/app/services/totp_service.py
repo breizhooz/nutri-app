@@ -121,9 +121,7 @@ class TotpService:
         target = qr_w // 5
         logo.thumbnail((target, target))
         pad = max(qr_w // 40, 6)
-        bg = Image.new(
-            "RGB", (logo.size[0] + 2 * pad, logo.size[1] + 2 * pad), "white"
-        )
+        bg = Image.new("RGB", (logo.size[0] + 2 * pad, logo.size[1] + 2 * pad), "white")
         bg.paste(logo, (pad, pad))
         qr_img.paste(bg, ((qr_w - bg.size[0]) // 2, (qr_h - bg.size[1]) // 2))
 

@@ -36,7 +36,10 @@ class TestTranslatePayload:
         assert out["summary"] == "Une pâte italienne classique."  # HTML strippé + FR
         assert out["extendedIngredients"][0]["original"] == "2 gousses d'ail"
         assert out["extendedIngredients"][0]["name"] == "ail"
-        assert out["analyzedInstructions"][0]["steps"][0]["step"] == "Faire bouillir les pâtes."
+        assert (
+            out["analyzedInstructions"][0]["steps"][0]["step"]
+            == "Faire bouillir les pâtes."
+        )
 
     def test_keeps_dish_types_and_cuisines_in_english(self):
         # Le mapper en dépend pour course_type / cuisine_origin.

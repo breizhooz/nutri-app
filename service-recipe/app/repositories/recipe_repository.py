@@ -31,15 +31,11 @@ class RecipeRepository:
     async def list_all_for_account(self, account_id: str) -> list[Recipe]:
         """Toutes les recettes d'un compte (vue bibliothèque, triées par titre)."""
         result = await self.session.execute(
-            select(Recipe)
-            .where(Recipe.account_id == account_id)
-            .order_by(Recipe.title)
+            select(Recipe).where(Recipe.account_id == account_id).order_by(Recipe.title)
         )
         return list(result.scalars().all())
 
-    async def find_clone(
-        self, account_id: str, source_recipe_id: int
-    ) -> Recipe | None:
+    async def find_clone(self, account_id: str, source_recipe_id: int) -> Recipe | None:
         """Recette déjà poussée d'une source donnée dans un compte (anti-doublon)."""
         result = await self.session.execute(
             select(Recipe).where(
@@ -246,9 +242,7 @@ class RecipeRepository:
             select(ImageSearchCache).where(ImageSearchCache.keyword == keyword)
         )
         if row is None:
-            self.session.add(
-                ImageSearchCache(keyword=keyword, suggestions=suggestions)
-            )
+            self.session.add(ImageSearchCache(keyword=keyword, suggestions=suggestions))
         else:
             row.suggestions = suggestions
         await self.session.commit()

@@ -15,7 +15,8 @@ def _resolver(mapping):
 class TestAssertPublicUrl:
     def test_allows_public_host(self):
         assert_public_url(
-            "https://example.com/recipe", resolver=_resolver({"example.com": "93.184.216.34"})
+            "https://example.com/recipe",
+            resolver=_resolver({"example.com": "93.184.216.34"}),
         )  # ne lève pas
 
     def test_allows_public_literal_ip(self):
@@ -51,7 +52,9 @@ class TestAssertPublicUrl:
         with pytest.raises(UnsafeUrlError):
             assert_public_url("http://postgres:5432/", resolver=resolver)
 
-    @pytest.mark.parametrize("url", ["file:///etc/passwd", "gopher://x/", "ftp://x/", "//x"])
+    @pytest.mark.parametrize(
+        "url", ["file:///etc/passwd", "gopher://x/", "ftp://x/", "//x"]
+    )
     def test_blocks_disallowed_schemes(self, url):
         with pytest.raises(UnsafeUrlError):
             assert_public_url(url)
@@ -70,9 +73,12 @@ class TestFetchEnforcesGuard:
     @pytest.mark.asyncio
     async def test_fetch_rejects_internal_url_without_any_request(self):
         # Le garde doit bloquer AVANT toute requête httpx et SANS repli Playwright.
-        with patch("app.services.web_service.httpx.AsyncClient") as mock_cls, patch.object(
-            WebService, "_fetch_with_playwright", new_callable=AsyncMock
-        ) as mock_pw:
+        with (
+            patch("app.services.web_service.httpx.AsyncClient") as mock_cls,
+            patch.object(
+                WebService, "_fetch_with_playwright", new_callable=AsyncMock
+            ) as mock_pw,
+        ):
             with pytest.raises(UnsafeUrlError):
                 await WebService().fetch("http://169.254.169.254/latest/meta-data/")
 

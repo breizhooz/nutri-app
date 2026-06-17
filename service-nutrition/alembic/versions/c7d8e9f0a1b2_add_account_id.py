@@ -28,9 +28,7 @@ def upgrade() -> None:
         "macro_errors",
         sa.Column("account_id", postgresql.UUID(as_uuid=True), nullable=True),
     )
-    op.create_index(
-        "ix_macro_errors_account_id", "macro_errors", ["account_id"]
-    )
+    op.create_index("ix_macro_errors_account_id", "macro_errors", ["account_id"])
 
 
 def downgrade() -> None:

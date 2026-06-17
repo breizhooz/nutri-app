@@ -234,7 +234,9 @@ class AuditLog(Base):
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     account_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("accounts.id", ondelete="SET NULL"), nullable=True
+        UUID(as_uuid=True),
+        ForeignKey("accounts.id", ondelete="SET NULL"),
+        nullable=True,
     )
     action: Mapped[str] = mapped_column(String(64), nullable=False)
     # JSON générique (portable SQLite/PG) ; JSONB côté Postgres via la migration.

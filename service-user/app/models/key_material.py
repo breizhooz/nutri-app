@@ -32,9 +32,7 @@ class UserKeyMaterial(Base):
 
     __tablename__ = "user_key_material"
 
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True
-    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
 
     # Dérivation de la Master Key (mêmes paramètres réutilisés pour la Recovery Key).
     salt: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)

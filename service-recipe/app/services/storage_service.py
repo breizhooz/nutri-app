@@ -53,9 +53,7 @@ class StorageService:
             aws_secret_access_key=secret_key,
             region_name="us-east-1",
             # path-style obligatoire (SeaweedFS/MinIO n'ont pas de vhost-bucket DNS).
-            config=Config(
-                signature_version="s3v4", s3={"addressing_style": "path"}
-            ),
+            config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
         )
         self._bucket = bucket
         self._public_url = public_url.rstrip("/")

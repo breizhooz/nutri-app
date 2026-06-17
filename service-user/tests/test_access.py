@@ -166,9 +166,7 @@ async def test_switch_to_own_account_returns_context_token(
     _, account, _ = await _seed_user_account(db_session, user_id=TEST_USER_ID)
     resp = await auth_client.post(f"/api/v1/accounts/{account.id}/switch")
     assert resp.status_code == 200
-    payload = jwt.decode(
-        resp.json()["access_token"], _JWT_SECRET, algorithms=["HS256"]
-    )
+    payload = jwt.decode(resp.json()["access_token"], _JWT_SECRET, algorithms=["HS256"])
     assert payload["sub"] == str(TEST_USER_ID)
     assert payload["act_account"] == str(account.id)
     assert payload["role"] == "OWNER"
@@ -223,17 +221,13 @@ async def test_signup_provisions_personal_account(
 async def test_login_token_carries_account_context_and_keeps_rbac_claims(
     anon_client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    await _seed_user_account(
-        db_session, email="ctx@test.com", password="password123"
-    )
+    await _seed_user_account(db_session, email="ctx@test.com", password="password123")
     resp = await anon_client.post(
         "/api/v1/auth/login",
         json={"email": "ctx@test.com", "password": "password123"},
     )
     assert resp.status_code == 200
-    payload = jwt.decode(
-        resp.json()["access_token"], _JWT_SECRET, algorithms=["HS256"]
-    )
+    payload = jwt.decode(resp.json()["access_token"], _JWT_SECRET, algorithms=["HS256"])
     # New context dimension...
     assert payload["role"] == "OWNER"
     assert "act_account" in payload

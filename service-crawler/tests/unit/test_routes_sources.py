@@ -31,9 +31,10 @@ async def test_oneshot_forbidden_without_web_right(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_oneshot_web_routes_to_crawl_url(client: AsyncClient):
-    with patch("app.api.routes.sources.crawl_url") as mock_url, patch(
-        "app.api.routes.sources.crawl_instagram_post"
-    ) as mock_post:
+    with (
+        patch("app.api.routes.sources.crawl_url") as mock_url,
+        patch("app.api.routes.sources.crawl_instagram_post") as mock_post,
+    ):
         resp = await client.post(
             "/api/v1/crawler/sources/oneshot", json={"url": "https://blog.com/curry"}
         )
@@ -45,9 +46,10 @@ async def test_oneshot_web_routes_to_crawl_url(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_oneshot_instagram_link_routes_to_single_post(client: AsyncClient):
-    with patch("app.api.routes.sources.crawl_url") as mock_url, patch(
-        "app.api.routes.sources.crawl_instagram_post"
-    ) as mock_post:
+    with (
+        patch("app.api.routes.sources.crawl_url") as mock_url,
+        patch("app.api.routes.sources.crawl_instagram_post") as mock_post,
+    ):
         resp = await client.post(
             "/api/v1/crawler/sources/oneshot",
             json={"url": "https://www.instagram.com/p/Cabc123/"},

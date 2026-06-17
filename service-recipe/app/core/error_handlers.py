@@ -64,9 +64,7 @@ def register_domain_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(ImageTooLarge)
-    async def _image_too_large(
-        request: Request, exc: ImageTooLarge
-    ) -> JSONResponse:
+    async def _image_too_large(request: Request, exc: ImageTooLarge) -> JSONResponse:
         return _localized_response(LocalizedHTTPException.image_too_large(request))
 
     @app.exception_handler(ImageNotInSuggestions)

@@ -12,8 +12,11 @@ from app.services.dispatch_service import DispatchResult
 
 class TestNotifyRoute:
     @pytest.mark.unit
-    async def test_notify_user_not_found_returns_404(self, service_client: AsyncClient):
-        """POST /api/v1/notify → 404 si aucun device abonné pour ce user."""
+    async def test_notify_no_subscription_persists_and_returns_200(
+        self, service_client: AsyncClient
+    ):
+        """Sans device abonné, la notif est tout de même persistée en historique
+        in-app (push best-effort) → 200, sent=0, failed=0, status=failed."""
         resp = await service_client.post(
             "/api/v1/notify",
             json={
@@ -23,7 +26,12 @@ class TestNotifyRoute:
                 "body": "Test body",
             },
         )
-        assert resp.status_code == 404
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["sent"] == 0
+        assert data["failed"] == 0
+        assert data["status"] == "failed"
+        assert "slug" in data
 
     @pytest.mark.unit
     async def test_notify_invalid_user_slug_returns_422(

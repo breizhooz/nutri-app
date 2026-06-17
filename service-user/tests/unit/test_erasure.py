@@ -51,10 +51,14 @@ async def test_request_erasure_creates_journal_and_audit(db_session):
     assert all(t.account_ids == [str(account_id)] for t in targets)
 
     audit = (
-        await db_session.execute(
-            select(AuditLog).where(AuditLog.action == "account.erasure_requested")
+        (
+            await db_session.execute(
+                select(AuditLog).where(AuditLog.action == "account.erasure_requested")
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert len(audit) == 1
 
 

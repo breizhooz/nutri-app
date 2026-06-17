@@ -28,9 +28,7 @@ def upgrade() -> None:
         "profiles",
         sa.Column("account_id", postgresql.UUID(as_uuid=True), nullable=True),
     )
-    op.create_index(
-        "ix_profiles_account_id", "profiles", ["account_id"], unique=True
-    )
+    op.create_index("ix_profiles_account_id", "profiles", ["account_id"], unique=True)
 
 
 def downgrade() -> None:

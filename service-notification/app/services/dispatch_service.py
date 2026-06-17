@@ -31,7 +31,8 @@ class DispatchService:
       2. Récupère les Subscription du user
       3. Envoie via PushService sur chaque device
       4. Met à jour le status final (sent / failed)
-    Précondition : au moins une subscription existe (vérification faite par la route).
+    La notification est toujours créée puis persistée, même sans subscription :
+    dans ce cas sent=failed=0 et le status final est ``failed`` (push best-effort).
     """
 
     def __init__(self, session: AsyncSession, push_service: PushService) -> None:
