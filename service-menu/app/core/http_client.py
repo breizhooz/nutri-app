@@ -163,11 +163,11 @@ class ServicesProfileClient:
         if self._client:
             await self._client.aclose()
 
-    async def get_nutrition_summary(self, user_id: str) -> dict | None:
-        """Résumé nutritionnel d'un utilisateur (profil, allergies, exclusions…).
+    async def get_nutrition_summary(self, account_id: str) -> dict | None:
+        """Résumé nutritionnel d'un compte (régime, exclusions, cibles).
 
-        Retourne None si l'intégration est désactivée ou si l'utilisateur n'a
-        pas de profil ; lève ServiceUnavailableError sur toute autre erreur.
+        Retourne None si l'intégration est désactivée ou si le compte n'a pas
+        de profil ; lève ServiceUnavailableError sur toute autre erreur.
         """
         if not self.enabled:
             logger.info(
@@ -177,7 +177,7 @@ class ServicesProfileClient:
             return None
         try:
             response = await self._client.get(
-                f"/api/v1/profiles/{user_id}/nutrition-summary"
+                f"/api/v1/internal/accounts/{account_id}/nutrition-summary"
             )
             if response.status_code == 404:
                 return None

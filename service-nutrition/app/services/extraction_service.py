@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.repositories.macro_error_repository import MacroErrorRepository
 from app.services.groq_extractor import GroqExtractor
 from app.services.lookup_service import LookupResult, LookupService
-from app.services.spacy_extractor import SpacyExtractor
+from app.services.ingredient_parser import RegexIngredientParser
 from app.services.unit_converter import UnitConverter
 
 logger = logging.getLogger(__name__)
@@ -36,20 +36,20 @@ class ExtractionResult:
 
 
 class ExtractionService:
-    """Orchestre l'escalier spaCy → Groq → MacroError pour chaque ingrédient brut."""
+    """Orchestre l'escalier regex → Groq → MacroError pour chaque ingrédient brut."""
 
     def __init__(
         self,
         session: AsyncSession,
-        spacy: SpacyExtractor | None = None,
+        parser: RegexIngredientParser | None = None,
         groq: GroqExtractor | None = None,
         lookup: LookupService | None = None,
     ) -> None:
         self._error_repo = MacroErrorRepository(session)
         self._converter = UnitConverter(session)
-        self._spacy = spacy or SpacyExtractor()
+        self._parser = parser or RegexIngredientParser()
         self._groq = groq or GroqExtractor()
-        self._lookup = lookup or LookupService()
+        self._lookup = lookup or LookupService(session)
 
     async def process(
         self,
@@ -62,7 +62,7 @@ class ExtractionService:
         failed: list[FailedIngredient] = []
 
         for raw_text in raw_texts:
-            extracted = self._spacy.extract(raw_text)
+            extracted = self._parser.extract(raw_text)
 
             if extracted is None:
                 try:

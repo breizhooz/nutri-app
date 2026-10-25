@@ -12,7 +12,7 @@ import uuid
 
 from celery_app import celery_app
 
-from app.db.session import _session_factory
+from app.db.session import task_session
 from app.services import erasure_service
 
 logger = logging.getLogger(__name__)
@@ -38,9 +38,8 @@ def erase_account_data_task(self, request_id: str) -> None:
 
 
 async def _process(request_id: str) -> list[str]:
-    """Ouvre une session et délègue à l'orchestrateur."""
-    factory = _session_factory()
-    async with factory() as session:
+    """Ouvre une session dédiée à la tâche et délègue à l'orchestrateur."""
+    async with task_session() as session:
         return await erasure_service.process_erasure_request(
             session, uuid.UUID(request_id)
         )

@@ -12,8 +12,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 os.environ.setdefault("DATABASE_URL", os.environ.get("DATABASE_URL", ""))
 os.environ.setdefault("SERVICE_USER_URL", "http://service-user:8000")
-os.environ.setdefault("ELASTICSEARCH_URL", "http://elasticsearch:9200")
-os.environ.setdefault("ELASTICSEARCH_INDEX_RECIPES", "recipes")
 os.environ.setdefault("JWT_SECRET", "seed-secret")
 os.environ.setdefault("SERVICE_NUTRITION_URL", "")
 os.environ.setdefault("SERVICE_NUTRITION_TOKEN", "")

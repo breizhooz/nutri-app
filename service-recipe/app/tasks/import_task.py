@@ -14,7 +14,7 @@ def import_recipes_payload(
 
     ``raw_payload`` est le contenu JSON déjà validé par la route ; on le re-valide
     ici par sécurité (le worker est le dernier rempart). Les macros sont calculées
-    via service-nutrition, l'indexation Elasticsearch est best-effort.
+    via service-nutrition.
 
     ``notify_user_id`` (l'admin déclencheur) reçoit une notification in-app de fin
     ou d'échec via service-notification (best-effort). En cas d'erreur, on notifie
@@ -28,38 +28,22 @@ def import_recipes_payload(
         from sqlalchemy.pool import NullPool
 
         from app.core.config import settings
-        from app.core import elasticsearch as es_module
-        from app.core.elasticsearch import init_elasticsearch
         from app.repositories.recipe_repository import RecipeRepository
         from app.schemas.recipe_import import RecipeImportPayload
         from app.services.recipe_import_service import RecipeImportService
         from app.services.recipe_service import RecipeService
-        from app.services.search_service import search_service
 
         payload = RecipeImportPayload.model_validate(raw_payload)
-
-        es_ready = False
-        try:
-            await init_elasticsearch()
-            es_ready = True
-        except Exception as exc:
-            logger.warning(
-                "Elasticsearch indisponible, indexation ignorée (%s). "
-                "Lancez une réindexation plus tard.",
-                exc,
-            )
 
         engine = create_async_engine(settings.DATABASE_URL, poolclass=NullPool)
         try:
             async with AsyncSession(engine, expire_on_commit=False) as session:
                 repository = RecipeRepository(session)
-                recipe_service = RecipeService(repository, search_service)
+                recipe_service = RecipeService(repository)
                 import_service = RecipeImportService(repository, recipe_service)
                 report = await import_service.import_payload(payload)
         finally:
             await engine.dispose()
-            if es_ready and es_module.es_client is not None:
-                await es_module.es_client.close()
 
         return {
             "ingredients_upserted": report.ingredients_upserted,

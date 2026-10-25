@@ -1,17 +1,27 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from nutri_shared.core.context import AccessContext
 
 from app.core.deps import get_read_context
-from app.services.nutrition_rules_service import nutrition_rules_service
+from app.db.session import get_session
+from app.services.nutrition_rules_service import NutritionRulesService
+from app.services.search_service import RecipeSearchService
 
 router = APIRouter()
+
+
+def get_nutrition_rules_service(
+    session: AsyncSession = Depends(get_session),
+) -> NutritionRulesService:
+    return NutritionRulesService(RecipeSearchService(session))
 
 
 @router.get("/search/recipes")
 async def search_recipe(
     ctx: AccessContext = Depends(get_read_context),
+    service: NutritionRulesService = Depends(get_nutrition_rules_service),
     q: Optional[str] = Query(
         None, description="Texte à rechercher (titre, description, ingrédients)"
     ),
@@ -40,12 +50,6 @@ async def search_recipe(
         True,
         description="Applique les règles nutritionnelles du user si elles sont activées",
     ),
-    aggressiveness: Optional[float] = Query(
-        None,
-        ge=0.5,
-        le=1.5,
-        description="Intensité : 0.5 Doux / 1.0 Modéré / 1.5 Intense",
-    ),
     variety_pct: Optional[float] = Query(
         None,
         ge=0.0,
@@ -69,11 +73,9 @@ async def search_recipe(
     - apply_rules: si True (défaut) et que le user a activé ses règles nutritionnelles,
       la recherche est personnalisée via le moteur de cibles (sinon recherche standard)
     """
-    return await nutrition_rules_service.search(
-        user_id=ctx.sub,
+    return await service.search(
         account_id=ctx.account_id,
         apply_rules=apply_rules,
-        aggressiveness=aggressiveness,
         variety_pct=variety_pct,
         override_calories=override_calories,
         override_proteines=override_proteines,

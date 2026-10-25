@@ -1,5 +1,5 @@
 # ══════════════════════════════════════════════════════════
-# DONNÉES — Postgres, Elasticsearch, Redis, SeaweedFS
+# DONNÉES — Postgres, Redis, SeaweedFS
 # Chemins relatifs à CE fichier (infra/compose/).
 # ══════════════════════════════════════════════════════════
 
@@ -35,30 +35,6 @@ services:
     networks:
       - nutriplanner
 
-# ══════════════════════════════════════════════════════════
-# SEARCH ENGINE
-# ══════════════════════════════════════════════════════════
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
-    container_name: nutriplanner-elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    mem_limit: 1g
-    # SEC-01 : loopback uniquement (cf. postgres).
-    ports:
-      - "127.0.0.1:9200:9200"
-    volumes:
-      - es-data:/usr/share/elasticsearch/data
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    networks:
-      - nutriplanner
-
   redis:
     image: redis:7-alpine
     container_name: nutriplanner-redis
@@ -84,7 +60,7 @@ services:
   # secrets d'env, donc aucune clé n'est dans l'image ni committée.
   # Endpoint S3 = port 8333 (l'app y parle via boto3, addressing path-style).
   seaweedfs:
-    image: chrislusf/seaweedfs:4.34
+    image: chrislusf/seaweedfs:4.48
     container_name: nutriplanner-seaweedfs
     # platform.secrets.env porte S3_APP_ACCESS_KEY / S3_APP_SECRET_KEY.
     env_file: ../env/secrets/platform.secrets.env

@@ -3,60 +3,10 @@
     "token_invalid": "Invalid or expired token",
     "service_token_invalid": "Invalid service token",
     "no_account_context": "No active account in context",
-    "health_consent_required": "Consent to health data processing is required",
-    "blob_not_found": "Encrypted resource not found",
-    "blob_version_conflict": "Version conflict: the resource was modified elsewhere",
-    "blob_collection_unknown": "Unknown collection",
-    "blob_ciphertext_invalid": "Invalid ciphertext (base64 expected)"
-  },
-  "validation": {
-    "rpe_range": "RPE must be between 1 and 10"
+    "health_consent_required": "Consent to health data processing is required"
   },
   "profile": {
-    "not_found": "Profile not found",
-    "already_exists": "A profile already exists for this user",
-    "missing_data_calc": "Insufficient data: age, weight, height and biological sex are required"
-  },
-  "injury": { "not_found": "Injury not found" },
-  "condition": { "not_found": "Medical condition not found" },
-  "allergy": { "not_found": "Allergy not found" },
-  "medication": { "not_found": "Medication not found" },
-  "composition": { "not_found": "Body composition record not found" },
-  "measurement": { "not_found": "Body measurement record not found" },
-  "performance": { "not_found": "Performance metric not found" },
-  "excluded_food": { "not_found": "Excluded food not found" },
-  "sports_profile": { "not_found": "Sports profile not configured" },
-  "lifestyle": { "not_found": "Lifestyle profile not configured" },
-  "nutrition": { "not_found": "Nutritional preferences not configured" },
-  "biological_sex": {
-    "male": "Male",
-    "female": "Female",
-    "not_specified": "Not specified"
-  },
-  "practice_level": {
-    "beginner": "Beginner",
-    "intermediate": "Intermediate",
-    "advanced": "Advanced",
-    "competitive": "Competitive athlete"
-  },
-  "activity_level": {
-    "sedentary": "Sedentary (desk job)",
-    "light": "Lightly active",
-    "moderate": "Moderately active",
-    "heavy": "Very active",
-    "very_heavy": "Extremely active"
-  },
-  "stress_level": { "low": "Low", "moderate": "Moderate", "high": "High" },
-  "chronotype": {
-    "morning": "Morning chronotype",
-    "intermediate": "Intermediate chronotype",
-    "evening": "Evening chronotype"
-  },
-  "alcohol_frequency": {
-    "never": "Never",
-    "occasional": "Occasional",
-    "moderate": "Moderate",
-    "regular": "Regular"
+    "not_found": "Profile not found"
   },
   "diet_type": {
     "omnivore": "Omnivore",
@@ -76,32 +26,20 @@
     "sports_performance": "Sports performance",
     "maintenance": "Maintenance / Overall health"
   },
-  "cooking_level": { "beginner": "Beginner", "intermediate": "Intermediate", "advanced": "Expert" },
-  "cooking_time": { "quick": "Quick (< 30 min)", "moderate": "Moderate (30–60 min)", "extended": "Extended (> 60 min)" },
-  "cooking_for": { "solo": "Just me", "couple": "For two", "family": "Family", "meal_prep": "Batch cooking" },
-  "medical_category": {
-    "metabolic": "Metabolic", "digestive": "Digestive",
-    "cardiovascular": "Cardiovascular", "hormonal": "Hormonal", "other": "Other"
+  "cooking_level": {
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Expert"
   },
-  "allergy_severity": { "intolerance": "Intolerance", "allergy": "Allergy" },
-  "bmi_category": {
-    "severe_malnutrition": "Severe malnutrition",
-    "moderate_malnutrition": "Moderate malnutrition",
-    "underweight": "Underweight",
-    "normal": "Normal weight",
-    "overweight": "Overweight",
-    "moderate_obesity": "Moderate obesity",
-    "severe_obesity": "Severe obesity",
-    "morbid_obesity": "Morbid obesity"
+  "cooking_time": {
+    "quick": "Quick (< 30 min)",
+    "moderate": "Moderate (30–60 min)",
+    "extended": "Extended (> 60 min)"
   },
-  "objective_explanation": {
-    "goal": "Your goal is: {goal}.",
-    "energy": "Your basal metabolic rate is estimated at {bmr} kcal/day; with your activity level (PAL {pal}), your total daily energy expenditure (maintenance) reaches {tdee} kcal/day.",
-    "target_deficit": "To reach this goal, a {pct}% deficit is applied: your energy target is {target} kcal/day, below your maintenance of {tdee} kcal.",
-    "target_surplus": "To reach this goal, a {pct}% surplus is applied: your energy target is {target} kcal/day, above your maintenance of {tdee} kcal.",
-    "target_maintenance": "Your energy target matches your maintenance, i.e. {target} kcal/day.",
-    "target_floored": "A safety floor was applied: your target does not go below {target} kcal/day to protect your metabolism.",
-    "macros": "The targeted daily split is {proteins_g} g of protein, {carbs_g} g of carbs and {fats_g} g of fat.",
-    "bmi": "Your BMI is {bmi} ({bmi_category}), for an ideal weight range of {ideal_min} to {ideal_max} kg."
+  "cooking_for": {
+    "solo": "Just me",
+    "couple": "For two",
+    "family": "Family",
+    "meal_prep": "Batch cooking"
   }
 }

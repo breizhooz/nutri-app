@@ -1,0 +1,8 @@
+# Dépendances de DEV/tests (venv, CI) — jamais dans l'image. Versions : ../shared/constraints.txt
+-r requirements.txt
+
+pytest
+pytest-asyncio
+pytest-cov
+aiosqlite
+httpx

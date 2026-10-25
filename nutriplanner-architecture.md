@@ -37,7 +37,7 @@ Rost.r est une application de gestion de menus pour le suivi nutritionnel. Elle 
 
 - **Microservices conteneurisés** — Chaque service applicatif tourne dans son propre container Docker, indépendant du cycle de vie des autres
 - **Base de données partagée, schémas isolés** — Une seule instance PostgreSQL héberge plusieurs schémas SQL (un par service). Séparation logique sans surcoût opérationnel
-- **Infrastructure mutualisée** — Redis, Elasticsearch et PostgreSQL sont des ressources d'infrastructure partagées entre les services via le réseau Docker interne
+- **Infrastructure mutualisée** — Redis et PostgreSQL sont des ressources d'infrastructure partagées entre les services via le réseau Docker interne
 - **Scalabilité horizontale** — L'architecture Docker Compose locale est conçue pour migrer vers Kubernetes ou une plateforme cloud sans modifier le code applicatif
 - **API-first** — Tous les services exposent une API REST documentée (OpenAPI/Swagger auto-générée par FastAPI)
 
@@ -49,7 +49,7 @@ Rost.r est une application de gestion de menus pour le suivi nutritionnel. Elle 
 | **Passerelle** | Nginx + FastAPI gateway | Routage, auth, rate limiting |
 | **Services** | service-recipe, service-menu, service-crawler, service-llm-bridge | Logique métier |
 | **Workers** | Celery + Redis broker | Tâches asynchrones (crawl, enrichissement) |
-| **Data** | PostgreSQL, Redis, Elasticsearch | Persistance, cache, recherche |
+| **Data** | PostgreSQL, Redis | Persistance, recherche plein texte, cache |
 
 ---
 
@@ -66,7 +66,7 @@ Rost.r est une application de gestion de menus pour le suivi nutritionnel. Elle 
 - **Backend** : FastAPI + SQLAlchemy async + asyncpg + Alembic
 - **Base de données** : PostgreSQL dédié par service
 - **Authentification** : JWT via python-jose, hachage argon2
-- **Recherche** : Elasticsearch 8.11 (service-recipe)
+- **Recherche** : PostgreSQL plein texte — `tsvector` + `unaccent` + `pg_trgm` (service-recipe, service-nutrition)
 - **Orchestration** : Docker Compose
 - **CI/CD** : GitHub Actions + SonarQube
 - **i18n** : Toutes les réponses API en clés de traduction
@@ -106,7 +106,7 @@ Rost.r est une application de gestion de menus pour le suivi nutritionnel. Elle 
 
 **Fonctionnalités** :
 - Calcul automatique des macros par portion via agrégation SQL
-- Indexation Elasticsearch déclenchée après chaque création/modification
+- Vecteur plein texte (`recipes.search_vector`) maintenu par triggers PostgreSQL à chaque écriture
 
 ---
 
@@ -130,13 +130,13 @@ Rost.r est une application de gestion de menus pour le suivi nutritionnel. Elle 
 
 **Extraction de recettes depuis sites web ou Instagram, normalisation et enrichissement.**
 
-**Stack** : Scrapy · Playwright · Instaloader · recipe-scrapers · Celery
+**Stack** : Scrapy · Instaloader · recipe-scrapers · Celery
 
 **Schema PostgreSQL** : `crawler`
 
 **Pipeline** :
 1. URL soumise → recipe-scrapers (sites supportés)
-2. Fallback Playwright (sites JS)
+2. Sinon texte brut de la page ; page JS vide sans schema.org → échec définitif (pas de navigateur headless, Playwright abandonné le 2026-09-30)
 3. Support Instagram via Instaloader : extraction caption + image du post
 4. Normalisation vers le schéma Recipe interne avant persistance
 5. File de tâches Celery — le crawl est toujours asynchrone
@@ -282,7 +282,7 @@ created_at: datetime
 1. User `POST /sources` (type=web, url=...)
 2. service-crawler publie tâche Celery dans Redis
 3. Worker httpx/BeautifulSoup fetch la page
-   - Fallback Playwright si site JS
+   - Recette schema.org (recipe-scrapers) prioritaire, même sur site JS ; sinon texte brut (page JS vide → échec définitif)
 4. Extraction : titre, texte, images
 5. Stockage CrawlResult (statut: EN_ATTENTE)
 6. User consulte `GET /results`
@@ -363,7 +363,7 @@ Pour chaque ingrédient détecté dans le texte :
 #### Phase 3 — Crawl web
 
 - [ ] Tâche Celery web.py (httpx + BeautifulSoup)
-- [ ] Fallback Playwright (sites JS)
+- [x] ~~Fallback Playwright (sites JS)~~ → abandonné (2026-09-30) au profit de recipe-scrapers (schema.org)
 - [ ] Extraction titre/texte/images
 - [ ] Endpoint POST /sources (type=web)
 - [ ] Endpoint POST /sources/{id}/crawl (manuel)
@@ -426,7 +426,7 @@ celery==5.3.6
 redis==5.0.1
 httpx==0.25.2
 beautifulsoup4==4.12.2
-playwright==1.40.0
+recipe-scrapers==15.12.0
 instaloader==4.10.3
 yt-dlp==2024.1.1
 minio==7.2.0
@@ -465,11 +465,6 @@ aiosqlite==0.20.0
 - **Port** : 6379 interne
 - **Préfixes** : clés par service
 
-#### Container #7 — Elasticsearch 8
-- **Rôle** : Index de recherche full-text sur recettes et ingrédients
-- **Port** : 9200 interne
-- **Index** : recipes, ingredients
-
 #### Container #8 — Nginx
 - **Rôle** : Reverse proxy — seul point d'entrée exposé vers la machine hôte
 - **Ports** : 80/443 exposés → routing vers services internes
@@ -479,17 +474,11 @@ aiosqlite==0.20.0
 - **Consomme** : queue Redis
 - **Scalabilité** : horizontale possible
 
-#### Container #10 — Kibana (dev uniquement)
-- **Rôle** : Interface d'administration Elasticsearch
-- **Port** : 5601
-- **Statut** : désactivé en production
-
 ### Réseau Docker interne
 
 Tous les containers partagent un réseau bridge Docker nommé `nutriplanner_net`. Les services se joignent par nom de service DNS interne :
 - `postgres:5432`
 - `redis:6379`
-- `elasticsearch:9200`
 
 **Isolation** : Aucun port d'infrastructure n'est exposé vers la machine hôte — seul Nginx ouvre les ports 80 et 443.
 
@@ -503,7 +492,7 @@ nutriplanner/
 │   └── nginx/nginx.conf
 ├── service-recipe/              # FastAPI · schéma recipe
 ├── service-menu/                # FastAPI · schéma menu
-├── service-crawler/             # Scrapy/Playwright · Celery
+├── service-crawler/             # httpx/recipe-scrapers · Celery
 ├── service-llm-bridge/          # Wrapper LLM
 └── frontend/
     ├── web/                     # React + Vite
@@ -523,11 +512,9 @@ nutriplanner/
 | | Alembic | 1.x | Migrations de schémas PostgreSQL |
 | **Base de données** | PostgreSQL | 16 | Source de vérité — données structurées |
 | | Redis | 7 | Cache TTL et broker Celery |
-| | Elasticsearch | 8.x | Recherche full-text sur recettes/ingrédients |
 | **Crawling** | Scrapy | 2.x | Spider pour sites web HTML classiques |
-| | Playwright (Python) | 1.x | Headless browser pour sites JS/SPA |
 | | Instaloader | 4.x | Extraction de posts et captions Instagram |
-| | recipe-scrapers | 14.x | Parsing structuré pour 500+ sites de recettes |
+| | recipe-scrapers | 15.x | Parsing structuré schema.org + ~740 sites de recettes |
 | **Async** | Celery | 5.x | Workers de tâches asynchrones (crawl, LLM) |
 | **LLM** | OpenAI SDK | 1.x | GPT-4o-mini pour extraction macros (cloud) |
 | | Ollama | latest | Llama 3.1 8B en local — mode offline |
@@ -546,13 +533,13 @@ nutriplanner/
 2. service-recipe valide les données (Pydantic v2)
 3. Persistance dans PostgreSQL schéma `recipe`
 4. Appel asynchrone à service-llm-bridge si les macros sont absentes
-5. Indexation dans Elasticsearch pour la recherche
+5. Vecteur plein texte mis à jour par trigger PostgreSQL (aucune indexation à orchestrer)
 
 ### Crawl d'une recette depuis une URL
 
 1. L'utilisateur soumet une URL (site web ou Instagram)
 2. service-crawler pousse une tâche dans la queue Celery (Redis)
-3. Le worker tente recipe-scrapers → Playwright si échec
+3. Le worker tente recipe-scrapers (schema.org) → texte brut de la page sinon
 4. Pour Instagram : Instaloader extrait la caption et l'image
 5. Texte brut envoyé à service-llm-bridge pour extraction des macros
 6. Résultat normalisé persisté via service-recipe
@@ -580,7 +567,13 @@ nutriplanner/
 | Recherche full-text native | ⚠️ Basique (tsvector) | ⚠️ Limitée | ✅ Excellent |
 | Complexité opérationnelle | ✅ Faible | ✅ Faible | ⚠️ Élevée seul |
 
-**Décision** : Elasticsearch est utilisé comme index de recherche complémentaire, pas comme base principale. Les données master restent dans PostgreSQL — Elastic en est une projection optimisée pour la recherche.
+**Décision initiale** : Elasticsearch comme index de recherche complémentaire, projection des données master PostgreSQL.
+
+**Révision (2026-10-24) — Elasticsearch supprimé.** Les recettes étant filtrées par compte (quelques centaines par
+compte au plus), la recherche plein texte PostgreSQL suffit : `tsvector` `french` désaccentué et pondéré, préfixes,
+tolérance aux fautes via `pg_trgm`. Gains : un conteneur JVM de moins (image 2 Go, ≥ 512 Mo de heap), plus de
+projection à resynchroniser (triggers), plus de DSL Elasticsearch dans le contrat nutrition → recipe (critères
+neutres `search_criteria`). Le rapprochement ingrédient → Ciqual de service-nutrition passe aussi sur `pg_trgm`.
 
 ### LLM — Cloud vs Local
 
@@ -609,14 +602,13 @@ nutriplanner/
 - Export PDF du menu et de la liste de courses
 
 ### Phase 3 — Crawling
-- service-crawler : intégration recipe-scrapers + Playwright
+- service-crawler : intégration recipe-scrapers
 - Support Instagram via Instaloader
 - Queue Celery pour traitement asynchrone
 
 ### Phase 4 — Enrichissement LLM
 - service-llm-bridge : OpenAI API par défaut
 - Mode Ollama local en option
-- Indexation Elasticsearch pour la recherche avancée
 
 ### Phase 5 — Mobile
 - Application React Native (Expo) — partage de code avec le web

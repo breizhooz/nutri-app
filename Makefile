@@ -7,7 +7,7 @@ PY      := python3
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up down restart ps logs config check env-examples env-check certs monitoring \
+.PHONY: help up up-prod down restart ps logs config check env-examples env-check deps-check certs monitoring flower \
         rgpd-clean rgpd-diagnose rgpd-replay rgpd-keys
 
 help: ## Liste les cibles disponibles
@@ -15,6 +15,9 @@ help: ## Liste les cibles disponibles
 
 up: ## Démarre la stack (build si nécessaire)
 	$(COMPOSE) up -d --build
+
+up-prod: ## Démarre la stack en mode prod local (cible prod, sans rechargement, DEBUG=false)
+	$(COMPOSE) -f docker-compose.yml -f infra/compose/prod.yml up -d --build
 
 down: ## Arrête la stack, monitoring inclus (les volumes sont conservés)
 	$(COMPOSE) --profile "*" down
@@ -30,6 +33,7 @@ logs: ## Logs suivis (tous, ou un service : make logs S=service-user)
 
 config: ## Rend la config compose résolue (sanity check des fragments + env)
 	$(COMPOSE) config --quiet && echo "compose OK"
+	$(COMPOSE) -f docker-compose.yml -f infra/compose/prod.yml config --quiet && echo "compose prod OK"
 
 env-examples: ## (Re)génère infra/env/examples/*.env.example depuis les Settings pydantic
 	$(PY) infra/scripts/gen_env_examples.py
@@ -37,13 +41,19 @@ env-examples: ## (Re)génère infra/env/examples/*.env.example depuis les Settin
 env-check: ## Vérifie que la chaîne env_file couvre tous les champs requis des Settings
 	$(PY) infra/scripts/gen_env_examples.py --check
 
-check: config env-check ## Tous les contrôles statiques infra
+deps-check: ## Vérifie que shared/constraints.txt est la source unique des versions Python
+	$(PY) infra/scripts/check_constraints.py
+
+check: config env-check deps-check ## Tous les contrôles statiques infra
 
 certs: ## (Re)génère les certificats mkcert pour Traefik (HTTPS dev)
 	cd infra/traefik && ./gen-certs.sh
 
 monitoring: ## Démarre la stack avec le profil monitoring
 	$(COMPOSE) --profile monitoring up -d
+
+flower: ## Démarre Flower (supervision Celery, profil tools) → http://127.0.0.1:5555
+	$(COMPOSE) --profile tools up -d celery-flower
 
 # ── Remédiation RGPD (effacement incomplet / comptes orphelins) — cf. cleaner.md ──
 rgpd-clean: ## Remédiation complète : redeploy → diagnostic → rejeu → purge clés

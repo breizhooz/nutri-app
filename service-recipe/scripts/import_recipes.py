@@ -17,8 +17,6 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 os.environ.setdefault("SERVICE_USER_URL", "http://service-user:8000")
-os.environ.setdefault("ELASTICSEARCH_URL", "http://elasticsearch:9200")
-os.environ.setdefault("ELASTICSEARCH_INDEX_RECIPES", "recipes")
 os.environ.setdefault("JWT_SECRET", "import-secret")
 os.environ.setdefault("SERVICE_NUTRITION_URL", "http://service-nutrition:8000")
 os.environ.setdefault("SERVICE_NUTRITION_TOKEN", "")
@@ -53,28 +51,15 @@ async def _run(path: str) -> None:
     from sqlalchemy.pool import NullPool
 
     from app.core.config import settings
-    from app.core import elasticsearch as es_module
-    from app.core.elasticsearch import init_elasticsearch
     from app.repositories.recipe_repository import RecipeRepository
     from app.services.recipe_import_service import RecipeImportService
     from app.services.recipe_service import RecipeService
-    from app.services.search_service import search_service
-
-    es_ready = False
-    try:
-        await init_elasticsearch()
-        es_ready = True
-    except Exception as exc:
-        print(
-            f"Elasticsearch indisponible, indexation ignorée ({exc}). "
-            "Lancez POST /api/v1/recipe/reindex plus tard."
-        )
 
     engine = create_async_engine(settings.DATABASE_URL, poolclass=NullPool)
     try:
         async with AsyncSession(engine, expire_on_commit=False) as session:
             repository = RecipeRepository(session)
-            recipe_service = RecipeService(repository, search_service)
+            recipe_service = RecipeService(repository)
             import_service = RecipeImportService(repository, recipe_service)
             report = await import_service.import_payload(payload)
 
@@ -86,8 +71,6 @@ async def _run(path: str) -> None:
             print(f"  - {slug}")
     finally:
         await engine.dispose()
-        if es_ready and es_module.es_client is not None:
-            await es_module.es_client.close()
 
 
 if __name__ == "__main__":

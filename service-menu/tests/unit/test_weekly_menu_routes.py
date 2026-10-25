@@ -11,8 +11,6 @@ os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 os.environ.setdefault("JWT_SECRET", "test-secret-key-for-testing-only")
 os.environ.setdefault("JWT_ALGORITHM", "HS256")
 os.environ.setdefault("SERVICE_RECIPE_URL", "http://service-recipe-test:8000")
-os.environ.setdefault("ELASTICSEARCH_URL", "http://es-test:9200")
-os.environ.setdefault("ELASTICSEARCH_INDEX_RECIPES", "recipes-test")
 
 TEST_USER_ID = "test-user-uuid-1234"
 TEST_ACCOUNT_ID = "test-account-uuid-1234"
@@ -149,7 +147,7 @@ class _FakeProfileClient:
         self._summary = summary
         self._raise = raise_unavailable
 
-    async def get_nutrition_summary(self, user_id: str) -> dict | None:
+    async def get_nutrition_summary(self, account_id: str) -> dict | None:
         if self._raise:
             from app.core.http_client import ServiceUnavailableError
 
@@ -223,10 +221,9 @@ class TestGenerateMenuRoute:
         pork["recipe_ingredients"][0]["ingredient"]["name"] = "Jambon blanc"
         recipes = [pork] + [make_recipe(i) for i in range(10, 35)]
         summary = {
-            "allergies": [],
-            "excluded_foods": [{"slug": "e-1", "food_name": "jambon"}],
-            "nutrition_preferences": None,
-            "calculation": None,
+            "diet_type": "omnivore",
+            "excluded_foods": ["jambon"],
+            "targets": None,
         }
         self._override_clients(app, recipes, _FakeProfileClient(summary))
         menu = _make_menu_response()
@@ -257,10 +254,9 @@ class TestGenerateMenuRoute:
         from tests.conftest import make_recipe
 
         summary = {
-            "allergies": [],
+            "diet_type": "omnivore",
             "excluded_foods": [],
-            "nutrition_preferences": None,
-            "calculation": {"target_calories_kcal": 2200},
+            "targets": {"calories": 2200},
         }
         self._override_clients(
             app, [make_recipe(i) for i in range(1, 25)], _FakeProfileClient(summary)

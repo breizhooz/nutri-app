@@ -42,8 +42,8 @@ Application de planification nutritionnelle et de gestion de recettes, construit
    ┌──────────────────────────────────────────────────┐
    │  Monitoring Stack  (profile: monitoring)          │
    │  Prometheus :9090  •  Grafana :3000              │
-   │  7x postgres-exporter  •  redis-exporter          │
-   │  elasticsearch-exporter                           │
+   │  postgres-exporter  •  redis-exporter             │
+   │  Loki + Alloy (logs)  •  Tempo (traces)           │
    └──────────────────────────────────────────────────┘
 ```
 
@@ -54,7 +54,7 @@ Application de planification nutritionnelle et de gestion de recettes, construit
 | Service | Port local | Domaine Traefik | Rôle |
 |---------|-----------|-----------------|------|
 | service-user | 8001 | `api-users.localhost` | Authentification JWT, gestion des utilisateurs |
-| service-recipe | 8002 | `api-recipe.localhost` | Gestion des recettes, recherche Elasticsearch |
+| service-recipe | 8002 | `api-recipe.localhost` | Gestion des recettes, recherche plein texte PostgreSQL |
 | service-menu | 8003 | `api-menu.localhost` | Planification de menus hebdomadaires |
 | service-crawler | 8004 | `api-crawler.localhost` | Crawling web, import de recettes |
 | service-nutrition | 8005 | `api-nutrition.localhost` | Calcul nutritionnel, base Ciqual |
@@ -85,7 +85,6 @@ Application de planification nutritionnelle et de gestion de recettes, construit
 | http://traefik.localhost | Dashboard Traefik | aucune (insecure mode) |
 | http://prometheus.localhost | Interface Prometheus | aucune |
 | http://grafana.localhost | Dashboards Grafana | `admin` / `${GRAFANA_ADMIN_PASSWORD}` |
-| `localhost:9200` | Elasticsearch (interne) | aucune (xpack désactivé) |
 | `localhost:8333` | Endpoint S3 SeaweedFS | clés `${S3_APP_ACCESS_KEY}` / `${S3_APP_SECRET_KEY}` (pas de console web) |
 
 ---
@@ -117,6 +116,16 @@ docker compose --profile monitoring up -d
 # Vérifier l'état
 docker compose ps
 ```
+
+### Mode prod local
+
+```bash
+make up-prod   # = docker compose -f docker-compose.yml -f infra/compose/prod.yml up -d --build
+```
+
+Même stack, cible Docker `prod` (`infra/compose/prod.yml`) : images `:prod`, code embarqué (pas de
+montage de l'hôte), sans `--reload` ni `watchmedo`, `DEBUG=false`, 2 processus uvicorn pour
+service-recipe (`WEB_CONCURRENCY`). Revenir au mode dev : `make up`.
 
 ### Arrêter
 
@@ -306,19 +315,15 @@ Le code à 6 chiffres est généré avec `secrets.randbelow` (cryptographiquemen
 | `SERVICE_RECIPE_URL` | URL interne de service-recipe (ex: `http://service-recipe:8000`) |
 | `SERVICE_PROFILE_TOKEN` | Token partagé pour les appels vers service-profile |
 
-### Infrastructure (Redis, Elasticsearch, SeaweedFS)
+### Infrastructure (Redis, SeaweedFS)
 
 | Variable | Description | Exemple |
 |----------|-------------|---------|
 | `CELERY_BROKER_URL` | URL du broker Celery | `redis://redis:6379/0` |
 | `CELERY_RESULT_BACKEND` | Backend des résultats Celery | `redis://redis:6379/1` |
-| `ELASTICSEARCH_URL` | URL Elasticsearch | `http://elasticsearch:9200` |
-| `ELASTICSEARCH_INDEX_RECIPES` | Nom de l'index des recettes | `recipes` |
 | `S3_ENDPOINT` | Endpoint S3 SeaweedFS (sans http://) | `seaweedfs:8333` |
 | `S3_ACCESS_KEY` | Clé d'accès S3 | — |
 | `S3_SECRET_KEY` | Clé secrète S3 | — |
-| `S3_BUCKET_CRAWLER` | Bucket pour les médias du crawler | `crawler-media` |
-| `S3_SECURE` | TLS vers l'endpoint S3 | `False` en dev |
 
 ### Notifications (SMTP + Push VAPID)
 
@@ -642,19 +647,19 @@ docker compose exec postgres-recipe psql -U nutrirecipe -d nutriplanner_recipe \
 
 | Composant | Technologie |
 |-----------|------------|
-| Language | Python 3.12 |
+| Language | Python 3.14 (code compatible ≥ 3.12, cf. ruff.toml) |
 | Framework API | FastAPI + Uvicorn |
 | ORM | SQLAlchemy (asyncio) |
 | Bases de données | PostgreSQL 16 (7 instances isolées) |
 | Migrations | Alembic |
 | Validation | Pydantic v2 |
-| Recherche | Elasticsearch 8.11 |
+| Recherche | PostgreSQL plein texte (`tsvector` + `unaccent` + `pg_trgm`) |
 | Cache / Queue | Redis 7 |
 | Tâches async | Celery |
 | Stockage objet | SeaweedFS (S3) |
 | Reverse proxy | Traefik v3.7 |
 | Monitoring | Prometheus + Grafana |
-| Logs | structlog → Filebeat → Elasticsearch |
+| Logs | structlog → Alloy → Loki |
 | Tests | pytest + pytest-cov |
 | Lint | Ruff |
 | Sécurité | Bandit |
@@ -692,7 +697,7 @@ service-{name}/
 │   ├── models/             # Modèles SQLAlchemy
 │   ├── schemas/            # Schémas Pydantic
 │   ├── db/                 # Session DB
-│   └── core/               # Config, auth, elasticsearch
+│   └── core/               # Config, auth, clients HTTP
 ├── alembic/                # Migrations Alembic
 │   └── versions/
 ├── tests/
@@ -700,8 +705,8 @@ service-{name}/
 │   ├── smoke_test.py
 │   ├── unit/
 │   └── integration/
-├── Dockerfile
-├── requirements.txt
+├── requirements.txt      # prod (noms seuls, versions : shared/constraints.txt)
+├── requirements-dev.txt  # + outils de test (venv, CI)
 ├── pyproject.toml
 └── pytest.ini
 ```
@@ -710,7 +715,7 @@ service-{name}/
 
 ## Bibliothèque partagée (`shared/`)
 
-`nutri_shared` est une bibliothèque Python interne installée dans chaque conteneur via le Dockerfile. Elle centralise le code commun à tous les services.
+`nutri_shared` est une bibliothèque Python interne installée dans chaque conteneur via le Dockerfile commun `infra/docker/service.Dockerfile` (un seul Dockerfile pour les 7 services, cibles `dev`/`prod`). Elle centralise le code commun à tous les services.
 
 ### Contenu
 
@@ -725,8 +730,11 @@ service-{name}/
 ### Installation en développement local
 
 ```bash
-pip install -e ./shared/
+pip install -c shared/constraints.txt -e ./shared/
+pip install -r service-<nom>/requirements-dev.txt
 ```
+
+Versions : `shared/constraints.txt` est la **source unique** (cf. `shared/README.md`, contrôle `make deps-check`).
 
 ### Utilisation
 
@@ -744,7 +752,7 @@ logger = get_logger(__name__)
 
 ### Activer / désactiver la stack
 
-La stack de monitoring (Prometheus, Grafana, Loki, Promtail, Tempo, exporters) est isolée derrière le profil Docker Compose `monitoring`. Elle ne démarre **pas** par défaut.
+La stack de monitoring (Prometheus, Grafana, Loki, Alloy, Tempo, exporters) est isolée derrière le profil Docker Compose `monitoring`. Elle ne démarre **pas** par défaut.
 
 ```bash
 # Avec monitoring
@@ -841,9 +849,21 @@ docker compose logs --tail=100 service-recipe
 ### Pipeline de centralisation
 
 ```
-structlog (JSON) → stdout conteneur → Filebeat → Elasticsearch → Grafana
+structlog (JSON) → stdout conteneur → Alloy → Loki → Grafana
 ```
 
-Filebeat collecte les logs de tous les conteneurs Docker et les envoie vers Elasticsearch. Les logs sont ensuite visualisables dans Grafana (`http://grafana.localhost`) via un index pattern `docker-*`.
+Grafana Alloy (remplace Promtail, déprécié) collecte les logs des conteneurs `nutriplanner-*` via l'API
+Docker et les pousse vers Loki. Labels : `container`, `service`, `level`. `trace_id` est une **métadonnée
+structurée** (pas un label : un label par requête créerait un flux par trace) :
 
-Le fichier de configuration Filebeat est à la racine du projet : `filebeat.yml`.
+```logql
+{service=~".+"} | trace_id="<id>"        # tous les logs d'une requête, tous services confondus
+{service="service-recipe", level="error"}
+```
+
+Chaque ligne est un objet JSON unique (`event`, `level`, `logger`, `service`, `request_id`, `timestamp`…).
+`LOG_LEVEL=DEBUG` (dev, `infra/env/platform.env`) n'affiche plus le bruit des bibliothèques (httpcore,
+watchfiles, asyncio…) ; l'écho de chaque requête SQL est désormais opt-in : `SQL_ECHO=true`.
+Dashboard Grafana « Rost.r — Logs » (`http://grafana.localhost`), profil `monitoring`.
+
+Configuration : `infra/monitoring/alloy/config.alloy`.

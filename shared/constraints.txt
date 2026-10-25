@@ -1,0 +1,93 @@
+# ══════════════════════════════════════════════════════════════════════
+# Contraintes pip communes — SOURCE UNIQUE des versions Python du backend.
+#
+# Les requirements*.txt des services ne listent que des NOMS (avec extras) ;
+# chacun commence par `-c ../shared/constraints.txt`, donc tout
+# `pip install -r requirements*.txt` (Docker, CI, venv local) est épinglé ici.
+# nutri_shared s'installe avec : pip install -c shared/constraints.txt shared/
+#
+# Une contrainte n'installe rien : elle fixe la version SI la lib est demandée.
+# Pas d'extras ici (refusés par pip) : ils restent dans les requirements.
+# Contrôle : `make deps-check` (inclus dans `make check` / CI infra-check).
+# ══════════════════════════════════════════════════════════════════════
+
+# ── Socle web / API (tous les services + nutri_shared) ──────────────────
+fastapi==0.142.2
+starlette==1.7.0
+uvicorn==0.54.0
+pydantic==2.13.5
+pydantic-settings==2.15.0
+email-validator==2.3.0
+python-multipart==0.0.32
+PyJWT==2.15.1
+httpx==0.28.1
+
+# ── Base de données ─────────────────────────────────────────────────────
+sqlalchemy==2.1.1
+asyncpg==0.31.0
+alembic==1.20.0
+
+# ── Asynchrone (Celery + broker Redis) ─────────────────────────────────
+celery==5.6.3
+# kombu 5.6 ne garantit officiellement que redis<6.5 : 7.4 puis 8.1 validés en runtime.
+redis==8.1.0
+
+# ── nutri_shared (utilitaires, crypto, observabilité) ──────────────────
+unidecode==1.4.0
+structlog==26.1.0
+cryptography==50.0.2
+opentelemetry-sdk==1.45.0
+opentelemetry-exporter-otlp-proto-http==1.45.0
+opentelemetry-instrumentation-fastapi==0.66b0
+opentelemetry-instrumentation-httpx==0.66b0
+prometheus-fastapi-instrumentator==8.1.0
+
+# ── Spécifiques à un service ────────────────────────────────────────────
+# crawler
+beautifulsoup4==4.15.0
+recipe-scrapers==15.12.0
+instaloader==4.15.3
+Pillow==12.3.0
+# crawler — OCR RapidOCR (onnxruntime). rapidocr s'installe en --no-deps
+# (requirements-nodeps.txt) car il exige `opencv_python` (non headless → libGL) ;
+# ses dépendances sont listées à la main, avec OpenCV headless.
+rapidocr==3.9.2
+onnxruntime==1.30.0
+opencv-python-headless==5.0.0.93
+pyclipper==1.4.0
+shapely==2.1.2
+six==1.17.0
+PyYAML==6.0.3
+tqdm==4.70.1
+omegaconf==2.3.1
+requests==2.34.2
+colorlog==6.12.0
+# numpy unique pour tout le backend (numpy 2 + OpenCV 5 depuis le retrait de spaCy).
+numpy==2.5.3
+# recipe
+boto3==1.43.106
+deep-translator==1.11.4
+# nutrition
+py7zr==1.1.3
+# notification, nutrition
+python-slugify==9.1.2
+# notification
+pywebpush==2.5.0
+aiosmtplib==5.1.3
+# menu
+fpdf2==2.8.9
+# user
+argon2-cffi==25.1.0
+pyotp==2.10.0
+qrcode==8.2
+
+# ── Dev / tests / CI (requirements-dev.txt, jamais dans les images) ─────
+pytest==9.1.1
+pytest-asyncio==1.4.0
+pytest-cov==7.1.0
+aiosqlite==0.22.1
+# client HTTP du TestClient de Starlette 1.x (httpx y est déprécié)
+httpx2==2.13.1
+watchdog==6.0.0
+ruff==0.16.9
+bandit==1.9.4

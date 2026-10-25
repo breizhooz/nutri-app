@@ -49,8 +49,9 @@ async def ocr_recipe(
     (``is_recipe``, ``title``, ``recipe_confidence``) pour que l'utilisateur voie
     ce qui a été extrait et décide lui-même de l'importer (cf. ``/import``).
 
-    L'image n'est jamais stockée : ses octets sont décodés en mémoire par EasyOCR
-    et ne touchent jamais le disque (aucune persistance, aucun cache).
+    L'image n'est jamais stockée : ses octets sont décodés en mémoire par le
+    moteur OCR (RapidOCR) et ne touchent jamais le disque (aucune persistance,
+    aucun cache).
     """
     if file.content_type and not file.content_type.startswith("image/"):
         raise HTTPException(
@@ -66,7 +67,7 @@ async def ocr_recipe(
         )
     if len(content) > MAX_IMAGE_BYTES:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail=t.get("ocr.errors.file_too_large"),
         )
 
@@ -75,7 +76,7 @@ async def ocr_recipe(
         raw_text = await asyncio.to_thread(ocr.extract_text_from_bytes, content)
     except OcrError as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(exc),
         ) from exc
 

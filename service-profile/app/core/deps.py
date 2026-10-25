@@ -141,9 +141,3 @@ async def get_write_context(
     """
     _account_uuid(request, ctx)  # 403 si pas de compte actif
     return ctx
-
-
-# Les dépendances read_profile_id/write_profile_id (résolution d'un profil clair
-# par compte) ont été retirées avec la bascule E2E : il n'y a plus de table
-# ``profiles`` ni de sous-ressources santé. Seul subsiste le coffre de blobs,
-# borné par ``get_read_account_id``/``get_write_account_id``.

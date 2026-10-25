@@ -1,3 +1,7 @@
+# Tempo 3 — binaire unique, stockage local.
+# Tempo 3 a supprimé `ingester` et `compactor` : l'écriture passe par le
+# live-store/block-builder et la rétention par backend_scheduler/backend_worker
+# (configurés automatiquement en binaire unique). Conteneur non-root (uid 10001).
 server:
   http_listen_port: 3200
   log_level: info
@@ -11,17 +15,15 @@ distributor:
         http:
           endpoint: 0.0.0.0:4318
 
-ingester:
-  trace_idle_period: 10s
-  max_block_bytes: 1_000_000
-  max_block_duration: 5m
-
-compactor:
+# Rétention des traces : 24 h (dev). Même valeur côté planificateur et worker.
+backend_scheduler:
+  provider:
+    compaction:
+      compaction:
+        block_retention: 24h
+backend_worker:
   compaction:
-    compaction_window: 1h
-    max_compaction_objects: 1000000
     block_retention: 24h
-    compacted_block_retention: 10m
 
 storage:
   trace:

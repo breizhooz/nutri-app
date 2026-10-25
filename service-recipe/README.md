@@ -1,12 +1,12 @@
 # service-recipe
 
-Service de gestion des recettes et des ingrédients, avec recherche full-text via Elasticsearch.
+Service de gestion des recettes et des ingrédients, avec recherche plein texte PostgreSQL.
 
 - **Port local** : `8002`
 - **Domaine Traefik** : `http://api-recipe.localhost`
 - **Swagger** : `http://api-recipe.localhost/docs`
 - **Base de données** : PostgreSQL sur `localhost:5434`
-- **Dépend de** : `service-user` (validation JWT), `elasticsearch`
+- **Dépend de** : `service-user` (validation JWT)
 
 ---
 
@@ -15,7 +15,7 @@ Service de gestion des recettes et des ingrédients, avec recherche full-text vi
 ```
 GET     /health
 GET     /health/db
-GET     /api/v1/search/recipes                 Recherche full-text (Elasticsearch)
+GET     /api/v1/search/recipes                 Recherche plein texte (PostgreSQL)
 POST    /api/v1/recipe                          Créer une recette
 PUT     /api/v1/recipe/id/{recipe_id}           Mettre à jour recette par ID
 GET     /api/v1/recipe/{slug}                   Recette par slug
@@ -97,7 +97,7 @@ service-recipe/
 │   ├── models/
 │   ├── schemas/
 │   ├── db/
-│   └── core/               # Config, elasticsearch client
+│   └── core/               # Config, clients HTTP inter-services
 ├── alembic/
 │   └── versions/
 ├── tests/
@@ -111,13 +111,30 @@ service-recipe/
 
 ---
 
+## Recherche plein texte
+
+`GET /api/v1/search/recipes` interroge PostgreSQL directement (plus d'Elasticsearch) :
+
+- **`recipes.search_vector`** (tsvector `french`, texte désaccentué) pondéré titre > ingrédients >
+  description > instructions. Maintenu par **triggers** (création/édition de recette, ajout/retrait
+  d'ingrédient, renommage d'ingrédient) : aucune réindexation à lancer, quel que soit le chemin d'écriture.
+- **Préfixe** (« poul » trouve « poulet »), tous les mots requis ; **faute de frappe** sur le titre tolérée
+  via `pg_trgm` (requêtes de 4 caractères et plus).
+- **Allergènes / régimes / tags** lus en direct sur les ingrédients de la recette.
+- **Règles nutritionnelles** : service-nutrition renvoie des `search_criteria` neutres (exclusions par tags
+  et par noms d'ingrédient en mot entier, cibles de macros) que `RecipeSearchService` traduit en SQL.
+- Extensions `unaccent` + `pg_trgm` créées par la migration `e5f6a7b8c9d0` (extensions « trusted » :
+  le rôle propriétaire de la base suffit).
+- Tests SQL réels : `TEST_POSTGRES_URL=postgresql+asyncpg://… pytest tests/integration/test_search_postgres.py`
+  (ignorés sans cette variable).
+
+---
+
 ## Variables d'environnement clés
 
 | Variable | Description |
 |----------|-------------|
 | `DATABASE_URL` | `postgresql+asyncpg://...@postgres-recipe:5432/...` |
-| `ELASTICSEARCH_URL` | `http://elasticsearch:9200` |
-| `ELASTICSEARCH_INDEX_RECIPES` | Nom de l'index ES (ex: `recipes`) |
 | `SERVICE_USER_URL` | `http://service-user:8000` (validation JWT) |
 
 ## Script de lancement pour intégration de 150 recettes de base.
@@ -145,7 +162,7 @@ service-recipe/
 
   - Prérequis : service-nutrition doit tourner (même réseau nutriplanner) pour le calcul des macros ; sinon les
   *_per_serving restent null (le script ne plante pas).
-  - Indexation Elasticsearch : best-effort. Si ES est indispo, relancer ensuite POST /api/v1/recipe/reindex.
+  - Recherche : rien à indexer, le vecteur plein texte est maintenu par des triggers PostgreSQL.
   - Idempotence : un même titre relancé crée une recette avec slug suffixé (-1, -2…). Les ingrédients du catalogue
   sont en upsert (macros mises à jour).
   - Format du fichier : voir scripts/sample_recipes.json (clé racine created_by_user_id, catalogue ingredients avec

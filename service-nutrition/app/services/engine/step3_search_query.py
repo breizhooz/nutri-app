@@ -1,143 +1,158 @@
-"""Étape 3 — Moteur de requête & scoring Elasticsearch.
+"""Étape 3 — Critères de recherche & scoring des recettes.
 
-Construit un query DSL pour l'index **recettes** (distinct de l'index
-``nutrition_items`` utilisé par LookupService).
+Produit des ``SearchCriteria`` neutres (aucun DSL de moteur de recherche) que
+service-recipe traduit en SQL (PostgreSQL plein texte).
 
 Sépare strictement :
-  • Filtres stricts (sécurité/éthique + is_strict)  → ``must_not`` / ``filter`` (éliminent)
-  • Scoring souple (is_strict=False + proximité macros) → ``functions`` (réduisent le score)
+  • Filtres stricts (sécurité/éthique + is_strict) → ``excluded_*`` / ``required_fields`` (éliminent)
+  • Scoring souple (is_strict=False + proximité macros) → ``macro_targets`` / ``preferences``
 
 Consomme ``FinalTargets`` en LECTURE SEULE : ne recalcule jamais calories/macros.
 """
 
-from app.schemas.engine import FilterPriority, FinalTargets
+from app.schemas.engine import (
+    FilterPriority,
+    FinalTargets,
+    MacroTarget,
+    ScoringPreference,
+    SearchCriteria,
+)
 
-# Champ ES listant les ingrédients normalisés d'une recette.
-_INGREDIENTS_FIELD = "ingredients"
+# ── Régime : tags TypeOfIngredient interdits (contrat inter-service) ────────
+# Aligné sur service-menu (app/services/profile_constraints.py).
+_MEAT_TAGS = [
+    "enums.type_of_ingredient.meat",
+    "enums.type_of_ingredient.white_meat",
+    "enums.type_of_ingredient.red_meat",
+    "enums.type_of_ingredient.processed_meat",
+]
+_FISH_TAGS = [
+    "enums.type_of_ingredient.fish",
+    "enums.type_of_ingredient.white_fish",
+    "enums.type_of_ingredient.fatty_fish",
+    "enums.type_of_ingredient.smoked_fish",
+]
+_SEAFOOD_TAGS = [
+    "enums.type_of_ingredient.seafood",
+    "enums.type_of_ingredient.crustacean",
+    "enums.type_of_ingredient.mollusc",
+]
+_DAIRY_TAGS = [
+    "enums.type_of_ingredient.dairy",
+    "enums.type_of_ingredient.milk",
+    "enums.type_of_ingredient.cheese",
+    "enums.type_of_ingredient.yogurt",
+    "enums.type_of_ingredient.butter",
+    "enums.type_of_ingredient.cream",
+]
+_EGG_TAGS = ["enums.type_of_ingredient.egg"]
+_HONEY_TAGS = ["enums.type_of_ingredient.honey"]
+_ALCOHOL_TAGS = [
+    "enums.type_of_ingredient.alcohol",
+    "enums.type_of_ingredient.wine",
+    "enums.type_of_ingredient.beer",
+    "enums.type_of_ingredient.spirit",
+]
 
-# Ingrédients bannis par régime éthique/religieux (filtre strict niveau 0).
-_DIET_BANNED_INGREDIENTS: dict[str, list[str]] = {
-    "vegan": ["viande", "poisson", "fruits_de_mer", "oeuf", "lait", "miel", "gelatine"],
-    "vegetarian": ["viande", "poisson", "fruits_de_mer", "gelatine"],
-    "pescatarian": ["viande", "gelatine"],
-    "halal": ["porc", "alcool", "gelatine"],
-    "kosher": ["porc", "fruits_de_mer"],
-    "no_pork": ["porc"],
+# Pas de tag « porc » ni « gélatine » → exclusion par noms d'ingrédient (best-effort).
+_PORK_TERMS = [
+    "porc",
+    "pork",
+    "jambon",
+    "lard",
+    "lardon",
+    "bacon",
+    "chorizo",
+    "saucisson",
+    "pancetta",
+]
+_GELATIN_TERMS = ["gelatine", "gelatin"]
+
+_DIET_BANNED_TAGS: dict[str, list[str]] = {
+    "vegan": _MEAT_TAGS
+    + _FISH_TAGS
+    + _SEAFOOD_TAGS
+    + _DAIRY_TAGS
+    + _EGG_TAGS
+    + _HONEY_TAGS,
+    "vegetarian": _MEAT_TAGS + _FISH_TAGS + _SEAFOOD_TAGS,
+    "pescatarian": _MEAT_TAGS,
+    "halal": _ALCOHOL_TAGS,
+    "kosher": _SEAFOOD_TAGS,
 }
+_DIET_BANNED_TERMS: dict[str, list[str]] = {
+    "vegan": _GELATIN_TERMS,
+    "vegetarian": _GELATIN_TERMS,
+    "pescatarian": _GELATIN_TERMS,
+    "halal": _PORK_TERMS + _GELATIN_TERMS,
+    "kosher": _PORK_TERMS,
+    "no_pork": _PORK_TERMS,
+}
+
+_MACRO_FIELDS = ("calories", "proteines", "lipides", "glucides")
+
+
+def _dedupe(values: list[str]) -> list[str]:
+    """Supprime vides et doublons en conservant l'ordre."""
+    seen: dict[str, None] = {}
+    for value in values:
+        cleaned = value.strip()
+        if cleaned:
+            seen.setdefault(cleaned, None)
+    return list(seen)
 
 
 class SearchQueryBuilder:
-    """Construit la requête Elasticsearch à partir des cibles finales sécurisées."""
+    """Construit les critères de recherche à partir des cibles finales sécurisées."""
 
     def build(
         self,
         targets: FinalTargets,
         excluded_foods: list[str],
         diet_type: str,
-        medical_contraindications: list[str],
-    ) -> dict:
-        """Retourne un query DSL Elasticsearch (``function_score``)."""
-        must_not = self._build_exclusion_clauses(
-            excluded_foods, diet_type, medical_contraindications
+    ) -> SearchCriteria:
+        return SearchCriteria(
+            excluded_tags=_dedupe(_DIET_BANNED_TAGS.get(diet_type, [])),
+            excluded_terms=_dedupe(
+                list(excluded_foods) + _DIET_BANNED_TERMS.get(diet_type, [])
+            ),
+            required_fields=[
+                fp.field_name for fp in targets.filter_priorities if fp.is_strict
+            ],
+            macro_targets=self._build_macro_targets(targets),
+            preferences=self._build_preferences(targets.filter_priorities),
         )
-        filters = self._build_strict_filters(targets.filter_priorities)
-        scoring = self._build_scoring_functions(targets)
-
-        return {
-            "query": {
-                "function_score": {
-                    "query": {
-                        "bool": {
-                            "must_not": must_not,
-                            "filter": filters,
-                        }
-                    },
-                    "functions": scoring,
-                    "score_mode": "sum",
-                    "boost_mode": "replace",
-                }
-            }
-        }
-
-    # ── Filtres stricts (éliminatoires) ─────────────────────────────────────
-    @staticmethod
-    def _build_exclusion_clauses(
-        excluded_foods: list[str],
-        diet_type: str,
-        medical_contraindications: list[str],
-    ) -> list[dict]:
-        """Clauses ``must_not`` : aliments exclus, contre-indications, régime."""
-        clauses: list[dict] = []
-
-        if excluded_foods:
-            clauses.append({"terms": {_INGREDIENTS_FIELD: list(excluded_foods)}})
-        if medical_contraindications:
-            clauses.append(
-                {"terms": {_INGREDIENTS_FIELD: list(medical_contraindications)}}
-            )
-
-        banned = _DIET_BANNED_INGREDIENTS.get(diet_type)
-        if banned:
-            clauses.append({"terms": {_INGREDIENTS_FIELD: banned}})
-
-        return clauses
 
     @staticmethod
-    def _build_strict_filters(filter_priorities: list[FilterPriority]) -> list[dict]:
-        """Clauses ``filter`` pour chaque priorité ``is_strict=True``.
-
-        Le contrat ``FilterPriority`` ne porte pas de valeur cible ; un critère
-        strict exige donc au minimum la présence du champ sur la recette.
-        """
-        return [
-            {"exists": {"field": fp.field_name}}
-            for fp in filter_priorities
-            if fp.is_strict
-        ]
-
-    # ── Scoring souple (non éliminatoire) ───────────────────────────────────
-    def _build_scoring_functions(self, targets: FinalTargets) -> list[dict]:
-        """Fonctions de score : proximité macros + priorités souples pondérées."""
-        functions: list[dict] = []
-
-        # Proximité des macros/calories (toujours souple).
-        functions.append(
-            self._decay_function(
-                "calories", targets.calories, targets.tolerances.calories_pct
+    def _build_macro_targets(targets: FinalTargets) -> list[MacroTarget]:
+        """Proximité calories (tolérance calories) puis macros (tolérance macros) ;
+        une macro non fournie par l'appareil n'est pas scorée."""
+        result = []
+        for field in _MACRO_FIELDS:
+            tolerance = (
+                targets.tolerances.calories_pct
+                if field == "calories"
+                else targets.tolerances.macros_pct
             )
-        )
-        for field in ("proteines", "lipides", "glucides"):
-            functions.append(
-                self._decay_function(
-                    field, getattr(targets, field), targets.tolerances.macros_pct
+            target = getattr(targets, field)
+            if target is None:
+                continue
+            result.append(
+                MacroTarget(
+                    field=field,
+                    target=target,
+                    scale=max(abs(target) * tolerance, 1e-6),
                 )
             )
-
-        # Priorités configurables : is_strict=False → scoring uniquement.
-        for fp in targets.filter_priorities:
-            if not fp.is_strict:
-                functions.append(self._weighted_preference(fp))
-
-        return functions
+        return result
 
     @staticmethod
-    def _decay_function(field: str, target: float, tolerance_pct: float) -> dict:
-        """Décroissance gaussienne : score maximal à la cible, réduit hors tolérance.
-
-        Filtrée sur ``exists`` : les recettes sans macro renseignée ne sont pas
-        scorées (et n'altèrent pas la requête si le champ est absent du document).
-        """
-        scale = max(abs(target) * tolerance_pct, 1e-6)
-        return {
-            "filter": {"exists": {"field": field}},
-            "gauss": {field: {"origin": target, "scale": scale, "decay": 0.5}},
-            "weight": 1.0,
-        }
-
-    @staticmethod
-    def _weighted_preference(fp: FilterPriority) -> dict:
-        """Bonus de score pondéré par ``ui_weight`` si la recette porte le critère."""
-        return {
-            "filter": {"exists": {"field": fp.field_name}},
-            "weight": fp.ui_weight,
-        }
+    def _build_preferences(
+        filter_priorities: list[FilterPriority],
+    ) -> list[ScoringPreference]:
+        """Priorités configurables : is_strict=False → scoring uniquement."""
+        return [
+            ScoringPreference(field=fp.field_name, weight=fp.ui_weight)
+            for fp in filter_priorities
+            if not fp.is_strict
+        ]

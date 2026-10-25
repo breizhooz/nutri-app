@@ -9,15 +9,28 @@ Bibliothèque Python partagée entre tous les microservices. Contient les handle
 La librairie est installée dans chaque conteneur via le Dockerfile :
 
 ```dockerfile
-COPY shared/ /tmp/shared/
-RUN pip install /tmp/shared/
+COPY shared/ /shared/
+RUN pip install --no-cache-dir -c /shared/constraints.txt /shared/
 ```
 
-En développement local :
+En développement local (depuis `backend/`, un venv pour tous les services) :
 
 ```bash
-pip install -e ./shared/
+pip install -c shared/constraints.txt -e ./shared/
+pip install -r service-<nom>/requirements-dev.txt   # prod + outils de test
 ```
+
+### Versions : `constraints.txt` (source unique)
+
+`shared/constraints.txt` épingle **toutes** les versions Python du backend.
+Les `requirements.txt` (prod, dans l'image) et `requirements-dev.txt` (tests, CI,
+jamais dans l'image) des services ne listent que des noms ; ils commencent par
+`-c ../shared/constraints.txt` (resp. `-r requirements.txt`), donc tout
+`pip install -r …` est épinglé automatiquement.
+
+Pour monter une lib : modifier **uniquement** sa ligne dans `constraints.txt`.
+`make deps-check` (inclus dans `make check` et le job CI `infra-check`) refuse
+toute version écrite ailleurs ou toute lib non épinglée.
 
 ---
 
@@ -32,9 +45,8 @@ shared/
 │   │   └── middleware.py   # RequestLoggingMiddleware
 │   ├── models/             # Modèles SQLAlchemy partagés
 │   └── schemas/            # Schémas Pydantic partagés
-├── setup.py
-├── pyproject.toml
-└── requirements.txt
+├── pyproject.toml      # dépendances de nutri_shared (bornes minimales)
+└── constraints.txt     # versions épinglées de tout le backend
 ```
 
 ---
@@ -54,10 +66,10 @@ shared/
 Le logging est centralisé via **structlog** :
 
 ```
-structlog → stdout JSON → Filebeat → Elasticsearch → Grafana
+structlog → stdout JSON → Promtail → Loki → Grafana
 ```
 
-Les logs sont collectés par Filebeat depuis les conteneurs Docker et envoyés vers Elasticsearch pour visualisation dans Grafana.
+Les logs sont collectés par Promtail depuis les conteneurs Docker et envoyés vers Loki pour visualisation dans Grafana.
 
 ---
 

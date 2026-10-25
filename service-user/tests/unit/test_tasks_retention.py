@@ -2,7 +2,7 @@
 
 Les wrappers de ``app/tasks/retention.py`` ouvrent une session dédiée puis
 délèguent à ``retention_service`` (lui-même testé dans ``test_retention.py``).
-On neutralise ``_session_factory`` et on remplace les fonctions de service par
+On neutralise ``task_session`` et on remplace les fonctions de service par
 des doublures async pour valider le câblage (session ouverte, valeur relayée).
 """
 
@@ -14,7 +14,7 @@ from app.tasks import retention as retention_task
 
 
 class _SentinelSession:
-    """Marqueur : ce que ``_session_factory()()`` doit fournir à la tâche."""
+    """Marqueur : ce que ``task_session()`` doit fournir à la tâche."""
 
 
 @pytest.fixture
@@ -26,9 +26,8 @@ def fake_session(monkeypatch):
     async def _cm():
         yield session
 
-    # _run() fait `_session_factory()()` : le 1er appel rend la factory,
-    # le 2nd ouvre la session.
-    monkeypatch.setattr(retention_task, "_session_factory", lambda: _cm)
+    # _run() fait `async with task_session() as session`.
+    monkeypatch.setattr(retention_task, "task_session", _cm)
     return session
 
 

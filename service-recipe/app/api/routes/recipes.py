@@ -31,7 +31,6 @@ from app.schemas.recipe_import import (
     ImportEnqueueResponse,
     ImportTaskStatus,
 )
-from app.services.search_service import search_service
 from app.services.recipe_service import RecipeService
 from app.services.import_task_service import ImportTaskService
 from app.services.storage_service import StorageService
@@ -39,7 +38,6 @@ from nutri_shared.core.context import AccessContext
 
 from app.core.config import settings
 from app.core.deps import (
-    get_current_user_id,
     get_read_account_id,
     get_read_context,
     get_write_account_id,
@@ -57,7 +55,7 @@ router = APIRouter()
 class RecipeServiceFactory:
     @staticmethod
     def inject(session: AsyncSession = Depends(get_session)) -> RecipeService:
-        return RecipeService(RecipeRepository(session), search_service)
+        return RecipeService(RecipeRepository(session))
 
 
 class ImportTaskServiceFactory:
@@ -366,13 +364,3 @@ async def select_recipe_image(
 ) -> RecipeResponse:
     """Valide et enregistre l'image finale choisie parmi les propositions Unsplash."""
     return await service.select_image(recipe_id, body.unsplash_id, account_id)
-
-
-@router.post("/reindex", status_code=status.HTTP_200_OK)
-async def reindex_recipes(
-    session: AsyncSession = Depends(get_session),
-    _: str = Depends(get_current_user_id),
-):
-    """Reindex all recipes into Elasticsearch."""
-    count = await search_service.reindex_all(session)
-    return {"indexed": count}

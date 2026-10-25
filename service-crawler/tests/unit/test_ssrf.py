@@ -1,7 +1,7 @@
 """Tests du garde anti-SSRF (SEC-03)."""
 
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 from app.core.ssrf import UnsafeUrlError, assert_public_url
 from app.services.web_service import WebService
@@ -72,15 +72,9 @@ class TestAssertPublicUrl:
 class TestFetchEnforcesGuard:
     @pytest.mark.asyncio
     async def test_fetch_rejects_internal_url_without_any_request(self):
-        # Le garde doit bloquer AVANT toute requête httpx et SANS repli Playwright.
-        with (
-            patch("app.services.web_service.httpx.AsyncClient") as mock_cls,
-            patch.object(
-                WebService, "_fetch_with_playwright", new_callable=AsyncMock
-            ) as mock_pw,
-        ):
+        # Le garde doit bloquer AVANT toute requête httpx.
+        with patch("app.services.web_service.httpx.AsyncClient") as mock_cls:
             with pytest.raises(UnsafeUrlError):
                 await WebService().fetch("http://169.254.169.254/latest/meta-data/")
 
         mock_cls.assert_not_called()
-        mock_pw.assert_not_called()

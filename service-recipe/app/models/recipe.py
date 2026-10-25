@@ -1,5 +1,6 @@
 from typing import Any
-from sqlalchemy import String, Text, Integer, Float, func, JSON, Enum as SQLEnum
+from sqlalchemy import String, Text, Integer, Float, Index, func, JSON, Enum as SQLEnum
+from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from datetime import datetime
 
@@ -14,6 +15,9 @@ class Recipe(AbstractModel):
     """
 
     __tablename__ = "recipes"
+    __table_args__ = (
+        Index("ix_recipes_search_vector", "search_vector", postgresql_using="gin"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
@@ -122,6 +126,16 @@ class Recipe(AbstractModel):
         default=func.now(), onupdate=func.now()
     )
 
+    # Recherche plein texte : tsvector maintenu par des triggers PostgreSQL
+    # (titre, ingrédients, description, instructions — cf. migration
+    # e5f6a7b8c9d0). Jamais écrit par l'application ; Text sous SQLite (tests).
+    search_vector: Mapped[str | None] = mapped_column(
+        TSVECTOR().with_variant(Text(), "sqlite"), deferred=True
+    )
+
+    # delete-orphan : supprimer une recette chargée avec ses ingrédients supprime
+    # ces lignes (sinon l'ORM met recipe_id à NULL → violation NOT NULL → 500).
+    # passive_deletes : les lignes non chargées sont laissées au ON DELETE CASCADE.
     recipe_ingredients: Mapped[list["RecipeIngredient"]] = relationship(
-        back_populates="recipe", passive_deletes=True
+        back_populates="recipe", cascade="all, delete-orphan", passive_deletes=True
     )

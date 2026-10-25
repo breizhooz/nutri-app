@@ -7,10 +7,11 @@ from sqlalchemy.orm import sessionmaker
 
 from celery_app import celery_app
 from app.core.config import settings
+from app.core.ssrf import UnsafeUrlError
 from app.models.enums import CrawlType
 from app.repositories.result_repository import ResultRepository
 from app.repositories.source_repository import SourceRepository
-from app.services.web_service import WebService
+from app.services.web_service import PermanentFetchError, WebService
 from app.services.notification_client import NotificationClient
 
 logger = logging.getLogger(__name__)
@@ -51,6 +52,11 @@ async def _do_crawl(
 
         try:
             data = await WebService().fetch(url)
+        except (PermanentFetchError, UnsafeUrlError) as exc:
+            # Définitif (4xx, URL interdite, page vide rendue en JS) : réessayer
+            # ne changerait rien → échec immédiat, avec le vrai motif.
+            logger.warning("Crawl abandonné pour %s : %s", url, exc)
+            raise
         except Exception as exc:
             logger.error("Fetch failed for %s: %s", url, exc)
             raise task.retry(exc=exc)

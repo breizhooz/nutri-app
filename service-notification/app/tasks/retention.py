@@ -10,7 +10,7 @@ import logging
 from celery_app import celery_app
 
 from app.core.config import settings
-from app.db.session import _session_factory
+from app.db.session import task_session
 from app.services import retention_service
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ def purge_old_notifications() -> int:
     """Purge quotidienne de l'historique des notifications au-delà de la rétention."""
 
     async def _main() -> int:
-        async with _session_factory()() as session:
+        async with task_session() as session:
             return await retention_service.purge_old_notifications(
                 session, settings.NOTIFICATION_RETENTION_DAYS
             )

@@ -102,7 +102,7 @@ class SpoonacularCacheService:
 
         Passe par le « process habituel » (``RecipeService.create_full``) :
         hydratation/création des ingrédients, calcul des macros via
-        service-nutrition, indexation Elasticsearch. Lève ``RecipeNotFound`` si la
+        service-nutrition. Lève ``RecipeNotFound`` si la
         recette n'est pas dans le cache Spoonacular.
         """
         cached = await self._repository.get_by_spoonacular_id(spoonacular_id)

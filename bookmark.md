@@ -187,7 +187,7 @@ DELETE  /api/v1/users/{user_id}       Supprimer utilisateur
 ```
 GET     /health
 GET     /health/db
-GET     /api/v1/search/recipes                 Recherche Elasticsearch
+GET     /api/v1/search/recipes                 Recherche plein texte (PostgreSQL)
 POST    /api/v1/recipe                          Créer une recette
 PUT     /api/v1/recipe/id/{recipe_id}           Mettre à jour recette
 GET     /api/v1/recipe/{slug}                   Recette par slug
@@ -313,7 +313,6 @@ POST    /api/v1/profiles/me/preferences         Définir préférences alimentai
 | service-nutrition | `localhost:8005` |
 | service-notification | `localhost:8006` |
 | service-profile | `localhost:8007` |
-| Elasticsearch | `localhost:9200` |
 | Redis | `localhost:6379` |
 | SeaweedFS S3 | `localhost:8333` |
 | Prometheus | `localhost:9090` |

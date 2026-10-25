@@ -25,7 +25,7 @@ async def get_history(
         user_id = uuid.UUID(user_slug)
     except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=t.get("errors.invalid_payload"),
         )
     if user_id != current_user_id:

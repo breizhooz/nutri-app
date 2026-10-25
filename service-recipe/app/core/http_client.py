@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 import httpx
 from app.core.config import settings
+from app.schemas.search import SearchCriteria
 
 logger = logging.getLogger(__name__)
 
@@ -18,10 +19,10 @@ class NutritionResult:
 
 @dataclass
 class NutritionTargetsResult:
-    """Sortie du moteur de cibles : cibles finales (+ warnings) et requête ES prête."""
+    """Sortie du moteur de cibles : cibles finales (+ warnings) et critères de recherche."""
 
     targets: dict
-    search_query: dict
+    search_criteria: SearchCriteria
 
 
 class NutritionServiceClient:
@@ -87,19 +88,16 @@ class NutritionServiceClient:
     async def compute_targets(
         self,
         *,
-        goal: str,
         diet_type: str,
-        tdee_kcal: float,
-        bmr_kcal: float,
-        weight_kg: float,
+        targets: dict,
         excluded_foods: list[str],
-        medical_contraindications: list[str],
         adjustment: dict | None = None,
     ) -> "NutritionTargetsResult | None":
         """Appelle le moteur de cibles (POST /api/v1/nutrition-targets).
 
-        ``adjustment`` (optionnel) transporte les curseurs UI : intensité,
-        tolérance variété et overrides manuels.
+        ``targets`` : cibles journalières calculées sur l'appareil (ou par un
+        coach) — le serveur n'a aucune donnée corporelle. ``adjustment``
+        (optionnel) transporte les curseurs UI : tolérance variété et overrides.
 
         Best-effort : retourne None si le service est absent, en erreur, ou si la
         réponse est malformée — l'appelant retombe alors sur une recherche standard.
@@ -107,13 +105,9 @@ class NutritionServiceClient:
         if not settings.SERVICE_NUTRITION_URL:
             return None
         payload = {
-            "goal": goal,
             "diet_type": diet_type,
-            "tdee_kcal": tdee_kcal,
-            "bmr_kcal": bmr_kcal,
-            "weight_kg": weight_kg,
+            "targets": targets,
             "excluded_foods": excluded_foods,
-            "medical_contraindications": medical_contraindications,
         }
         if adjustment:
             payload["adjustment"] = adjustment
@@ -123,7 +117,8 @@ class NutritionServiceClient:
                 resp.raise_for_status()
             data = resp.json()
             return NutritionTargetsResult(
-                targets=data["targets"], search_query=data["search_query"]
+                targets=data["targets"],
+                search_criteria=SearchCriteria.model_validate(data["search_criteria"]),
             )
         except (httpx.HTTPStatusError, httpx.RequestError, KeyError, ValueError) as exc:
             logger.warning("Nutrition targets computation failed: %s", exc)

@@ -2,7 +2,7 @@
 
 C'est ce ``RecipeImportItem`` qui est ensuite passé à
 ``RecipeService.create_full`` — le « process habituel » : résolution/création des
-ingrédients, calcul des macros via service-nutrition, indexation Elasticsearch.
+ingrédients, calcul des macros via service-nutrition.
 """
 
 import html

@@ -50,13 +50,13 @@ async def send_notification(
         user_id = uuid.UUID(payload.user_slug)
     except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=t.get("errors.invalid_payload"),
         )
     if payload.type == NotificationType.PASSWORD_RESET:
         if not payload.recipient_email:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=t.get("errors.recipient_email_required", type="password_reset"),
             )
         reset_url = (payload.data or {}).get("reset_url", "")
@@ -85,7 +85,7 @@ async def send_notification(
     if payload.type == NotificationType.MFA_CODE:
         if not payload.recipient_email:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=t.get("errors.recipient_email_required", type="mfa_code"),
             )
         code = (payload.data or {}).get("code", "")

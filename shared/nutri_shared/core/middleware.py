@@ -8,6 +8,7 @@ from starlette.responses import Response
 
 try:
     from opentelemetry import trace as otel_trace
+
     _OTEL_AVAILABLE = True
 except ImportError:
     _OTEL_AVAILABLE = False
@@ -97,8 +98,8 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         _log.info("request", status_code=response.status_code)
         response.headers["X-Request-ID"] = request_id
         # Exposé au front (admin) pour proposer une recherche Loki ciblée
-        # `{trace_id="…"}` quand une requête plante. `trace_id` est un label
-        # Loki (extrait par promtail), donc directement requêtable dans Grafana.
+        # `{service=~".+"} | trace_id="…"` quand une requête plante. `trace_id`
+        # est une métadonnée structurée Loki (extraite par Alloy).
         if trace_id is not None:
             response.headers["X-Trace-Id"] = trace_id
         return response

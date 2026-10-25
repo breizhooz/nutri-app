@@ -46,12 +46,6 @@ def _make_recipe(recipe_id: int = 1, title: str = "Tarte aux pommes") -> MagicMo
     return r
 
 
-def _make_search() -> AsyncMock:
-    search = AsyncMock()
-    search.index_recipe.return_value = None
-    return search
-
-
 def _make_data(**kwargs) -> RecipeManualCreate:
     defaults = dict(
         title="Tarte aux pommes",
@@ -88,16 +82,12 @@ class TestRecipeServiceCreateManual:
         return _make_repo()
 
     @pytest.fixture
-    def search(self):
-        return _make_search()
-
-    @pytest.fixture
     def nutrition(self):
         return _make_nutrition_client()
 
     @pytest.fixture
-    def service(self, repo, search, nutrition):
-        return RecipeService(repo, search, nutrition_client=nutrition)
+    def service(self, repo, nutrition):
+        return RecipeService(repo, nutrition_client=nutrition)
 
     async def test_returns_created_recipe(self, service, repo):
         result = await service.create_manual(
@@ -162,30 +152,15 @@ class TestRecipeServiceCreateManual:
         assert recipe_ingredients[0].unit == "g"
         assert recipe_ingredients[0].quantity == 1.0
 
-    async def test_indexes_recipe_in_search(self, service, repo, search):
-        recipe = _make_recipe()
-        repo.create.return_value = recipe
-        await service.create_manual(_make_data(), user_id="u", account_id="acc-u")
-        search.index_recipe.assert_called_once_with(recipe)
-
-    async def test_es_failure_does_not_raise(self, service, repo, search):
-        search.index_recipe.side_effect = Exception("ES down")
-        result = await service.create_manual(
-            _make_data(), user_id="u", account_id="acc-u"
-        )
-        assert result is not None
-
-    async def test_nutrition_called_when_ingredients_present(
-        self, repo, search, nutrition
-    ):
-        service = RecipeService(repo, search, nutrition_client=nutrition)
+    async def test_nutrition_called_when_ingredients_present(self, repo, nutrition):
+        service = RecipeService(repo, nutrition_client=nutrition)
         data = _make_data(
             ingredients=[ManualIngredient(name="farine", quantity=200.0, unit="g")]
         )
         await service.create_manual(data, user_id="u", account_id="acc-u")
         nutrition.calculate.assert_called_once()
 
-    async def test_macros_saved_when_nutrition_returns_result(self, repo, search):
+    async def test_macros_saved_when_nutrition_returns_result(self, repo):
         result = NutritionResult(
             calories_per_serving=350.0,
             proteins_per_serving=10.0,
@@ -193,7 +168,7 @@ class TestRecipeServiceCreateManual:
             fats_per_serving=8.0,
         )
         nutrition = _make_nutrition_client(result=result)
-        service = RecipeService(repo, search, nutrition_client=nutrition)
+        service = RecipeService(repo, nutrition_client=nutrition)
         data = _make_data(
             ingredients=[ManualIngredient(name="farine", quantity=200.0, unit="g")]
         )
@@ -206,9 +181,9 @@ class TestRecipeServiceCreateManual:
             fats=8.0,
         )
 
-    async def test_macros_not_saved_when_nutrition_returns_none(self, repo, search):
+    async def test_macros_not_saved_when_nutrition_returns_none(self, repo):
         nutrition = _make_nutrition_client(result=None)
-        service = RecipeService(repo, search, nutrition_client=nutrition)
+        service = RecipeService(repo, nutrition_client=nutrition)
         data = _make_data(
             ingredients=[ManualIngredient(name="farine", quantity=200.0, unit="g")]
         )
@@ -221,10 +196,10 @@ class TestRecipeServiceCreateManual:
         )
         nutrition.calculate.assert_not_called()
 
-    async def test_nutrition_failure_does_not_raise(self, repo, search):
+    async def test_nutrition_failure_does_not_raise(self, repo):
         nutrition = _make_nutrition_client()
         nutrition.calculate.side_effect = Exception("timeout")
-        service = RecipeService(repo, search, nutrition_client=nutrition)
+        service = RecipeService(repo, nutrition_client=nutrition)
         data = _make_data(
             ingredients=[ManualIngredient(name="farine", quantity=200.0, unit="g")]
         )
@@ -241,16 +216,12 @@ class TestRecipeServiceCreateFull:
         return _make_repo()
 
     @pytest.fixture
-    def search(self):
-        return _make_search()
-
-    @pytest.fixture
     def nutrition(self):
         return _make_nutrition_client()
 
     @pytest.fixture
-    def service(self, repo, search, nutrition):
-        return RecipeService(repo, search, nutrition_client=nutrition)
+    def service(self, repo, nutrition):
+        return RecipeService(repo, nutrition_client=nutrition)
 
     async def test_honors_all_enum_fields(self, service, repo):
         await service.create_full(
@@ -298,35 +269,25 @@ class TestRecipeServiceCreateFull:
         await service.create_full(item, user_id="u", account_id="acc-u")
         assert repo.get_or_create_ingredient.call_count == 2
 
-    async def test_indexes_recipe_in_search(self, service, repo, search):
-        recipe = _make_recipe()
-        repo.create.return_value = recipe
-        await service.create_full(_make_import_item(), user_id="u", account_id="acc-u")
-        search.index_recipe.assert_called_once_with(recipe)
-
-    async def test_does_not_call_unsplash_on_bulk_import(self, repo, search, nutrition):
+    async def test_does_not_call_unsplash_on_bulk_import(self, repo, nutrition):
         # L'import en masse ne doit JAMAIS interroger Unsplash (sinon N appels →
         # quota demo 50/h cramé). La recherche d'image reste à la demande.
         unsplash = AsyncMock()
-        service = RecipeService(
-            repo, search, nutrition_client=nutrition, unsplash=unsplash
-        )
+        service = RecipeService(repo, nutrition_client=nutrition, unsplash=unsplash)
         await service.create_full(
             _make_import_item(image_url="http://img"), user_id="u", account_id="acc-u"
         )
         unsplash.search.assert_not_called()
 
-    async def test_nutrition_called_when_ingredients_present(
-        self, repo, search, nutrition
-    ):
-        service = RecipeService(repo, search, nutrition_client=nutrition)
+    async def test_nutrition_called_when_ingredients_present(self, repo, nutrition):
+        service = RecipeService(repo, nutrition_client=nutrition)
         item = _make_import_item(
             ingredients=[RecipeIngredientImport(name="riz", quantity=300.0, unit="g")]
         )
         await service.create_full(item, user_id="u", account_id="acc-u")
         nutrition.calculate.assert_called_once()
 
-    async def test_macros_saved_when_nutrition_returns_result(self, repo, search):
+    async def test_macros_saved_when_nutrition_returns_result(self, repo):
         result = NutritionResult(
             calories_per_serving=480.0,
             proteins_per_serving=12.0,
@@ -334,7 +295,7 @@ class TestRecipeServiceCreateFull:
             fats_per_serving=14.0,
         )
         nutrition = _make_nutrition_client(result=result)
-        service = RecipeService(repo, search, nutrition_client=nutrition)
+        service = RecipeService(repo, nutrition_client=nutrition)
         item = _make_import_item(
             ingredients=[RecipeIngredientImport(name="riz", quantity=300.0, unit="g")]
         )
@@ -363,12 +324,8 @@ class TestGenerateUniqueSlug:
         return _make_repo()
 
     @pytest.fixture
-    def search(self):
-        return _make_search()
-
-    @pytest.fixture
-    def service(self, repo, search):
-        return RecipeService(repo, search, nutrition_client=_make_nutrition_client())
+    def service(self, repo):
+        return RecipeService(repo, nutrition_client=_make_nutrition_client())
 
     async def test_returns_base_slug_when_free(self, service, repo):
         repo.slug_exists.return_value = False
@@ -410,9 +367,7 @@ class TestRecipeServiceRead:
 
     @pytest.fixture
     def service(self, repo):
-        return RecipeService(
-            repo, _make_search(), nutrition_client=_make_nutrition_client()
-        )
+        return RecipeService(repo, nutrition_client=_make_nutrition_client())
 
     async def test_get_by_slug_returns_recipe(self, service, repo):
         recipe = _owned_recipe("acc-1")
@@ -470,12 +425,8 @@ class TestRecipeServiceUpdate:
         return repo
 
     @pytest.fixture
-    def search(self):
-        return _make_search()
-
-    @pytest.fixture
-    def service(self, repo, search):
-        return RecipeService(repo, search, nutrition_client=_make_nutrition_client())
+    def service(self, repo):
+        return RecipeService(repo, nutrition_client=_make_nutrition_client())
 
     async def test_raises_not_found_when_missing(self, service, repo):
         repo.get_by_id_with_relations.return_value = None
@@ -498,15 +449,6 @@ class TestRecipeServiceUpdate:
         _, fields, _ = repo.apply_update.call_args[0]
         assert fields["slug"] == "nouveau-titre"
 
-    async def test_indexes_after_update(self, service, repo, search):
-        await service.update(1, RecipeUpdate(comment="ok"), "user-1")
-        search.index_recipe.assert_called_once()
-
-    async def test_es_failure_does_not_raise(self, service, repo, search):
-        search.index_recipe.side_effect = Exception("ES down")
-        result = await service.update(1, RecipeUpdate(comment="ok"), "user-1")
-        assert result is not None
-
 
 class TestRecipeServiceDelete:
     @pytest.fixture
@@ -516,12 +458,8 @@ class TestRecipeServiceDelete:
         return repo
 
     @pytest.fixture
-    def search(self):
-        return _make_search()
-
-    @pytest.fixture
-    def service(self, repo, search):
-        return RecipeService(repo, search, nutrition_client=_make_nutrition_client())
+    def service(self, repo):
+        return RecipeService(repo, nutrition_client=_make_nutrition_client())
 
     async def test_raises_not_found_when_missing(self, service, repo):
         repo.get_by_id_with_relations.return_value = None
@@ -533,13 +471,7 @@ class TestRecipeServiceDelete:
         with pytest.raises(RecipeForbidden):
             await service.delete(1, "user-1")
 
-    async def test_deletes_and_unindexes(self, service, repo, search):
-        await service.delete(1, "user-1")
-        repo.delete.assert_called_once()
-        search.delete_recipe.assert_called_once_with(1)
-
-    async def test_es_failure_does_not_raise(self, service, repo, search):
-        search.delete_recipe.side_effect = Exception("ES down")
+    async def test_deletes(self, service, repo):
         await service.delete(1, "user-1")
         repo.delete.assert_called_once()
 
@@ -552,21 +484,10 @@ class TestRecipeServiceDeleteByUser:
         return repo
 
     @pytest.fixture
-    def search(self):
-        return _make_search()
+    def service(self, repo):
+        return RecipeService(repo, nutrition_client=_make_nutrition_client())
 
-    @pytest.fixture
-    def service(self, repo, search):
-        return RecipeService(repo, search, nutrition_client=_make_nutrition_client())
-
-    async def test_deletes_user_recipes_and_unindexes(self, service, repo, search):
-        deleted = await service.delete_by_user("user-1")
-        assert deleted == 3
-        repo.delete_by_user.assert_awaited_once_with("user-1")
-        search.delete_by_user.assert_awaited_once_with("user-1")
-
-    async def test_es_failure_does_not_raise(self, service, repo, search):
-        search.delete_by_user.side_effect = Exception("ES down")
+    async def test_deletes_user_recipes(self, service, repo):
         deleted = await service.delete_by_user("user-1")
         assert deleted == 3
         repo.delete_by_user.assert_awaited_once_with("user-1")

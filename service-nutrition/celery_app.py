@@ -10,6 +10,12 @@ celery_app = Celery(
 )
 
 celery_app.conf.timezone = "Europe/Paris"
+
+# File dédiée (comme recipe/crawler) : sans elle, les tâches partaient dans la
+# file par défaut « celery », partagée avec d'autres services dont les workers
+# jetaient les tâches inconnues (ex. purges RGPD, effacement de compte).
+# Le worker compose écoute cette file (-Q nutrition) ; le beat y envoie aussi.
+celery_app.conf.task_default_queue = "nutrition"
 celery_app.conf.beat_schedule = {
     "import-ciqual-monthly": {
         "task": "app.tasks.nutrition_tasks.import_ciqual",

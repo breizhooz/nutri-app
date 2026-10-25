@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -82,18 +82,6 @@ def override_user_client():
     app.dependency_overrides[get_user_client] = _get_user_client
     yield mock_client
     app.dependency_overrides.pop(get_user_client, None)
-
-
-@pytest.fixture
-def mock_es():
-    """Patche le es_client global utilisé par search_service."""
-    with patch("app.core.elasticsearch.es_client") as mock:
-        mock.index = AsyncMock()
-        mock.delete = AsyncMock()
-        mock.search = AsyncMock(
-            return_value={"hits": {"total": {"value": 0}, "hits": []}}
-        )
-        yield mock
 
 
 def make_mock_recipe(

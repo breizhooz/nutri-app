@@ -52,14 +52,14 @@ async def generate_menu(
     profile_client: ServicesProfileClient = Depends(get_profile_client),
     ctx: AccessContext = Depends(get_write_context),
 ):
-    # Contraintes du profil (allergies, aliments exclus, régime, cible
+    # Contraintes du profil du compte actif (aliments exclus, régime, cible
     # calorique). Fail-closed : service-profile en erreur → 503, plutôt que de
-    # générer un menu qui ignore des allergies déclarées. Pas de profil (404)
+    # générer un menu qui ignore des exclusions déclarées. Pas de profil (404)
     # ou intégration désactivée → contraintes vides. Les exclusions du payload
     # restent les seules persistées sur le menu ; celles du profil sont
     # réappliquées dynamiquement à chaque génération.
     try:
-        summary = await profile_client.get_nutrition_summary(ctx.sub)
+        summary = await profile_client.get_nutrition_summary(ctx.account_id)
     except ServiceUnavailableError:
         raise LocalizedHTTPException.service_profile_unavailable(request)
     constraints = build_constraints(summary)

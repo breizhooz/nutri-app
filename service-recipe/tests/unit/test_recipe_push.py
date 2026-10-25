@@ -36,9 +36,7 @@ def _make_source(recipe_id: int = 7) -> MagicMock:
 
 
 def _make_service(repo: AsyncMock) -> RecipeService:
-    search = AsyncMock()
-    search.index_recipe.return_value = None
-    return RecipeService(repo, search, AsyncMock(), AsyncMock())
+    return RecipeService(repo, AsyncMock(), AsyncMock())
 
 
 @pytest.mark.asyncio

@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.session import get_session
 
 from app.schemas.calculate import LookupResponse
 from app.services.lookup_service import LookupService
@@ -9,9 +12,10 @@ router = APIRouter()
 @router.get("", response_model=list[LookupResponse])
 async def lookup_item(
     q: str = Query(..., min_length=2, description="Nom d'ingrédient à chercher"),
+    session: AsyncSession = Depends(get_session),
 ) -> list[LookupResponse]:
     """Fuzzy match d'un aliment dans le référentiel nutritionnel."""
-    results = await LookupService().search(q)
+    results = await LookupService(session).search(q)
     return [
         LookupResponse(
             slug=r.slug,

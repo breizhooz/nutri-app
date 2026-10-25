@@ -10,12 +10,6 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str
     CELERY_RESULT_BACKEND: str
 
-    S3_ENDPOINT: str
-    S3_ACCESS_KEY: str
-    S3_SECRET_KEY: str
-    S3_BUCKET_CRAWLER: str
-    S3_SECURE: bool = False
-
     SERVICE_RECIPE_URL: str
     SERVICE_RECIPE_TOKEN: str = ""
 
@@ -45,7 +39,7 @@ class Settings(BaseSettings):
 
     GROQ_API_KEY: str = ""
     GROQ_API_KEYS: str = ""  # comma-separated list; overrides GROQ_API_KEY when set
-    GROQ_MODEL: str = "llama-3.1-8b-instant"
+    GROQ_MODEL: str = "openai/gpt-oss-20b"
     GROQ_CONCURRENCY_PER_KEY: int = 2
 
     REDIS_CACHE_URL: str = "redis://redis:6379/2"

@@ -1,8 +1,8 @@
 """Client HTTP inter-service vers service-profile.
 
-Récupère le résumé nutritionnel d'un utilisateur (profil, calcul métabolique,
-préférences, contraintes médicales) en un seul appel, authentifié par le token
-de service ``SERVICE_PROFILE_TOKEN``.
+Récupère le résumé nutritionnel d'un compte (objectif, régime, aliments exclus,
+cibles) en un seul appel, authentifié par le token de service
+``SERVICE_PROFILE_TOKEN``.
 """
 
 import logging
@@ -48,9 +48,9 @@ class ProfileClient:
             return await client.request(method, url, **kwargs)
 
     async def get_nutrition_summary(
-        self, user_id: uuid.UUID
+        self, account_id: uuid.UUID
     ) -> NutritionSummary | None:
-        """Retourne le résumé nutritionnel d'un utilisateur.
+        """Retourne le résumé nutritionnel d'un compte.
 
         Best-effort : retourne None si le client est désactivé, si le profil
         n'existe pas (404), ou en cas d'erreur réseau / réponse invalide — afin
@@ -60,18 +60,20 @@ class ProfileClient:
             logger.info("ProfileClient désactivé (aucun token) — appel ignoré")
             return None
 
-        url = f"{self._base_url}/api/v1/profiles/{user_id}/nutrition-summary"
+        url = (
+            f"{self._base_url}/api/v1/internal/accounts/{account_id}/nutrition-summary"
+        )
         try:
             resp = await self._request("GET", url, headers=self._headers())
             if resp.status_code == 404:
-                logger.info("Aucun profil nutrition pour user_id=%s", user_id)
+                logger.info("Aucun profil nutrition pour account_id=%s", account_id)
                 return None
             resp.raise_for_status()
             return NutritionSummary.model_validate(resp.json())
         except (httpx.HTTPError, ValueError) as exc:
             logger.warning(
-                "Échec récupération du résumé nutrition pour user_id=%s : %s",
-                user_id,
+                "Échec récupération du résumé nutrition pour account_id=%s : %s",
+                account_id,
                 exc,
             )
             return None

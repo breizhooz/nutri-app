@@ -18,7 +18,6 @@ os.environ["NUTRITIONIX_API_KEY"] = "test-api-key"
 os.environ["SERVICE_NUTRITION_TOKEN"] = "test-service-token"
 os.environ["SERVICE_NOTIFICATION_URL"] = "http://notification-test:8006"
 os.environ["SERVICE_NOTIFICATION_TOKEN"] = "test-notif-token"
-os.environ["ELASTICSEARCH_URL"] = "http://es-test:9200"
 
 from app.db.base import Base  # noqa: E402
 from app.db.session import get_session  # noqa: E402

@@ -31,13 +31,13 @@ async def calculate_macros(
         account_id = uuid.UUID(payload.account_id) if payload.account_id else None
     except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=t.get("errors.invalid_payload"),
         )
 
     if not payload.ingredients:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=t.get("extraction.no_ingredients"),
         )
 

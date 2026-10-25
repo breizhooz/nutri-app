@@ -81,6 +81,10 @@ def compose_env(svc: str) -> set[str]:
 
     keys: set[str] = set()
     for frag in (BACKEND / "infra" / "compose").glob("*.yml"):
+        # prod.yml est un override (balises compose !reset/!override, illisibles
+        # par yaml.safe_load) : la chaîne vérifiée est celle des fragments de base.
+        if frag.name == "prod.yml":
+            continue
         doc = yaml.safe_load(frag.read_text()) or {}
         spec = (doc.get("services") or {}).get(f"service-{svc}")
         if not spec:

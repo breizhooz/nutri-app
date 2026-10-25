@@ -17,8 +17,8 @@ class TranslatableEnum(str, enum.Enum):
     """Classe de base pour les enums traduisibles.
 
     Convention : clé i18n = snake_case(NomClasse).valeur
-    Exemple : BiologicalSex.MALE → "biological_sex.male"
-    La valeur courte ("male") est ce qui est stocké en base.
+    Exemple : DietType.VEGAN → "diet_type.vegan"
+    La valeur courte ("vegan") est ce qui est stocké en base.
     """
 
     def i18n_key(self) -> str:
@@ -31,58 +31,6 @@ class TranslatableEnum(str, enum.Enum):
         from app.i18n import t
 
         return t.get(self.i18n_key(), locale)
-
-
-class BiologicalSex(TranslatableEnum):
-    """Sexe biologique — indispensable pour les formules métaboliques (Harris-Benedict, Mifflin-St Jeor)."""
-
-    MALE = "male"
-    FEMALE = "female"
-    NOT_SPECIFIED = "not_specified"
-
-
-class PracticeLevel(TranslatableEnum):
-    """Niveau de pratique sportive."""
-
-    BEGINNER = "beginner"
-    INTERMEDIATE = "intermediate"
-    ADVANCED = "advanced"
-    COMPETITIVE = "competitive"
-
-
-class ActivityLevel(TranslatableEnum):
-    """Niveau d'activité professionnelle / quotidienne hors sport (NEAT)."""
-
-    SEDENTARY = "sedentary"
-    LIGHT = "light"
-    MODERATE = "moderate"
-    HEAVY = "heavy"
-    VERY_HEAVY = "very_heavy"
-
-
-class StressLevel(TranslatableEnum):
-    """Niveau de stress perçu — impacte le cortisol et la récupération."""
-
-    LOW = "low"
-    MODERATE = "moderate"
-    HIGH = "high"
-
-
-class Chronotype(TranslatableEnum):
-    """Chronotype circadien — influe sur le métabolisme et la fenêtre anabolique."""
-
-    MORNING = "morning"
-    INTERMEDIATE = "intermediate"
-    EVENING = "evening"
-
-
-class AlcoholFrequency(TranslatableEnum):
-    """Fréquence de consommation d'alcool."""
-
-    NEVER = "never"
-    OCCASIONAL = "occasional"
-    MODERATE = "moderate"
-    REGULAR = "regular"
 
 
 class DietType(TranslatableEnum):
@@ -132,20 +80,3 @@ class CookingFor(TranslatableEnum):
     COUPLE = "couple"
     FAMILY = "family"
     MEAL_PREP = "meal_prep"
-
-
-class MedicalCategory(TranslatableEnum):
-    """Catégorie médicale d'une pathologie."""
-
-    METABOLIC = "metabolic"
-    DIGESTIVE = "digestive"
-    CARDIOVASCULAR = "cardiovascular"
-    HORMONAL = "hormonal"
-    OTHER = "other"
-
-
-class AllergySeverity(TranslatableEnum):
-    """Niveau de sévérité d'une réaction alimentaire."""
-
-    INTOLERANCE = "intolerance"
-    ALLERGY = "allergy"
