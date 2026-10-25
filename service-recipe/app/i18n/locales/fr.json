@@ -287,12 +287,5 @@
         "unavailable": "Service utilisateur indisponible"
       }
     }
-  },
-  "elasticsearch":{
-    "errors":{
-      "indexation_for_recipe": "ES l'indexation pour la recette a échoué",
-      "update_indexation_for_recipe": "ES la re-indexation pour la recette a échoué",
-      "delete_fail_for_recipe": "La suppression de la recette a échoué dans l'index"
-    }
   }
 }

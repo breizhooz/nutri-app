@@ -21,7 +21,7 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v5
-        with: { python-version: '3.12' }
+        with: { python-version: '3.14' }
 
       - name: Secrets factices
         # Les *.secrets.env sont gitignorés donc absents en CI. On les recrée
@@ -36,7 +36,7 @@ jobs:
           done
           touch infra/env/secrets/platform.secrets.env
 
-      - name: make check (compose config + env-check)
+      - name: make check (compose config + env-check + deps-check)
         run: |
           pip install pyyaml
           make check
@@ -50,14 +50,15 @@ jobs:
       
       - name: Setup Python
         uses: actions/setup-python@v5
-        with: { python-version: '3.12' }
+        with: { python-version: '3.14' }
 
       - name: Install & Test
         run: |
           cd service-user
-          pip install ../shared/
-          pip install -r requirements.txt
-          pip install pytest pytest-cov ruff==0.15.14 bandit
+          # Versions : ../shared/constraints.txt (source unique, cf. make deps-check)
+          pip install -c ../shared/constraints.txt ../shared/
+          pip install -r requirements-dev.txt
+          pip install -c ../shared/constraints.txt ruff bandit
 
       - name: Run linter user
         run: |
@@ -101,20 +102,33 @@ jobs:
   analyze-recipe:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-recipe')
     runs-on: ubuntu-latest
+    services:
+      # PostgreSQL jetable : tests plein texte / pg_trgm (TEST_POSTGRES_URL).
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v5
         with: { fetch-depth: 0 }
       
       - name: Setup Python
         uses: actions/setup-python@v5
-        with: { python-version: '3.12' }
+        with: { python-version: '3.14' }
 
       - name: Install & Test
         run: |
           cd service-recipe
-          pip install ../shared/
-          pip install -r requirements.txt
-          pip install pytest pytest-cov ruff==0.15.14 bandit
+          # Versions : ../shared/constraints.txt (source unique, cf. make deps-check)
+          pip install -c ../shared/constraints.txt ../shared/
+          pip install -r requirements-dev.txt
+          pip install -c ../shared/constraints.txt ruff bandit
 
       - name: Run linter recipe
         run: |
@@ -150,6 +164,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Run test recipe
+        env:
+          TEST_POSTGRES_URL: postgresql+asyncpg://test:test@localhost:5432/test
         run: |
           cd service-recipe
           pytest --cov=app --cov-report=xml:coverage.xml --cov-fail-under=80 -m "not smoke"
@@ -164,14 +180,15 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v5
-        with: { python-version: '3.12' }
+        with: { python-version: '3.14' }
 
       - name: Install & Test
         run: |
           cd service-menu
-          pip install ../shared/
-          pip install -r requirements.txt
-          pip install pytest pytest-cov ruff==0.15.14 bandit
+          # Versions : ../shared/constraints.txt (source unique, cf. make deps-check)
+          pip install -c ../shared/constraints.txt ../shared/
+          pip install -r requirements-dev.txt
+          pip install -c ../shared/constraints.txt ruff bandit
 
       - name: Run linter menu
         run: |
@@ -221,14 +238,16 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v5
-        with: { python-version: '3.12' }
+        with: { python-version: '3.14' }
 
       - name: Install & Test
         run: |
           cd service-crawler
-          pip install ../shared/
-          pip install -r requirements.txt
-          pip install pytest pytest-cov ruff==0.15.14 bandit
+          # Versions : ../shared/constraints.txt (source unique, cf. make deps-check)
+          pip install -c ../shared/constraints.txt ../shared/
+          pip install -r requirements-dev.txt
+          pip install --no-deps -r requirements-nodeps.txt  # rapidocr (cf. le fichier)
+          pip install -c ../shared/constraints.txt ruff bandit
 
       - name: Run linter crawler
         run: |
@@ -278,14 +297,15 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v5
-        with: { python-version: '3.12' }
+        with: { python-version: '3.14' }
 
       - name: Install & Test
         run: |
           cd service-notification
-          pip install ../shared/
-          pip install -r requirements.txt
-          pip install pytest pytest-cov ruff==0.15.14 bandit
+          # Versions : ../shared/constraints.txt (source unique, cf. make deps-check)
+          pip install -c ../shared/constraints.txt ../shared/
+          pip install -r requirements-dev.txt
+          pip install -c ../shared/constraints.txt ruff bandit
 
       - name: Run linter notification
         run: |
@@ -329,20 +349,33 @@ jobs:
   analyze-nutrition:
     if: github.event_name == 'pull_request' || contains(github.event.head_commit.message, 'service-nutrition')
     runs-on: ubuntu-latest
+    services:
+      # PostgreSQL jetable : tests plein texte / pg_trgm (TEST_POSTGRES_URL).
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v5
         with: { fetch-depth: 0 }
 
       - name: Setup Python
         uses: actions/setup-python@v5
-        with: { python-version: '3.12' }
+        with: { python-version: '3.14' }
 
       - name: Install & Test
         run: |
           cd service-nutrition
-          pip install ../shared/
-          pip install -r requirements.txt
-          pip install pytest pytest-cov ruff==0.15.14 bandit
+          # Versions : ../shared/constraints.txt (source unique, cf. make deps-check)
+          pip install -c ../shared/constraints.txt ../shared/
+          pip install -r requirements-dev.txt
+          pip install -c ../shared/constraints.txt ruff bandit
 
       - name: Run linter nutrition
         run: |
@@ -378,6 +411,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Run test nutrition
+        env:
+          TEST_POSTGRES_URL: postgresql+asyncpg://test:test@localhost:5432/test
         run: |
           cd service-nutrition
           pytest --cov=app --cov-report=xml:coverage.xml --cov-fail-under=80 -m "not smoke"
@@ -392,14 +427,15 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v5
-        with: { python-version: '3.12' }
+        with: { python-version: '3.14' }
 
       - name: Install & Test
         run: |
           cd service-profile
-          pip install ../shared/
-          pip install -r requirements.txt
-          pip install pytest pytest-cov ruff==0.15.14 bandit
+          # Versions : ../shared/constraints.txt (source unique, cf. make deps-check)
+          pip install -c ../shared/constraints.txt ../shared/
+          pip install -r requirements-dev.txt
+          pip install -c ../shared/constraints.txt ruff bandit
 
       - name: Run linter profile
         run: |
@@ -453,10 +489,10 @@ jobs:
 
         - name: Setup Python
           uses: actions/setup-python@v5
-          with: { python-version: '3.12' }
+          with: { python-version: '3.14' }
 
         - name: Install smoke test dependencies
-          run: pip install httpx pytest pyotp
+          run: pip install -c shared/constraints.txt httpx pytest pyotp
 
         - name: Create .env file
           run: |
@@ -489,8 +525,6 @@ jobs:
             echo "POSTGRES_PROFILE_PASSWORD=profile_pass_ci" >> .env
             
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
-            echo "ELASTICSEARCH_URL=http://elasticsearch:9200" >> .env
-            echo "ELASTICSEARCH_INDEX_RECIPES=recipes" >> .env
 
             # SeaweedFS (S3) : l'identité serveur S3_APP_* doit valoir ce que les
             # services envoient (S3_ACCESS_KEY/SECRET) → on réutilise les mêmes secrets
@@ -500,8 +534,6 @@ jobs:
             echo "S3_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}" >> .env
             echo "S3_APP_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }}" >> .env
             echo "S3_APP_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }}" >> .env
-            echo "S3_BUCKET_CRAWLER=crawler-media" >> .env
-            echo "S3_SECURE=False" >> .env
             echo "SERVICE_RECIPE_URL=http://service-recipe:8000" >> .env
             echo "CELERY_BROKER_URL=redis://redis:6379/0" >> .env
             echo "CELERY_RESULT_BACKEND=redis://redis:6379/1" >> .env

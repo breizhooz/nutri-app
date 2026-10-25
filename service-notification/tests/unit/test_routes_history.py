@@ -56,12 +56,15 @@ class TestHistoryRoute:
 
     @pytest.mark.unit
     async def test_get_history_requires_auth(self):
-        """Sans Authorization header → 403."""
+        """Token invalide → 401 (authentification refusée par get_current_user)."""
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"
         ) as ac:
-            resp = await ac.get(f"/api/v1/users/{TEST_USER_ID}/history")
-        assert resp.status_code == 403
+            resp = await ac.get(
+                f"/api/v1/users/{TEST_USER_ID}/history",
+                headers={"Authorization": "Bearer invalid-token"},
+            )
+        assert resp.status_code == 401
 
     @pytest.mark.unit
     async def test_get_history_limit_pagination(self, client, db_session):

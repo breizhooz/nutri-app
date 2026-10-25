@@ -45,11 +45,8 @@ def _make_service(recipe, unsplash):
     repo.select_final_image.return_value = recipe
     # Par défaut : cache vide (miss) → on retombe sur un appel Unsplash réel.
     repo.get_cached_image_suggestions.return_value = None
-    search = AsyncMock()
-    service = RecipeService(
-        repo, search, nutrition_client=AsyncMock(), unsplash=unsplash
-    )
-    return service, repo, search
+    service = RecipeService(repo, nutrition_client=AsyncMock(), unsplash=unsplash)
+    return service, repo
 
 
 # ─── attach (on creation) ───────────────────────────────────────────────────────
@@ -60,7 +57,7 @@ class TestAttachSuggestions:
         recipe = _make_recipe()
         unsplash = AsyncMock()
         unsplash.search.return_value = [_suggestion("a"), _suggestion("b")]
-        service, repo, _ = _make_service(recipe, unsplash)
+        service, repo = _make_service(recipe, unsplash)
 
         await service._attach_suggestions(recipe)
 
@@ -75,7 +72,7 @@ class TestAttachSuggestions:
         recipe = _make_recipe()
         unsplash = AsyncMock()
         unsplash.search.return_value = []
-        service, repo, _ = _make_service(recipe, unsplash)
+        service, repo = _make_service(recipe, unsplash)
 
         await service._attach_suggestions(recipe)
         assert repo.update_image_suggestions.call_args[0][2] == []
@@ -84,22 +81,21 @@ class TestAttachSuggestions:
         recipe = _make_recipe(image_url=None)
         unsplash = AsyncMock()
         unsplash.search.return_value = [_suggestion("a"), _suggestion("b")]
-        service, repo, search = _make_service(recipe, unsplash)
+        service, repo = _make_service(recipe, unsplash)
 
         await service._attach_suggestions(recipe)
 
-        # 1ʳᵉ proposition posée comme image finale + tracking Unsplash + réindex ES.
+        # 1ʳᵉ proposition posée comme image finale + tracking Unsplash.
         repo.select_final_image.assert_called_once_with(
             1, "http://hd/a", "http://thumb/a"
         )
         unsplash.track_download.assert_called_once_with("http://dl/a")
-        search.index_recipe.assert_called_once()
 
     async def test_no_auto_select_when_no_suggestions(self):
         recipe = _make_recipe(image_url=None)
         unsplash = AsyncMock()
         unsplash.search.return_value = []
-        service, repo, _ = _make_service(recipe, unsplash)
+        service, repo = _make_service(recipe, unsplash)
 
         await service._attach_suggestions(recipe)
 
@@ -110,7 +106,7 @@ class TestAttachSuggestions:
         recipe = _make_recipe(image_url="http://existing/img.jpg")
         unsplash = AsyncMock()
         unsplash.search.return_value = [_suggestion("a")]
-        service, repo, _ = _make_service(recipe, unsplash)
+        service, repo = _make_service(recipe, unsplash)
 
         await service._attach_suggestions(recipe)
 
@@ -124,7 +120,7 @@ class TestAttachSuggestions:
         recipe = _make_recipe()
         unsplash = AsyncMock()
         unsplash.search.side_effect = ImageServiceUnavailable()
-        service, repo, _ = _make_service(recipe, unsplash)
+        service, repo = _make_service(recipe, unsplash)
 
         await service._attach_suggestions(recipe)  # ne doit pas lever
         assert repo.update_image_suggestions.call_args[0][2] == []
@@ -139,7 +135,7 @@ class TestRefreshSuggestions:
         recipe = _make_recipe()
         unsplash = AsyncMock()
         unsplash.search.return_value = [_suggestion("x")]
-        service, repo, _ = _make_service(recipe, unsplash)
+        service, repo = _make_service(recipe, unsplash)
 
         await service.refresh_suggestions(1, "gateau chocolat", "owner")
 
@@ -148,12 +144,12 @@ class TestRefreshSuggestions:
 
     async def test_forbidden_for_non_author(self):
         recipe = _make_recipe(user_id="someone-else")
-        service, repo, _ = _make_service(recipe, AsyncMock())
+        service, repo = _make_service(recipe, AsyncMock())
         with pytest.raises(RecipeForbidden):
             await service.refresh_suggestions(1, "kw", "owner")
 
     async def test_not_found(self):
-        service, repo, _ = _make_service(_make_recipe(), AsyncMock())
+        service, repo = _make_service(_make_recipe(), AsyncMock())
         repo.get_by_id_with_relations.return_value = None
         with pytest.raises(RecipeNotFound):
             await service.refresh_suggestions(1, "kw", "owner")
@@ -164,7 +160,7 @@ class TestRefreshSuggestions:
         recipe = _make_recipe()
         unsplash = AsyncMock()
         unsplash.search.side_effect = ImageServiceUnavailable()
-        service, repo, _ = _make_service(recipe, unsplash)
+        service, repo = _make_service(recipe, unsplash)
         with pytest.raises(ImageServiceUnavailable):
             await service.refresh_suggestions(1, "saumon", "owner")
 
@@ -178,7 +174,7 @@ class TestSelectImage:
             suggestions=[_suggestion("a").to_dict(), _suggestion("b").to_dict()]
         )
         unsplash = AsyncMock()
-        service, repo, search = _make_service(recipe, unsplash)
+        service, repo = _make_service(recipe, unsplash)
 
         await service.select_image(1, "b", "owner")
 
@@ -186,18 +182,17 @@ class TestSelectImage:
             1, "http://hd/b", "http://thumb/b"
         )
         unsplash.track_download.assert_called_once_with("http://dl/b")
-        search.index_recipe.assert_called_once()
 
     async def test_rejects_unknown_id(self):
         recipe = _make_recipe(suggestions=[_suggestion("a").to_dict()])
-        service, repo, _ = _make_service(recipe, AsyncMock())
+        service, repo = _make_service(recipe, AsyncMock())
         with pytest.raises(ImageNotInSuggestions):
             await service.select_image(1, "zzz", "owner")
         repo.select_final_image.assert_not_called()
 
     async def test_forbidden_for_non_author(self):
         recipe = _make_recipe(user_id="other", suggestions=[_suggestion("a").to_dict()])
-        service, repo, _ = _make_service(recipe, AsyncMock())
+        service, repo = _make_service(recipe, AsyncMock())
         with pytest.raises(RecipeForbidden):
             await service.select_image(1, "a", "owner")
 
@@ -209,7 +204,7 @@ class TestImageCache:
     async def test_cache_hit_skips_unsplash_call(self):
         recipe = _make_recipe()
         unsplash = AsyncMock()
-        service, repo, _ = _make_service(recipe, unsplash)
+        service, repo = _make_service(recipe, unsplash)
         repo.get_cached_image_suggestions.return_value = [_suggestion("c").to_dict()]
 
         out = await service._search_images("Tarte aux pommes")
@@ -222,7 +217,7 @@ class TestImageCache:
         recipe = _make_recipe()
         unsplash = AsyncMock()
         unsplash.search.return_value = [_suggestion("a"), _suggestion("b")]
-        service, repo, _ = _make_service(recipe, unsplash)
+        service, repo = _make_service(recipe, unsplash)
         repo.get_cached_image_suggestions.return_value = None
 
         out = await service._search_images("Tarte aux Pommes")
@@ -239,7 +234,7 @@ class TestImageCache:
         recipe = _make_recipe()
         unsplash = AsyncMock()
         unsplash.search.return_value = []
-        service, repo, _ = _make_service(recipe, unsplash)
+        service, repo = _make_service(recipe, unsplash)
         repo.get_cached_image_suggestions.return_value = None
 
         out = await service._search_images("introuvable")
@@ -250,7 +245,7 @@ class TestImageCache:
     async def test_blank_keyword_touches_nothing(self):
         recipe = _make_recipe()
         unsplash = AsyncMock()
-        service, repo, _ = _make_service(recipe, unsplash)
+        service, repo = _make_service(recipe, unsplash)
 
         out = await service._search_images("   ")
 

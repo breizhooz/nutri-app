@@ -7,13 +7,13 @@ from contextlib import asynccontextmanager
 import httpx
 
 from app.core.config import settings
-from app.services.spacy_extractor import ExtractedIngredient
+from app.services.ingredient_parser import ExtractedIngredient
 
 logger = logging.getLogger(__name__)
 
 
 class GroqExtractor:
-    """Extraction d'ingrédients via Groq API (Llama 3.1 8B, fallback gratuit).
+    """Extraction d'ingrédients via Groq API (modèle `GROQ_MODEL`, fallback gratuit).
 
     Le client httpx est injectable pour les tests.
     """

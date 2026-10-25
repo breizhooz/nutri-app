@@ -12,34 +12,34 @@ from app.services.randomizer import generate_slots
 
 
 def _summary(
-    allergies: list[str] | None = None,
     excluded_foods: list[str] | None = None,
-    prefs_excluded: list[str] | None = None,
     diet_type: str | None = None,
     target_calories: int | None = None,
 ) -> dict:
-    """Résumé nutritionnel minimal au format service-profile."""
-    summary: dict = {
-        "user_id": "u-1",
-        "allergies": [
-            {"slug": f"a-{i}", "allergen": a, "severity": "allergy"}
-            for i, a in enumerate(allergies or [])
-        ],
-        "excluded_foods": [
-            {"slug": f"e-{i}", "food_name": n}
-            for i, n in enumerate(excluded_foods or [])
-        ],
-        "nutrition_preferences": None,
-        "calculation": None,
+    """Résumé nutritionnel minimal au format service-profile (par compte)."""
+    return {
+        "account_id": "acc-1",
+        "main_goal": "maintenance",
+        "diet_type": diet_type or "omnivore",
+        "excluded_foods": excluded_foods or [],
+        "targets": (
+            {
+                "calories": target_calories,
+                "proteines": None,
+                "glucides": None,
+                "lipides": None,
+            }
+            if target_calories is not None
+            else None
+        ),
+        "rules": {
+            "enabled": True,
+            "aggressiveness": 1.0,
+            "variety_pct": 0.1,
+            "override_calories": None,
+            "override_proteines": None,
+        },
     }
-    if diet_type or prefs_excluded:
-        summary["nutrition_preferences"] = {
-            "diet_type": diet_type,
-            "excluded_foods": prefs_excluded or [],
-        }
-    if target_calories is not None:
-        summary["calculation"] = {"target_calories_kcal": target_calories}
-    return summary
 
 
 class TestBuildConstraints:
@@ -49,33 +49,33 @@ class TestBuildConstraints:
         assert c.excluded_food_terms == frozenset()
         assert c.target_calories is None
 
-    def test_allergy_fr_label_maps_to_allergen_tag(self):
-        c = build_constraints(_summary(allergies=["Arachides"]))
+    # Les allergies sont fondues dans les aliments exclus : un aliment exclu
+    # reconnu comme allergène écarte aussi les ingrédients tagués.
+    def test_excluded_allergen_fr_label_maps_to_allergen_tag(self):
+        c = build_constraints(_summary(excluded_foods=["Arachides"]))
         assert Allergen.PEANUTS.value in c.allergen_tags
 
-    def test_allergy_en_label_maps_to_allergen_tag(self):
-        c = build_constraints(_summary(allergies=["peanut"]))
+    def test_excluded_allergen_en_label_maps_to_allergen_tag(self):
+        c = build_constraints(_summary(excluded_foods=["peanut"]))
         assert Allergen.PEANUTS.value in c.allergen_tags
 
-    def test_allergy_accented_label_maps(self):
-        c = build_constraints(_summary(allergies=["Céleri"]))
+    def test_excluded_allergen_accented_label_maps(self):
+        c = build_constraints(_summary(excluded_foods=["Céleri"]))
         assert Allergen.CELERY.value in c.allergen_tags
 
-    def test_allergy_label_always_added_as_food_term(self):
-        # Défense en profondeur : même mappée, l'allergie exclut aussi par nom.
-        c = build_constraints(_summary(allergies=["lait"]))
+    def test_excluded_allergen_always_added_as_food_term(self):
+        # Défense en profondeur : même mappé en tag, l'aliment exclut aussi par nom.
+        c = build_constraints(_summary(excluded_foods=["lait"]))
         assert Allergen.MILK.value in c.allergen_tags
         assert "lait" in c.excluded_food_terms
 
-    def test_unmapped_allergy_falls_back_to_food_term(self):
-        c = build_constraints(_summary(allergies=["kiwi"]))
+    def test_non_allergen_food_is_name_only(self):
+        c = build_constraints(_summary(excluded_foods=["kiwi"]))
         assert c.allergen_tags == frozenset()
         assert "kiwi" in c.excluded_food_terms
 
-    def test_excluded_foods_from_both_sources_merged(self):
-        c = build_constraints(
-            _summary(excluded_foods=["Champignon"], prefs_excluded=["Brocoli"])
-        )
+    def test_excluded_foods_normalized(self):
+        c = build_constraints(_summary(excluded_foods=["Champignon", "  Brocoli "]))
         assert "champignon" in c.excluded_food_terms
         assert "brocoli" in c.excluded_food_terms
 

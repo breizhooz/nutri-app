@@ -114,11 +114,13 @@ async def test_get_current_user_inactive_user_returns_400(
 
 
 @pytest.mark.unit
-async def test_get_current_user_no_header_returns_403(
+async def test_get_current_user_wrong_scheme_returns_401(
     anon_client: AsyncClient,
 ) -> None:
-    resp = await anon_client.get("/api/v1/users/me")
-    assert resp.status_code == 403
+    resp = await anon_client.get(
+        "/api/v1/users/me", headers={"Authorization": "Basic dXNlcjpwYXNz"}
+    )
+    assert resp.status_code == 401
 
 
 # ── get_mfa_pending_user (called directly) ─────────────────────────────────────

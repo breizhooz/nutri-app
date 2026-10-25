@@ -18,6 +18,12 @@ celery_app = Celery(
 
 celery_app.conf.timezone = "Europe/Paris"
 
+# File dédiée (comme recipe/crawler) : sans elle, les tâches partaient dans la
+# file par défaut « celery », partagée avec d'autres services dont les workers
+# jetaient les tâches inconnues (ex. purges RGPD, effacement de compte).
+# Le worker compose écoute cette file (-Q notification) ; le beat y envoie aussi.
+celery_app.conf.task_default_queue = "notification"
+
 # Purges de rétention (RGPD art. 5.1.e) — Phase 4.
 celery_app.conf.beat_schedule = {
     "purge-old-notifications": {

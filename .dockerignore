@@ -16,6 +16,10 @@
 **/bandit-report.json
 **/bandit-summary.txt
 
+# Artefacts de build setuptools de nutri_shared (build/ s'était imbriqué récursivement)
+shared/build
+**/*.egg-info
+
 # Hors périmètre des images backend
 .git
 frontend
@@ -25,3 +29,9 @@ ci-local-report.txt
 
 # Secrets locaux : les .env sont injectés via env_file, pas via COPY
 **/.env
+
+# Hors images (MAJ_OBLIGATOIRE §4.8) : tests (lancés dans le venv/CI, et le code
+# est monté depuis l'hôte en dev), état runtime de celery beat, config Sonar.
+**/tests
+**/celerybeat-schedule*
+**/sonar-project.properties

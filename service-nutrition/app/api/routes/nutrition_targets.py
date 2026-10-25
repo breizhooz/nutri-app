@@ -1,14 +1,14 @@
-"""Route d'orchestration du moteur de cibles nutritionnelles.
+"""Route du moteur de cibles nutritionnelles.
 
-Orchestration PURE : enchaîne les 3 étapes découplées sans aucune logique
-nutritionnelle propre. Appel inter-service (token de service).
+Orchestration PURE : cibles reçues (calculées sur l'appareil ou fixées par un
+coach) → ajustements UI (Étape 2) → critères de recherche (Étape 3). Aucune
+donnée corporelle ni médicale. Appel inter-service (token de service).
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 
 from app.core.deps import verify_service_token
 from app.schemas.engine import NutritionTargetsRequest, NutritionTargetsResponse
-from app.services.engine.step1_base_targets import BaseTargetsCalculator
 from app.services.engine.step2_user_overrides import UserOverridesService
 from app.services.engine.step3_search_query import SearchQueryBuilder
 
@@ -20,34 +20,11 @@ async def compute_nutrition_targets(
     payload: NutritionTargetsRequest,
     _: None = Depends(verify_service_token),
 ) -> NutritionTargetsResponse:
-    """Calcule les cibles finales sécurisées et la requête de recherche associée."""
-    try:
-        base = BaseTargetsCalculator().calculate(
-            goal=payload.goal,
-            diet_type=payload.diet_type,
-            tdee_kcal=payload.tdee_kcal,
-            bmr_kcal=payload.bmr_kcal,
-            weight_kg=payload.weight_kg,
-        )
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
-        )
-
-    final = UserOverridesService().apply(
-        base=base,
-        profile=payload.adjustment,
-        goal=payload.goal,
-        tdee_kcal=payload.tdee_kcal,
-        bmr_kcal=payload.bmr_kcal,
-        weight_kg=payload.weight_kg,
-    )
-
-    search_query = SearchQueryBuilder().build(
+    """Applique les ajustements UI aux cibles reçues et en déduit les critères."""
+    final = UserOverridesService().apply(payload.targets, payload.adjustment)
+    search_criteria = SearchQueryBuilder().build(
         targets=final,
         excluded_foods=payload.excluded_foods,
         diet_type=payload.diet_type,
-        medical_contraindications=payload.medical_contraindications,
     )
-
-    return NutritionTargetsResponse(targets=final, search_query=search_query)
+    return NutritionTargetsResponse(targets=final, search_criteria=search_criteria)

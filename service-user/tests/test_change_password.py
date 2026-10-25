@@ -84,6 +84,7 @@ async def test_change_password_unauthenticated() -> None:
     ) as client:
         resp = await client.post(
             "/api/v1/users/me/password",
+            headers={"Authorization": "Bearer invalid-token"},
             json={"current_password": "OldPass1!", "new_password": "NewPass99!"},
         )
-    assert resp.status_code == 403
+    assert resp.status_code == 401

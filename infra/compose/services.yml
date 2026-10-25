@@ -5,29 +5,38 @@
 # ══════════════════════════════════════════════════════════
 
 # Healthcheck API standard (services qui démarrent vite).
+# Chaque sonde lance un interpréteur Python (~75 ms de CPU) : toutes les 30 s en
+# régime établi, mais toutes les 2 s pendant le démarrage (start_interval), pour
+# que les `depends_on: service_healthy` restent rapides. Docker ≥ 25.
 x-healthcheck-api: &healthcheck-api
-  test: ["CMD-SHELL", "curl -f http://localhost:8000/health"]
-  interval: 5s
+  test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+  interval: 30s
   timeout: 3s
-  retries: 5
-  start_period: 20s
+  retries: 3
+  start_period: 60s
+  start_interval: 2s
 
 # Variante tolérante (menu/crawler : démarrage + migrations plus longs).
 x-healthcheck-api-slow: &healthcheck-api-slow
-  test: ["CMD-SHELL", "curl -f http://localhost:8000/health"]
-  interval: 5s
+  test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+  interval: 30s
   timeout: 5s
-  retries: 20
-  start_period: 20s
+  retries: 3
+  start_period: 120s
+  start_interval: 2s
 
 services:
 # ══════════════════════════════════════════════════════════
 # SERVICE — user  →  http://api-users.localhost
 # ══════════════════════════════════════════════════════════
   service-user:
+    image: nutri-app-service-user
     build:
       context: ../..
-      dockerfile: service-user/Dockerfile
+      dockerfile: infra/docker/service.Dockerfile
+      target: dev
+      args:
+        SERVICE: user
     container_name: nutriplanner-service-user
     ports:
       - "8001:8000"
@@ -50,9 +59,13 @@ services:
 # SERVICE — recipe  →  http://api-recipe.localhost
 # ══════════════════════════════════════════════════════════
   service-recipe:
+    image: nutri-app-service-recipe
     build:
       context: ../..
-      dockerfile: service-recipe/Dockerfile
+      dockerfile: infra/docker/service.Dockerfile
+      target: dev
+      args:
+        SERVICE: recipe
     container_name: nutriplanner-service-recipe
     ports:
       - "8002:8000"
@@ -70,8 +83,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
       service-user:
         condition: service_healthy
     healthcheck: *healthcheck-api
@@ -82,9 +93,14 @@ services:
 # SERVICE — menu  →  http://api-menu.localhost
 # ══════════════════════════════════════════════════════════
   service-menu:
+    image: nutri-app-service-menu
     build:
       context: ../..
-      dockerfile: service-menu/Dockerfile
+      dockerfile: infra/docker/service.Dockerfile
+      target: dev
+      args:
+        SERVICE: menu
+        APT_PACKAGES: "libpango-1.0-0 libpangoft2-1.0-0 fonts-dejavu-core"
     container_name: nutriplanner-service-menu
     ports:
       - "8003:8000"
@@ -113,9 +129,13 @@ services:
 # SERVICE — crawler  →  http://api-crawler.localhost
 # ══════════════════════════════════════════════════════════
   service-crawler:
+    image: nutri-app-service-crawler
     build:
       context: ../..
-      dockerfile: service-crawler/Dockerfile
+      dockerfile: infra/docker/service.Dockerfile
+      target: dev
+      args:
+        SERVICE: crawler
     container_name: nutriplanner-service-crawler
     ports:
       - "8004:8000"
@@ -139,9 +159,13 @@ services:
 # SERVICE — notification  →  http://api-notification.localhost
 # ══════════════════════════════════════════════════════════
   service-notification:
+    image: nutri-app-service-notification
     build:
       context: ../..
-      dockerfile: service-notification/Dockerfile
+      dockerfile: infra/docker/service.Dockerfile
+      target: dev
+      args:
+        SERVICE: notification
     container_name: nutriplanner-service-notification
     ports:
       - "8006:8000"
@@ -164,9 +188,13 @@ services:
 # SERVICE — nutrition  →  http://api-nutrition.localhost
 # ══════════════════════════════════════════════════════════
   service-nutrition:
+    image: nutri-app-service-nutrition
     build:
       context: ../..
-      dockerfile: service-nutrition/Dockerfile
+      dockerfile: infra/docker/service.Dockerfile
+      target: dev
+      args:
+        SERVICE: nutrition
     container_name: nutriplanner-service-nutrition
     ports:
       - "8005:8000"
@@ -174,7 +202,6 @@ services:
       - ../../service-nutrition:/app
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_NUTRITION_USER}:${POSTGRES_NUTRITION_PASSWORD}@postgres:5432/${POSTGRES_NUTRITION_DB}
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/1
       - SERVICE_NOTIFICATION_URL=http://service-notification:8000
@@ -184,8 +211,6 @@ services:
       - ../env/secrets/nutrition.secrets.env
     depends_on:
       postgres:
-        condition: service_healthy
-      elasticsearch:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -199,9 +224,13 @@ services:
 # SERVICE — profile  →  http://api-profile.localhost
 # ══════════════════════════════════════════════════════════
   service-profile:
+    image: nutri-app-service-profile
     build:
       context: ../..
-      dockerfile: service-profile/Dockerfile
+      dockerfile: infra/docker/service.Dockerfile
+      target: dev
+      args:
+        SERVICE: profile
     container_name: nutriplanner-service-profile
     ports:
       - "8007:8000"

@@ -286,12 +286,5 @@
         "unavailable": "service-user unavailable"
       }
     }
-  },
-  "elasticsearch":{
-    "errors":{
-      "indexation_for_recipe": "ES indexation failed for recipe",
-      "update_indexation_for_recipe": "ES re-indexation failed for recipe",
-      "delete_fail_for_recipe": "the deletion for the recipe failed"
-    }
   }
 }

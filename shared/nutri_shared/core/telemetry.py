@@ -9,13 +9,22 @@ from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 
 
 def setup_telemetry(service_name: str, app=None) -> None:
-    """Configure OTel → Tempo et Prometheus /metrics pour un service FastAPI.
+    """Configure Prometheus /metrics et OTel → Tempo pour un service FastAPI.
+
+    /metrics est toujours exposé : les métriques ne dépendent pas du tracing
+    (avant, OTEL_SDK_DISABLED=true — le défaut — coupait aussi /metrics et toutes
+    les cibles Prometheus « services » étaient en échec).
 
     L'export des traces est volontairement *fail-fast* : Tempo est optionnel
     (profil ``monitoring``), donc un collecteur absent ou lent ne doit jamais
-    spammer les logs ni bloquer une requête/arrêt. Désactivable entièrement via
+    spammer les logs ni bloquer une requête/arrêt. Désactivable via
     ``OTEL_SDK_DISABLED=true`` (défaut côté compose quand monitoring est down).
     """
+    if app is not None:
+        from prometheus_fastapi_instrumentator import Instrumentator
+
+        Instrumentator().instrument(app).expose(app)
+
     if os.getenv("OTEL_SDK_DISABLED", "false").lower() == "true":
         return
     resource = Resource.create({SERVICE_NAME: service_name})
@@ -43,7 +52,5 @@ def setup_telemetry(service_name: str, app=None) -> None:
 
     if app is not None:
         from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-        FastAPIInstrumentor.instrument_app(app, tracer_provider=provider)
 
-        from prometheus_fastapi_instrumentator import Instrumentator
-        Instrumentator().instrument(app).expose(app)
+        FastAPIInstrumentor.instrument_app(app, tracer_provider=provider)

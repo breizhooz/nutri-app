@@ -10,7 +10,6 @@ from app.repositories.spoonacular_cache_repository import SpoonacularCacheReposi
 from app.schemas.recipe import RecipeResponse
 from app.schemas.spoonacular import SpoonacularShakeResponse
 from app.services.recipe_service import RecipeService
-from app.services.search_service import search_service
 from app.services.spoonacular_cache_service import SpoonacularCacheService
 from app.services.spoonacular_mapper import short_description
 
@@ -28,7 +27,7 @@ class SpoonacularCacheServiceFactory:
 class RecipeServiceFactory:
     @staticmethod
     def inject(session: AsyncSession = Depends(get_session)) -> RecipeService:
-        return RecipeService(RecipeRepository(session), search_service)
+        return RecipeService(RecipeRepository(session))
 
 
 @router.get("/shake", response_model=SpoonacularShakeResponse)
@@ -66,7 +65,7 @@ async def add_to_personal_list(
     """Ajoute la recette Spoonacular à la liste personnelle du compte actif.
 
     Passe par le pipeline habituel (``create_full``) : hydratation des
-    ingrédients, calcul des macros (service-nutrition), indexation Elasticsearch.
+    ingrédients, calcul des macros (service-nutrition).
     """
     return await service.add_to_personal_list(
         spoonacular_id, ctx.sub, ctx.account_id, recipe_service

@@ -6,33 +6,10 @@
 
 services:
 # ══════════════════════════════════════════════════════════
-# FILEBEAT — filebeat logs
-# ══════════════════════════════════════════════════════════
-  filebeat:
-    image: docker.elastic.co/beats/filebeat:8.11.0
-    container_name: nutriplanner-filebeat
-    profiles: [monitoring]
-    user: root
-    # filebeat.yml est bind-mounté depuis l'hôte (uid 1000) alors que filebeat
-    # tourne en root → le contrôle de permissions strict refuse de démarrer.
-    # --strict.perms=false le désactive (recommandé Elastic pour configs montées).
-    command: ["--strict.perms=false", "-environment", "container"]
-    volumes:
-      - ../monitoring/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - nutriplanner
-    restart: unless-stopped
-
-# ══════════════════════════════════════════════════════════
 # MONITORING — Prometheus + Grafana + Exporters
 # ══════════════════════════════════════════════════════════
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.15.1
     container_name: nutriplanner-prometheus
     profiles: [monitoring]
     volumes:
@@ -48,7 +25,7 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana-oss:latest
+    image: grafana/grafana-oss:13.0.2
     container_name: nutriplanner-grafana
     profiles: [monitoring]
     environment:
@@ -65,10 +42,10 @@ services:
     restart: unless-stopped
 
 # ══════════════════════════════════════════════════════════
-# LOGS LIVE — Loki + Promtail
+# LOGS LIVE — Loki + Alloy (Alloy remplace Promtail, déprécié)
 # ══════════════════════════════════════════════════════════
   loki:
-    image: grafana/loki:3.0.0
+    image: grafana/loki:3.7.9
     container_name: nutriplanner-loki
     profiles: [monitoring]
     command: -config.file=/etc/loki/loki.yml
@@ -79,14 +56,20 @@ services:
       - nutriplanner
     restart: unless-stopped
 
-  promtail:
-    image: grafana/promtail:3.0.0
-    container_name: nutriplanner-promtail
+  alloy:
+    image: grafana/alloy:v1.21.2
+    container_name: nutriplanner-alloy
     profiles: [monitoring]
-    command: -config.file=/etc/promtail/promtail.yml
+    # Lit les logs via l'API Docker ; positions de lecture persistées (alloy-data)
+    # pour ne pas renvoyer l'historique à chaque redémarrage.
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=0.0.0.0:12345
     volumes:
-      - ../monitoring/promtail:/etc/promtail:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ../monitoring/alloy:/etc/alloy:ro
+      - alloy-data:/var/lib/alloy/data
       - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
       - loki
@@ -98,7 +81,8 @@ services:
 # TRACES — Tempo
 # ══════════════════════════════════════════════════════════
   tempo:
-    image: grafana/tempo:2.4.0
+    # Tempo 3 : non-root (uid 10001), cf. infra/monitoring/tempo/tempo.yml.
+    image: grafana/tempo:3.1.1
     container_name: nutriplanner-tempo
     profiles: [monitoring]
     command: ["-config.file=/etc/tempo/tempo.yml"]
@@ -113,7 +97,7 @@ services:
     restart: unless-stopped
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
+    image: gcr.io/cadvisor/cadvisor:v0.55.1
     container_name: nutriplanner-cadvisor
     profiles: [monitoring]
     privileged: true
@@ -134,7 +118,7 @@ services:
     restart: unless-stopped
 
   redis-exporter:
-    image: oliver006/redis_exporter:latest
+    image: oliver006/redis_exporter:v1.96.0
     container_name: nutriplanner-redis-exporter
     profiles: [monitoring]
     environment:
@@ -148,26 +132,11 @@ services:
       - nutriplanner
     restart: unless-stopped
 
-  elasticsearch-exporter:
-    image: quay.io/prometheuscommunity/elasticsearch-exporter:latest
-    container_name: nutriplanner-elasticsearch-exporter
-    profiles: [monitoring]
-    command:
-      - '--es.uri=http://elasticsearch:9200'
-      - '--es.all'
-      - '--es.indices'
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - nutriplanner
-    restart: unless-stopped
-
   # Exporter Postgres UNIQUE : se connecte en superuser et auto-découvre toutes
   # les bases du moteur (7 → 1 exporter). Chaque base apparaît via le label
   # `datname` sur les métriques (au lieu d'un target par base).
   postgres-exporter:
-    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.20.1
     container_name: nutriplanner-postgres-exporter
     profiles: [monitoring]
     environment:

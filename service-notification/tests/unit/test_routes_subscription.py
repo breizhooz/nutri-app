@@ -90,19 +90,20 @@ class TestSubscriptionsRoutes:
 
     @pytest.mark.unit
     async def test_create_subscription_requires_auth(self):
-        """POST sans Authorization header → 403 (HTTPBearer auto_error)."""
+        """POST avec un token invalide → 401 (authentification refusée)."""
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"
         ) as ac:
             resp = await ac.post(
                 "/api/v1/subscriptions",
+                headers={"Authorization": "Bearer invalid-token"},
                 json={
                     "endpoint": "https://fcm.googleapis.com/fcm/send/noauth",
                     "p256dh_key": "k",
                     "auth_key": "a",
                 },
             )
-        assert resp.status_code == 403
+        assert resp.status_code == 401
 
     @pytest.mark.unit
     async def test_get_subscription_other_user_returns_403(

@@ -1,13 +1,25 @@
 from __future__ import annotations
 
-import logging
+import re
 from dataclasses import dataclass
 
-from app.core.config import settings
+from sqlalchemy import case, false, func, literal, literal_column, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-logger = logging.getLogger(__name__)
+from app.models.nutrition_item import NutritionItem
 
-_MIN_SCORE = 1.0
+# Similarité trigramme minimale pour qu'un aliment soit candidat (0..1).
+_MIN_SIMILARITY = 0.5
+# Sans mot de tête commun, il faut une correspondance quasi exacte : mieux vaut
+# une MacroError visible qu'un faux ami (« crème fraîche » → « Criste marine, fraîche »).
+_STRONG_SIMILARITY = 0.8
+# Bonus quand un mot de la requête est la tête du nom Ciqual (l'aliment
+# principal vient en premier : « Tomate, crue » plutôt que « Caviar de tomates »).
+_HEAD_BONUS = 0.5
+# Le nom anglais ne sert que de repli et compte moins que le nom français.
+_EN_WEIGHT = 0.8
+
+_WORD = re.compile(r"\w+")
 
 
 @dataclass
@@ -22,141 +34,89 @@ class LookupResult:
     score: float
 
 
-class LookupService:
-    """Fuzzy match Elasticsearch sur le référentiel nutritionnel.
+def _normalized(expr):
+    # f_unaccent (IMMUTABLE, migration e2f3a4b5c6d7) : mêmes expressions que les
+    # index trigrammes, sinon le planificateur ne peut pas les utiliser.
+    return func.f_unaccent(func.lower(expr))
 
-    Le client ES est injectable pour les tests.
+
+def _head_pattern(query: str) -> str | None:
+    """Regex « le nom commence par un des mots de la requête » (pluriel naïf).
+
+    Mots de 3 lettres et plus : « de », « d' » ne sont jamais l'aliment principal.
+    """
+    stems = []
+    for word in _WORD.findall(query.lower()):
+        if len(word) < 3:
+            continue
+        stems.append(word[:-1] if len(word) > 3 and word[-1] in "sx" else word)
+    if not stems:
+        return None
+    return r"^(" + "|".join(re.escape(stem) for stem in stems) + r")[sx]?\M"
+
+
+class LookupService:
+    """Fuzzy match PostgreSQL (pg_trgm + unaccent) sur le référentiel nutritionnel.
+
+    Score = ``word_similarity(requête, nom)`` (meilleure correspondance de la
+    requête avec un fragment du nom) + bonus si un mot de la requête est la
+    tête du nom. À score égal, le nom le plus court (le plus générique) gagne.
     """
 
-    def __init__(self, es_client=None) -> None:
-        self._es = es_client
-        self._index_ensured = False
-
-    def _get_client(self):
-        if self._es is not None:
-            return self._es
-        from elasticsearch import AsyncElasticsearch
-
-        if not hasattr(self, "_owned_client"):
-            self._owned_client = AsyncElasticsearch(settings.ELASTICSEARCH_URL)
-        return self._owned_client
-
-    async def ensure_index(self) -> None:
-        """Garantit que l'index existe avec 0 réplica (cluster mono-nœud).
-
-        Sans création explicite, ES auto-crée l'index au premier document avec
-        le défaut ``number_of_replicas=1`` : sur un cluster à un seul nœud, le
-        shard réplica reste *unassigned* → cluster ``yellow``. On crée donc
-        l'index à 0 réplica, et on force aussi 0 réplica s'il existe déjà (pour
-        régulariser un index hérité du comportement par défaut). Idempotent et
-        exécuté au plus une fois par instance.
-        """
-        if self._index_ensured:
-            return
-        client = self._get_client()
-        index = settings.ELASTICSEARCH_INDEX
-        try:
-            if await client.indices.exists(index=index):
-                await client.indices.put_settings(
-                    index=index, settings={"index": {"number_of_replicas": 0}}
-                )
-            else:
-                await client.indices.create(
-                    index=index, settings={"number_of_replicas": 0}
-                )
-            self._index_ensured = True
-        except Exception as exc:
-            logger.error("ES ensure_index error: %s", exc)
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
 
     async def search(self, query: str, size: int = 5) -> list[LookupResult]:
-        """Retourne les candidats au-dessus du seuil de score, ou liste vide."""
-        client = self._get_client()
-        try:
-            resp = await client.search(
-                index=settings.ELASTICSEARCH_INDEX,
-                body={
-                    "query": {
-                        "multi_match": {
-                            "query": query,
-                            "fields": ["nom_fr^2", "nom_en"],
-                            "fuzziness": "AUTO",
-                        }
-                    },
-                    "size": size,
-                },
-            )
-        except Exception as exc:
-            logger.error("Elasticsearch error: %s", exc)
-            return []
-
-        results = []
-        for hit in resp["hits"]["hits"]:
-            score = hit["_score"]
-            if score < _MIN_SCORE:
-                continue
-            src = hit["_source"]
-            results.append(
-                LookupResult(
-                    slug=src["slug"],
-                    nom_fr=src["nom_fr"],
-                    calories=src["calories"],
-                    proteines=src["proteines"],
-                    glucides=src["glucides"],
-                    lipides=src["lipides"],
-                    fibres=src.get("fibres"),
-                    score=score,
+        """Retourne les candidats acceptés, du meilleur au moins bon, ou liste vide."""
+        term = _normalized(literal(query.strip()))
+        name_fr = _normalized(NutritionItem.nom_fr)
+        # '' en dur (pas en paramètre) : l'expression doit être celle de l'index.
+        name_en = _normalized(func.coalesce(NutritionItem.nom_en, literal_column("''")))
+        similarity_fr = func.word_similarity(term, name_fr)
+        similarity_en = func.word_similarity(term, name_en) * _EN_WEIGHT
+        pattern = _head_pattern(query)
+        is_head = (
+            name_fr.regexp_match(func.f_unaccent(literal(pattern)))
+            if pattern
+            else false()
+        )
+        score = func.greatest(
+            similarity_fr + case((is_head, _HEAD_BONUS), else_=0.0),
+            similarity_en,
+        )
+        accepted = or_(
+            (similarity_fr >= _MIN_SIMILARITY)
+            & ((similarity_fr >= _STRONG_SIMILARITY) | is_head),
+            similarity_en >= _STRONG_SIMILARITY,
+        )
+        # Candidats lus via les index trigrammes : `requête <% nom` ⇔
+        # word_similarity ≥ pg_trgm.word_similarity_threshold (fixé pour la transaction).
+        candidate = or_(term.op("<%")(name_fr), term.op("<%")(name_en))
+        await self._session.execute(
+            select(
+                func.set_config(
+                    "pg_trgm.word_similarity_threshold", str(_MIN_SIMILARITY), True
                 )
             )
-        return results
+        )
+        stmt = (
+            select(NutritionItem, score.label("score"))
+            .where(candidate, accepted)
+            .order_by(score.desc(), func.length(NutritionItem.nom_fr))
+            .limit(size)
+        )
+        rows = (await self._session.execute(stmt)).all()
 
-    async def index_item(self, item) -> None:
-        await self.ensure_index()
-        client = self._get_client()
-        try:
-            await client.index(
-                index=settings.ELASTICSEARCH_INDEX,
-                id=str(item.id),
-                document={
-                    "slug": item.slug,
-                    "nom_fr": item.nom_fr,
-                    "nom_en": item.nom_en,
-                    "calories": item.calories,
-                    "proteines": item.proteines,
-                    "glucides": item.glucides,
-                    "lipides": item.lipides,
-                    "fibres": item.fibres,
-                },
+        return [
+            LookupResult(
+                slug=item.slug,
+                nom_fr=item.nom_fr,
+                calories=item.calories or 0.0,
+                proteines=item.proteines or 0.0,
+                glucides=item.glucides or 0.0,
+                lipides=item.lipides or 0.0,
+                fibres=item.fibres,
+                score=float(row_score),
             )
-        except Exception as exc:
-            logger.error("ES index error (slug=%s): %s", item.slug, exc)
-
-    async def bulk_index(self, items: list) -> int:
-        """Index a list of NutritionItems using the bulk API."""
-        from elasticsearch.helpers import async_bulk
-
-        await self.ensure_index()
-        client = self._get_client()
-
-        async def _actions():
-            for item in items:
-                yield {
-                    "_index": settings.ELASTICSEARCH_INDEX,
-                    "_id": str(item.id),
-                    "_source": {
-                        "slug": item.slug,
-                        "nom_fr": item.nom_fr,
-                        "nom_en": item.nom_en,
-                        "calories": item.calories or 0.0,
-                        "proteines": item.proteines or 0.0,
-                        "glucides": item.glucides or 0.0,
-                        "lipides": item.lipides or 0.0,
-                        "fibres": item.fibres,
-                    },
-                }
-
-        try:
-            success, _ = await async_bulk(client, _actions(), raise_on_error=False)
-            return success
-        except Exception as exc:
-            logger.error("ES bulk_index error: %s", exc)
-            return 0
+            for item, row_score in rows
+        ]

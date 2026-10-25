@@ -1,161 +1,91 @@
+"""Route GET /search/recipes : validation et transmission au service.
+
+Le SQL de la recherche (plein texte, filtres, scoring) est testé sur un vrai
+PostgreSQL dans ``test_search_postgres.py``.
+"""
+
+from unittest.mock import AsyncMock
+
 import pytest
-from .conftest import TEST_ACCOUNT_ID, TEST_USER_ID
+
+from app.api.routes.search import get_nutrition_rules_service
+from app.main import app
+
+from .conftest import TEST_ACCOUNT_ID
 
 SEARCH_BASE = "/api/v1/search/recipes"
 
 
-def _es_response(hits=None, total=0):
-    return {"hits": {"total": {"value": total}, "hits": hits or []}}
-
-
-def _es_hit(recipe_id, title, score=1.0, **extra):
-    return {
-        "_id": str(recipe_id),
-        "_score": score,
-        "_source": {
-            "title": title,
-            "slug": title.lower().replace(" ", "-"),
-            "description": None,
-            "difficulty": "enums.difficulty.easy",
-            "cuisine_origin": "enums.cuisine.french",
-            "origin_recipe": "enums.origin.personal",
-            "course_type": "enums.course.main",
-            "prep_time_minutes": 20,
-            "cook_time_minutes": 30,
-            "servings": 4,
-            "ingredient_names": [],
-            "allergens": [],
-            "created_by_user_id": TEST_USER_ID,
-            "created_at": "2026-01-01T12:00:00",
-            **extra,
-        },
+@pytest.fixture
+def rules_service():
+    service = AsyncMock()
+    service.search.return_value = {
+        "total": 1,
+        "limit": 10,
+        "offset": 0,
+        "results": [{"id": 1, "score": 1.0, "title": "Tarte aux pommes"}],
     }
+    app.dependency_overrides[get_nutrition_rules_service] = lambda: service
+    yield service
+    app.dependency_overrides.pop(get_nutrition_rules_service, None)
+
+
+def _kwargs(service) -> dict:
+    return service.search.call_args.kwargs
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_search_returns_structured_response(mock_es, http_client):
-    mock_es.search.return_value = _es_response(
-        hits=[_es_hit(1, "Tarte aux pommes", score=1.8)], total=1
-    )
-
+async def test_search_returns_service_response(rules_service, http_client):
     async with http_client as client:
         response = await client.get(SEARCH_BASE, params={"q": "tarte"})
-
     assert response.status_code == 200
-    data = response.json()
-    assert data["total"] == 1
-    assert data["results"][0]["title"] == "Tarte aux pommes"
-    assert data["results"][0]["id"] == 1
+    assert response.json()["results"][0]["title"] == "Tarte aux pommes"
+    assert _kwargs(rules_service)["query"] == "tarte"
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_search_without_q_uses_match_all(mock_es, http_client):
-    mock_es.search.return_value = _es_response()
+async def test_search_scoped_to_active_account(rules_service, http_client):
+    """Multicomptes : recettes et règles bornées au compte actif."""
     async with http_client as client:
         await client.get(SEARCH_BASE)
-    call_kwargs = mock_es.search.call_args.kwargs
-    # body = mock_es.search.call_args.kwargs["body"]
-    assert any("match_all" in c for c in call_kwargs["query"]["bool"]["must"])
+    kwargs = _kwargs(rules_service)
+    assert kwargs["account_id"] == TEST_ACCOUNT_ID
+    assert "user_id" not in kwargs
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_search_with_q_uses_multi_match(mock_es, http_client):
-    mock_es.search.return_value = _es_response()
-    async with http_client as client:
-        await client.get(SEARCH_BASE, params={"q": "tarte"})
-    call_kwargs = mock_es.search.call_args.kwargs
-    must = call_kwargs["query"]["bool"]["must"]
-    # query is wrapped in bool/should for prefix + fuzzy support
-    assert len(must) == 1 and "bool" in must[0]
-    should = must[0]["bool"]["should"]
-    mm = next(c["multi_match"] for c in should if "multi_match" in c)
-    assert mm["query"] == "tarte"
-    assert "title^3" in mm["fields"]
-
-
-@pytest.mark.asyncio
-@pytest.mark.integration
-async def test_search_difficulty_filter(mock_es, http_client):
-    mock_es.search.return_value = _es_response()
-    async with http_client as client:
-        await client.get(SEARCH_BASE, params={"difficulty": "enums.difficulty.easy"})
-    filters = mock_es.search.call_args.kwargs["query"]["bool"]["filter"]
-    assert {"term": {"difficulty": "enums.difficulty.easy"}} in filters
-
-
-@pytest.mark.asyncio
-@pytest.mark.integration
-async def test_search_max_prep_time_filter(mock_es, http_client):
-    mock_es.search.return_value = _es_response()
-    async with http_client as client:
-        await client.get(SEARCH_BASE, params={"max_prep_time": 30})
-    filters = mock_es.search.call_args.kwargs["query"]["bool"]["filter"]
-    assert {"range": {"prep_time_minutes": {"lte": 30}}} in filters
-
-
-@pytest.mark.asyncio
-@pytest.mark.integration
-async def test_search_exclude_allergens(mock_es, http_client):
-    mock_es.search.return_value = _es_response()
+async def test_search_forwards_filters(rules_service, http_client):
     async with http_client as client:
         await client.get(
             SEARCH_BASE,
             params=[
+                ("difficulty", "enums.difficulty.easy"),
+                ("max_prep_time", "30"),
                 ("exclude_allergens", "enums.allergen.gluten"),
                 ("exclude_allergens", "enums.allergen.milk"),
+                ("limit", "5"),
+                ("offset", "20"),
+                ("apply_rules", "false"),
             ],
         )
-    must_not = mock_es.search.call_args.kwargs["query"]["bool"]["must_not"]
-    excluded = [c["term"]["allergens"] for c in must_not]
-    assert "enums.allergen.gluten" in excluded
-    assert "enums.allergen.milk" in excluded
+    kwargs = _kwargs(rules_service)
+    assert kwargs["difficulty"] == "enums.difficulty.easy"
+    assert kwargs["max_prep_time"] == 30
+    assert kwargs["exclude_allergens"] == [
+        "enums.allergen.gluten",
+        "enums.allergen.milk",
+    ]
+    assert (kwargs["limit"], kwargs["offset"]) == (5, 20)
+    assert kwargs["apply_rules"] is False
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_search_pagination(mock_es, http_client):
-    mock_es.search.return_value = _es_response()
-    async with http_client as client:
-        response = await client.get(SEARCH_BASE, params={"limit": 5, "offset": 20})
-    body = mock_es.search.call_args.kwargs
-    assert body["size"] == 5
-    assert body["from"] == 20
-    data = response.json()
-    assert data["limit"] == 5
-    assert data["offset"] == 20
-
-
-@pytest.mark.asyncio
-@pytest.mark.integration
-async def test_search_limit_max_returns_422(mock_es, http_client):
+async def test_search_limit_max_returns_422(rules_service, http_client):
     async with http_client as client:
         response = await client.get(SEARCH_BASE, params={"limit": 200})
     assert response.status_code == 422
-
-
-@pytest.mark.asyncio
-@pytest.mark.integration
-async def test_search_always_filters_by_account_id(mock_es, http_client):
-    """La query ES doit toujours contenir un filtre term sur account_id (multicomptes)."""
-    mock_es.search.return_value = _es_response()
-    async with http_client as client:
-        await client.get(SEARCH_BASE)
-    filters = mock_es.search.call_args.kwargs["query"]["bool"]["filter"]
-    assert {"term": {"account_id": TEST_ACCOUNT_ID}} in filters
-
-
-@pytest.mark.asyncio
-@pytest.mark.integration
-async def test_search_results_do_not_expose_user_id(mock_es, http_client):
-    """created_by_user_id ne doit jamais apparaître dans les résultats retournés au client."""
-    mock_es.search.return_value = _es_response(
-        hits=[_es_hit(1, "Tarte aux pommes")], total=1
-    )
-    async with http_client as client:
-        response = await client.get(SEARCH_BASE)
-    assert response.status_code == 200
-    result = response.json()["results"][0]
-    assert "created_by_user_id" not in result
+    rules_service.search.assert_not_called()

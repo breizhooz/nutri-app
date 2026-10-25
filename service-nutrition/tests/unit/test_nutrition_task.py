@@ -45,23 +45,3 @@ class TestImportCiquaTask:
             result = enrich_from_off()
 
         assert result == {"enriched": 0}
-
-    @pytest.mark.unit
-    def test_reindex_elasticsearch_returns_indexed_count(self):
-        """reindex_elasticsearch retourne {"indexed": N}."""
-        with patch("app.tasks.nutrition_task.asyncio.run", return_value=150):
-            from app.tasks.nutrition_task import reindex_elasticsearch
-
-            result = reindex_elasticsearch()
-
-        assert result == {"indexed": 150}
-
-    @pytest.mark.unit
-    def test_reindex_elasticsearch_zero_when_empty(self):
-        """reindex_elasticsearch retourne {"indexed": 0} si la base est vide."""
-        with patch("app.tasks.nutrition_task.asyncio.run", return_value=0):
-            from app.tasks.nutrition_task import reindex_elasticsearch
-
-            result = reindex_elasticsearch()
-
-        assert result == {"indexed": 0}

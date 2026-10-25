@@ -151,11 +151,3 @@ class LocalizedHTTPException(AppException):
             request,
             code="RECIPE_PUSH_SAME_ACCOUNT",
         )
-
-    @staticmethod
-    def service_es_failed(
-        request: Request, translation_key: str, e: Exception
-    ) -> "LocalizedHTTPException":
-        return LocalizedHTTPException(
-            500, translation_key, request, code="ELASTICSEARCH_ERROR", message=str(e)
-        )

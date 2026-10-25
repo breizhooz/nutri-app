@@ -150,36 +150,3 @@ class TestLocalizedHTTPExceptionFactories:
             exc = LocalizedHTTPException.service_user_unavailable(req)
         assert exc.status_code == 503
         assert exc.code == "SERVICE_USER_UNAVAILABLE"
-
-    @pytest.mark.unit
-    def test_service_es_failed_status_and_code(self):
-        req = _make_request()
-        with patch("app.i18n.exceptions.t") as mock_t:
-            mock_t.get.return_value = "ES error"
-            exc = LocalizedHTTPException.service_es_failed(
-                req, "es.errors.failed", RuntimeError("index error")
-            )
-        assert exc.status_code == 500
-        assert exc.code == "ELASTICSEARCH_ERROR"
-
-    @pytest.mark.unit
-    def test_service_es_failed_exception_message_in_detail(self):
-        """Le message de l'exception est inclus dans detail."""
-        req = _make_request()
-        with patch("app.i18n.exceptions.t") as mock_t:
-            mock_t.get.return_value = "ES error"
-            exc = LocalizedHTTPException.service_es_failed(
-                req, "es.errors.failed", ValueError("timeout")
-            )
-        assert "timeout" in exc.detail
-
-    @pytest.mark.unit
-    def test_service_es_failed_translation_key_forwarded(self):
-        """service_es_failed transmet la clé de traduction donnée à t.get."""
-        req = _make_request()
-        with patch("app.i18n.exceptions.t") as mock_t:
-            mock_t.get.return_value = "msg"
-            LocalizedHTTPException.service_es_failed(
-                req, "custom.es.key", RuntimeError("err")
-            )
-        mock_t.get.assert_called_once_with("custom.es.key", locale="fr")

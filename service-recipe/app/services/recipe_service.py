@@ -22,7 +22,6 @@ from app.schemas.recipe import (
     RecipeUpdate,
 )
 from app.schemas.recipe_import import RecipeImportItem
-from app.services.search_service import RecipeSearchService
 from app.services.unsplash_service import ImageSuggestion, UnsplashService
 from app.core.utils import normalize_keyword, slugify
 
@@ -35,12 +34,10 @@ class RecipeService:
     def __init__(
         self,
         repository: RecipeRepository,
-        search: RecipeSearchService,
         nutrition_client: NutritionServiceClient | None = None,
         unsplash: UnsplashService | None = None,
     ) -> None:
         self._repository = repository
-        self._search = search
         self._nutrition = nutrition_client or NutritionServiceClient()
         self._unsplash = unsplash or UnsplashService()
 
@@ -93,32 +90,18 @@ class RecipeService:
                 slugify(update_fields["title"]), exclude_id=recipe_id
             )
 
-        updated = await self._repository.apply_update(
+        return await self._repository.apply_update(
             recipe, update_fields, data.recipe_ingredients
         )
-        try:
-            await self._search.index_recipe(updated)
-        except Exception as exc:
-            logger.warning("ES reindex failed for recipe %s: %s", recipe_id, exc)
-        return updated
 
     async def delete(self, recipe_id: int, account_id: str) -> None:
         recipe = await self._repository.get_by_id_with_relations(recipe_id)
         recipe = self._ensure_account(recipe, account_id)
         await self._repository.delete(recipe)
-        try:
-            await self._search.delete_recipe(recipe_id)
-        except Exception as exc:
-            logger.warning("ES delete failed for recipe %s: %s", recipe_id, exc)
 
     async def delete_by_user(self, user_id: str) -> int:
-        """Delete all recipes authored by ``user_id`` and unindex them."""
-        count = await self._repository.delete_by_user(user_id)
-        try:
-            await self._search.delete_by_user(user_id)
-        except Exception as exc:
-            logger.warning("ES delete-by-user failed for %s: %s", user_id, exc)
-        return count
+        """Delete all recipes authored by ``user_id``."""
+        return await self._repository.delete_by_user(user_id)
 
     async def create_manual(
         self, data: RecipeManualCreate, user_id: str, account_id: str
@@ -144,9 +127,7 @@ class RecipeService:
         )
 
         recipe = await self._repository.create(recipe, recipe_ingredients)
-        recipe = await self._index_and_enrich(
-            recipe, data.ingredients, user_id, account_id
-        )
+        recipe = await self._enrich(recipe, data.ingredients, user_id, account_id)
         return await self._attach_suggestions(recipe)
 
     async def create(self, data: RecipeCreate, user_id: str, account_id: str) -> Recipe:
@@ -181,10 +162,6 @@ class RecipeService:
             for ing in data.recipe_ingredients
         ]
         recipe = await self._repository.create(recipe, recipe_ingredients)
-        try:
-            await self._search.index_recipe(recipe)
-        except Exception as exc:
-            logger.warning("ES indexing failed for recipe %s: %s", recipe.id, exc)
         return await self._attach_suggestions(recipe)
 
     async def create_full(
@@ -216,9 +193,7 @@ class RecipeService:
         )
 
         recipe = await self._repository.create(recipe, recipe_ingredients)
-        recipe = await self._index_and_enrich(
-            recipe, data.ingredients, user_id, account_id
-        )
+        recipe = await self._enrich(recipe, data.ingredients, user_id, account_id)
         # Import en masse : on NE lance PAS de recherche d'image Unsplash par
         # recette. Sinon un import de N recettes = N appels Unsplash, ce qui crame
         # le quota (50 req/h en clé "demo") et casse la recherche d'image pour
@@ -294,12 +269,6 @@ class RecipeService:
                 for ri in source.recipe_ingredients
             ]
             clone = await self._repository.create(clone, ingredients)
-            try:
-                await self._search.index_recipe(clone)
-            except Exception as exc:
-                logger.warning(
-                    "ES indexing failed for pushed recipe %s: %s", clone.id, exc
-                )
             created.append(clone)
         return created, skipped
 
@@ -316,14 +285,9 @@ class RecipeService:
             )
         return rows
 
-    async def _index_and_enrich(
+    async def _enrich(
         self, recipe: Recipe, ingredients, user_id: str, account_id: str
     ) -> Recipe:
-        try:
-            await self._search.index_recipe(recipe)
-        except Exception as exc:
-            logger.warning("ES indexing failed for recipe %s: %s", recipe.id, exc)
-
         if ingredients:
             nutrition = await self._nutrition.calculate(
                 recipe_slug=recipe.slug,
@@ -346,13 +310,6 @@ class RecipeService:
                 recipe = (
                     await self._repository.get_by_id_with_relations(recipe.id) or recipe
                 )
-                # Ré-indexe pour que le doc ES porte les macros fraîchement calculées.
-                try:
-                    await self._search.index_recipe(recipe)
-                except Exception as exc:
-                    logger.warning(
-                        "ES macro reindex failed for recipe %s: %s", recipe.id, exc
-                    )
 
         return recipe
 
@@ -362,10 +319,6 @@ class RecipeService:
         recipe = await self._repository.get_by_id_with_relations(recipe_id)
         self._ensure_account(recipe, account_id)
         recipe = await self._repository.update_image_url(recipe_id, image_url)
-        try:
-            await self._search.index_recipe(recipe)
-        except Exception as exc:
-            logger.warning("ES reindex failed for recipe %s: %s", recipe_id, exc)
         return recipe
 
     async def _attach_suggestions(self, recipe: Recipe) -> Recipe:
@@ -405,10 +358,6 @@ class RecipeService:
             recipe.id, suggestion.full_url, suggestion.thumb_url
         )
         recipe = selected or recipe
-        try:
-            await self._search.index_recipe(recipe)
-        except Exception as exc:
-            logger.warning("ES reindex failed for recipe %s: %s", recipe.id, exc)
         return recipe
 
     def _ensure_account(self, recipe: Recipe | None, account_id: str) -> Recipe:
@@ -492,10 +441,6 @@ class RecipeService:
             recipe_id, chosen.get("full_url", ""), chosen.get("thumb_url")
         )
         recipe = updated or recipe
-        try:
-            await self._search.index_recipe(recipe)
-        except Exception as exc:
-            logger.warning("ES reindex failed for recipe %s: %s", recipe_id, exc)
         return recipe
 
     async def _generate_unique_slug(

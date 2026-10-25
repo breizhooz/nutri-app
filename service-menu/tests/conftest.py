@@ -16,8 +16,6 @@ os.environ.setdefault("SERVICE_RECIPE_URL", "http://service-recipe-test:8000")
 os.environ.setdefault("SERVICE_MENU_TOKEN", "test-menu-service-token")
 os.environ.setdefault("JWT_SECRET", "test-secret-key-for-testing-only")
 os.environ.setdefault("JWT_ALGORITHM", "HS256")
-os.environ.setdefault("ELASTICSEARCH_URL", "http://elasticsearch-test:9200")
-os.environ.setdefault("ELASTICSEARCH_INDEX_RECIPES", "recipes-test")
 
 
 def make_recipe(

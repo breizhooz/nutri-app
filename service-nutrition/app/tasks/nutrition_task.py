@@ -104,29 +104,3 @@ def enrich_from_off(batch_size: int = 50) -> dict:
     count = asyncio.run(_run())
     logger.info("Enrichissement OFF terminé : %d items", count)
     return {"enriched": count}
-
-
-@celery_app.task(name="app.tasks.nutrition_tasks.reindex_elasticsearch")
-def reindex_elasticsearch() -> dict:
-    """Réindexe tous les NutritionItems dans Elasticsearch."""
-
-    async def _run() -> int:
-        from app.models.nutrition_item import NutritionItem
-        from app.services.lookup_service import LookupService
-        from sqlalchemy import select
-        from sqlalchemy.ext.asyncio import AsyncSession
-
-        engine = _make_engine()
-        try:
-            async with AsyncSession(engine) as session:
-                result = await session.execute(select(NutritionItem))
-                items = list(result.scalars().all())
-                lookup = LookupService()
-                await lookup.bulk_index(items)
-                return len(items)
-        finally:
-            await engine.dispose()
-
-    count = asyncio.run(_run())
-    logger.info("Réindexation Elasticsearch terminée : %d items", count)
-    return {"indexed": count}

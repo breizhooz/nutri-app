@@ -5,10 +5,8 @@ service-user (``nutriplanner_user``), non joignable en SQL depuis la base recipe
 (frontière dure). Ce script lit ce mapping et remplit ``recipes.account_id`` là où
 il est NULL, en se basant sur ``created_by_user_id``. Idempotent.
 
-À lancer APRÈS la migration, et SUIVI d'une réindexation Elasticsearch
-(POST /api/v1/recipe/reindex ou commande équivalente) pour que les documents ES
-portent le champ ``account_id`` (sinon la recherche, filtrée par compte, ne
-renvoie plus rien).
+À lancer APRÈS la migration (la recherche plein texte lit directement
+``recipes.account_id`` : aucune réindexation nécessaire).
 
 Usage :
 
@@ -70,7 +68,6 @@ async def _main() -> None:
 
     print(f"[backfill] {updated} recette(s) mise(s) à jour dans {recipe_db}")
     print(f"[backfill] recettes restantes sans account_id : {remaining}")
-    print("[backfill] ⚠️ lancer ensuite une réindexation Elasticsearch.")
 
 
 if __name__ == "__main__":

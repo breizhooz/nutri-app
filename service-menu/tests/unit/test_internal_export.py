@@ -114,7 +114,7 @@ async def test_export_empty_when_no_menu(service_client):
 
 @pytest.mark.unit
 async def test_export_requires_service_token(session):
-    """Sans token de service, l'accès est refusé (403)."""
+    """Token de service invalide → accès refusé (403)."""
 
     async def _override():
         yield session
@@ -124,7 +124,9 @@ async def test_export_requires_service_token(session):
         transport=ASGITransport(app=app), base_url="http://test"
     ) as ac:
         resp = await ac.post(
-            "/api/v1/internal/export", json={"account_ids": [str(uuid.uuid4())]}
+            "/api/v1/internal/export",
+            json={"account_ids": [str(uuid.uuid4())]},
+            headers={"Authorization": "Bearer invalid-token"},
         )
     app.dependency_overrides.clear()
     assert resp.status_code == 403

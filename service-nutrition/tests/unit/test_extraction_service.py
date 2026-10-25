@@ -5,7 +5,7 @@ import pytest
 
 from app.services.extraction_service import ExtractionService
 from app.services.lookup_service import LookupResult
-from app.services.spacy_extractor import ExtractedIngredient
+from app.services.ingredient_parser import ExtractedIngredient
 
 USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 
@@ -29,7 +29,7 @@ def _extracted(nom="farine") -> ExtractedIngredient:
     )
 
 
-def _spacy(returns) -> MagicMock:
+def _parser(returns) -> MagicMock:
     m = MagicMock()
     m.extract = MagicMock(return_value=returns)
     return m
@@ -64,9 +64,9 @@ def _mock_repo(error_slug="err-slug") -> MagicMock:
 
 class TestExtractionService:
     @pytest.mark.unit
-    async def test_spacy_ok_groq_not_called(self, db_session):
-        """spaCy réussit → Groq n'est jamais appelé."""
-        spacy = _spacy([_extracted()])
+    async def test_parser_ok_groq_not_called(self, db_session):
+        """La regex réussit → Groq n'est jamais appelé."""
+        parser = _parser([_extracted()])
         groq = _groq([])
         lookup = _lookup([_lookup_result()])
 
@@ -74,7 +74,7 @@ class TestExtractionService:
             "app.services.extraction_service.MacroErrorRepository",
             return_value=_mock_repo(),
         ):
-            svc = ExtractionService(db_session, spacy=spacy, groq=groq, lookup=lookup)
+            svc = ExtractionService(db_session, parser=parser, groq=groq, lookup=lookup)
             result = await svc.process(["200g de farine"], USER_ID)
 
         groq.extract.assert_not_called()
@@ -82,9 +82,9 @@ class TestExtractionService:
         assert len(result.failed) == 0
 
     @pytest.mark.unit
-    async def test_spacy_none_groq_called(self, db_session):
-        """spaCy retourne None → Groq appelé en fallback."""
-        spacy = _spacy(None)
+    async def test_parser_none_groq_called(self, db_session):
+        """La regex retourne None → Groq appelé en fallback."""
+        parser = _parser(None)
         groq = _groq([_extracted()])
         lookup = _lookup([_lookup_result()])
 
@@ -92,16 +92,16 @@ class TestExtractionService:
             "app.services.extraction_service.MacroErrorRepository",
             return_value=_mock_repo(),
         ):
-            svc = ExtractionService(db_session, spacy=spacy, groq=groq, lookup=lookup)
+            svc = ExtractionService(db_session, parser=parser, groq=groq, lookup=lookup)
             result = await svc.process(["texte ambigu"], USER_ID)
 
         groq.extract.assert_called_once()
         assert len(result.resolved) == 1
 
     @pytest.mark.unit
-    async def test_spacy_none_groq_raises_creates_macro_error(self, db_session):
-        """spaCy None + Groq lève → MacroError créé."""
-        spacy = _spacy(None)
+    async def test_parser_none_groq_raises_creates_macro_error(self, db_session):
+        """La regex None + Groq lève → MacroError créé."""
+        parser = _parser(None)
         groq = _groq(raises=ValueError("groq boom"))
         lookup = _lookup([])
         repo = _mock_repo("gochujank-20260518")
@@ -109,7 +109,7 @@ class TestExtractionService:
         with patch(
             "app.services.extraction_service.MacroErrorRepository", return_value=repo
         ):
-            svc = ExtractionService(db_session, spacy=spacy, groq=groq, lookup=lookup)
+            svc = ExtractionService(db_session, parser=parser, groq=groq, lookup=lookup)
             result = await svc.process(["gochujank"], USER_ID)
 
         assert len(result.failed) == 1
@@ -117,9 +117,9 @@ class TestExtractionService:
         assert result.failed[0].suggested is None
 
     @pytest.mark.unit
-    async def test_spacy_ok_lookup_no_match_creates_macro_error(self, db_session):
-        """spaCy extrait mais lookup vide → MacroError avec suggestion."""
-        spacy = _spacy([_extracted("gochujank")])
+    async def test_parser_ok_lookup_no_match_creates_macro_error(self, db_session):
+        """La regex extrait mais lookup vide → MacroError avec suggestion."""
+        parser = _parser([_extracted("gochujank")])
         groq = _groq([])
         lookup = _lookup([])
         repo = _mock_repo("gochujank-err")
@@ -127,16 +127,16 @@ class TestExtractionService:
         with patch(
             "app.services.extraction_service.MacroErrorRepository", return_value=repo
         ):
-            svc = ExtractionService(db_session, spacy=spacy, groq=groq, lookup=lookup)
+            svc = ExtractionService(db_session, parser=parser, groq=groq, lookup=lookup)
             result = await svc.process(["gochujank"], USER_ID)
 
         assert len(result.failed) == 1
         assert result.failed[0].suggested == "gochujank"
 
     @pytest.mark.unit
-    async def test_spacy_empty_groq_empty_creates_macro_error(self, db_session):
-        """spaCy [] et Groq [] → MacroError (aucun ingrédient extrait)."""
-        spacy = _spacy([])
+    async def test_parser_empty_groq_empty_creates_macro_error(self, db_session):
+        """La regex [] et Groq [] → MacroError (aucun ingrédient extrait)."""
+        parser = _parser([])
         groq = _groq([])
         lookup = _lookup([])
         repo = _mock_repo("empty-err")
@@ -144,7 +144,7 @@ class TestExtractionService:
         with patch(
             "app.services.extraction_service.MacroErrorRepository", return_value=repo
         ):
-            svc = ExtractionService(db_session, spacy=spacy, groq=groq, lookup=lookup)
+            svc = ExtractionService(db_session, parser=parser, groq=groq, lookup=lookup)
             result = await svc.process(["texte vide"], USER_ID)
 
         assert len(result.failed) == 1
@@ -152,7 +152,7 @@ class TestExtractionService:
     @pytest.mark.unit
     async def test_unknown_unit_falls_back_to_raw_quantity(self, db_session):
         """Unité inconnue → grammes = quantité brute (pas None)."""
-        spacy = _spacy(
+        parser = _parser(
             [
                 ExtractedIngredient(
                     raw_text="3 oeufs",
@@ -170,7 +170,7 @@ class TestExtractionService:
             "app.services.extraction_service.MacroErrorRepository",
             return_value=_mock_repo(),
         ):
-            svc = ExtractionService(db_session, spacy=spacy, groq=groq, lookup=lookup)
+            svc = ExtractionService(db_session, parser=parser, groq=groq, lookup=lookup)
             result = await svc.process(["3 oeufs"], USER_ID)
 
         assert len(result.resolved) == 1
@@ -181,15 +181,15 @@ class TestExtractionService:
         """2 ingrédients : 1 résolu + 1 échec → resolved=1, failed=1."""
         call_count = 0
 
-        def spacy_side_effect(text):
+        def parser_side_effect(text):
             nonlocal call_count
             call_count += 1
             if call_count == 1:
                 return [_extracted("farine")]
             return None
 
-        spacy = MagicMock()
-        spacy.extract = MagicMock(side_effect=spacy_side_effect)
+        parser = MagicMock()
+        parser.extract = MagicMock(side_effect=parser_side_effect)
         groq = _groq(raises=ValueError("boom"))
         lookup = _lookup([_lookup_result()])
         repo = _mock_repo("fail-err")
@@ -197,7 +197,7 @@ class TestExtractionService:
         with patch(
             "app.services.extraction_service.MacroErrorRepository", return_value=repo
         ):
-            svc = ExtractionService(db_session, spacy=spacy, groq=groq, lookup=lookup)
+            svc = ExtractionService(db_session, parser=parser, groq=groq, lookup=lookup)
             result = await svc.process(["200g de farine", "gochujank"], USER_ID)
 
         assert len(result.resolved) == 1

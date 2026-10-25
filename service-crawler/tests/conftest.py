@@ -11,10 +11,6 @@ os.environ.setdefault("OTEL_SDK_DISABLED", "true")
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 os.environ.setdefault("CELERY_BROKER_URL", "memory://")
 os.environ.setdefault("CELERY_RESULT_BACKEND", "cache+memory://")
-os.environ.setdefault("S3_ENDPOINT", "localhost:9000")
-os.environ.setdefault("S3_ACCESS_KEY", "test-access-key")
-os.environ.setdefault("S3_SECRET_KEY", "test-secret-key")
-os.environ.setdefault("S3_BUCKET_CRAWLER", "crawler-test")
 os.environ.setdefault("SERVICE_RECIPE_URL", "http://service-recipe-test:8000")
 os.environ.setdefault("SERVICE_RECIPE_TOKEN", "test-service-token")
 os.environ.setdefault(
@@ -26,7 +22,7 @@ os.environ.setdefault("INSTAGRAM_USERNAME", "")
 os.environ.setdefault("INSTAGRAM_PASSWORD", "")
 os.environ.setdefault("INSTAGRAM_SESSION_FILE", "/tmp/test_instagram_session")
 os.environ.setdefault("GROQ_API_KEY", "test-groq-key")
-os.environ.setdefault("GROQ_MODEL", "llama-3.1-8b-instant")
+os.environ.setdefault("GROQ_MODEL", "openai/gpt-oss-20b")
 
 from app.core.deps import get_current_user_id
 from app.db.base import Base

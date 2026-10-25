@@ -1,17 +1,19 @@
 """Routes internes (inter-service), réservées aux autres microservices.
 
-Effacement RGPD (art. 17) : purge le dossier profil d'un compte sur demande de
-service-user. Portabilité (art. 20) : export du dossier profil. Tous gardés par
-``verify_service_token``.
+Résumé nutritionnel d'un compte (service-menu, service-recipe). Effacement RGPD
+(art. 17) : purge le profil d'un compte sur demande de service-user. Portabilité
+(art. 20) : export du profil. Tous gardés par ``verify_service_token``.
 """
 
 import logging
+import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import verify_service_token
+from app.core.deps import get_locale, verify_service_token
 from app.db.session import get_session
+from app.i18n.loader import t
 from app.repositories.erasure_repository import ErasureRepository
 from app.repositories.export_repository import ExportRepository
 from app.schemas.internal import (
@@ -20,9 +22,28 @@ from app.schemas.internal import (
     ExportRequest,
     ExportResponse,
 )
+from app.schemas.profile import NutritionSummary
+from app.services.profile_service import ProfileService
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+@router.get("/accounts/{account_id}/nutrition-summary", response_model=NutritionSummary)
+async def nutrition_summary(
+    account_id: uuid.UUID,
+    request: Request,
+    _: None = Depends(verify_service_token),
+    session: AsyncSession = Depends(get_session),
+) -> NutritionSummary:
+    """Objectif, régime, exclusions et cibles du compte (404 sans profil)."""
+    summary = await ProfileService(session).summary(account_id)
+    if summary is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            detail=t.get("profile.not_found", get_locale(request)),
+        )
+    return summary
 
 
 @router.post("/erasure", response_model=ErasureResponse)

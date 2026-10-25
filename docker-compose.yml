@@ -8,8 +8,8 @@ name: nutri-app
 # de chaque fragment se résolvent depuis infra/compose/.
 include:
   - infra/compose/base.yml        # réseau + volumes nommés
-  - infra/compose/data.yml        # postgres, elasticsearch, redis, seaweedfs
+  - infra/compose/data.yml        # postgres, redis, seaweedfs
   - infra/compose/services.yml    # les 7 API métier
   - infra/compose/workers.yml     # celery workers / beat / flower
   - infra/compose/edge.yml        # traefik + portail swagger
-  - infra/compose/monitoring.yml  # prometheus, grafana, loki, tempo, exporters, filebeat
+  - infra/compose/monitoring.yml  # prometheus, grafana, loki, tempo, exporters

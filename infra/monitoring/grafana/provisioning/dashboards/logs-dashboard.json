@@ -1,125 +1,239 @@
 {
   "__inputs": [],
   "__requires": [
-    { "type": "datasource", "id": "elasticsearch", "name": "Elasticsearch", "version": "1.0.0" }
+    {
+      "type": "datasource",
+      "id": "loki",
+      "name": "Loki",
+      "version": "1.0.0"
+    }
   ],
-  "annotations": { "list": [] },
-  "description": "Rost.r — logs centralisés (structlog → Filebeat → Elasticsearch)",
+  "annotations": {
+    "list": []
+  },
+  "description": "Rost.r — logs centralisés (structlog → Alloy → Loki)",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
   "id": null,
   "panels": [
     {
-      "datasource": { "type": "elasticsearch", "uid": "${DS_ELASTICSEARCH}" },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
       "fieldConfig": {
-        "defaults": { "color": { "mode": "palette-classic" }, "custom": { "lineWidth": 2 } },
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2
+          }
+        },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "error" }, "properties": [{ "id": "color", "value": { "fixedColor": "#F2495C", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "warning" }, "properties": [{ "id": "color", "value": { "fixedColor": "#FF9830", "mode": "fixed" } }] },
-          { "matcher": { "id": "byName", "options": "info" }, "properties": [{ "id": "color", "value": { "fixedColor": "#73BF69", "mode": "fixed" } }] }
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "error"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#F2495C",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "warning"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#FF9830",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "info"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#73BF69",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
         ]
       },
-      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
       "id": 1,
-      "options": { "tooltip": { "mode": "multi" } },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
       "targets": [
         {
-          "alias": "errors",
-          "bucketAggs": [{ "field": "@timestamp", "id": "2", "settings": { "interval": "auto" }, "type": "date_histogram" }],
-          "metrics": [{ "id": "1", "type": "count" }],
-          "query": "level:error",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum by (level) (count_over_time({service=~\"$service\", level=~\"error|warning|info\"} [$__interval]))",
           "refId": "A",
-          "timeField": "@timestamp"
-        },
-        {
-          "alias": "warning",
-          "bucketAggs": [{ "field": "@timestamp", "id": "2", "settings": { "interval": "auto" }, "type": "date_histogram" }],
-          "metrics": [{ "id": "1", "type": "count" }],
-          "query": "level:warning",
-          "refId": "B",
-          "timeField": "@timestamp"
-        },
-        {
-          "alias": "info",
-          "bucketAggs": [{ "field": "@timestamp", "id": "2", "settings": { "interval": "auto" }, "type": "date_histogram" }],
-          "metrics": [{ "id": "1", "type": "count" }],
-          "query": "level:info",
-          "refId": "C",
-          "timeField": "@timestamp"
+          "queryType": "range",
+          "legendFormat": "{{level}}"
         }
       ],
       "title": "Volume de logs par niveau",
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "elasticsearch", "uid": "${DS_ELASTICSEARCH}" },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
       "fieldConfig": {
         "defaults": {},
         "overrides": []
       },
-      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 7 },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 7
+      },
       "id": 2,
       "options": {
-        "bucketOffset": 0,
-        "fillOpacity": 80,
-        "gradientMode": "none",
-        "legend": { "displayMode": "list", "placement": "bottom" }
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "showUnfilled": true
       },
       "targets": [
         {
-          "bucketAggs": [
-            { "field": "service.keyword", "id": "3", "settings": { "min_doc_count": "1", "order": "desc", "orderBy": "1", "size": "10" }, "type": "terms" }
-          ],
-          "metrics": [{ "id": "1", "type": "count" }],
-          "query": "level:error",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum by (service) (count_over_time({service=~\"$service\", level=\"error\"} [$__range]))",
           "refId": "A",
-          "timeField": "@timestamp"
+          "queryType": "instant",
+          "legendFormat": "{{service}}"
         }
       ],
       "title": "Erreurs par service",
-      "type": "barchart"
+      "type": "bargauge"
     },
     {
-      "datasource": { "type": "elasticsearch", "uid": "${DS_ELASTICSEARCH}" },
-      "fieldConfig": { "defaults": {}, "overrides": [] },
-      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 7 },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 7
+      },
       "id": 3,
-      "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "text": {} },
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "text": {}
+      },
       "targets": [
         {
-          "alias": "Requêtes",
-          "bucketAggs": [],
-          "metrics": [{ "id": "1", "type": "count" }],
-          "query": "event:request",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum(count_over_time({service=~\"$service\"} | json | event=\"request\" [$__range]))",
           "refId": "A",
-          "timeField": "@timestamp"
+          "queryType": "instant",
+          "legendFormat": "Requêtes"
         }
       ],
       "title": "Total requêtes HTTP",
       "type": "stat"
     },
     {
-      "datasource": { "type": "elasticsearch", "uid": "${DS_ELASTICSEARCH}" },
-      "fieldConfig": { "defaults": {}, "overrides": [] },
-      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 7 },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 7
+      },
       "id": 4,
-      "options": { "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"] }, "text": {}, "colorMode": "background" },
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "text": {},
+        "colorMode": "background"
+      },
       "targets": [
         {
-          "alias": "Erreurs",
-          "bucketAggs": [],
-          "metrics": [{ "id": "1", "type": "count" }],
-          "query": "level:error",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum(count_over_time({service=~\"$service\", level=\"error\"} [$__range]))",
           "refId": "A",
-          "timeField": "@timestamp"
+          "queryType": "instant",
+          "legendFormat": "Erreurs"
         }
       ],
       "title": "Total erreurs",
       "type": "stat"
     },
     {
-      "datasource": { "type": "elasticsearch", "uid": "${DS_ELASTICSEARCH}" },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -129,29 +243,51 @@
           }
         },
         "overrides": [
-          { "matcher": { "id": "byName", "options": "level" }, "properties": [{ "id": "custom.width", "value": 80 }] },
-          { "matcher": { "id": "byName", "options": "service" }, "properties": [{ "id": "custom.width", "value": 140 }] },
-          { "matcher": { "id": "byName", "options": "request_id" }, "properties": [{ "id": "custom.width", "value": 300 }] }
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "level"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "service"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 140
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "request_id"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 300
+              }
+            ]
+          }
         ]
       },
-      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 14 },
-      "id": 5,
-      "options": {
-        "footer": { "show": false },
-        "showHeader": true,
-        "sortBy": [{ "desc": true, "displayName": "@timestamp" }]
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 14
       },
-      "targets": [
-        {
-          "bucketAggs": [],
-          "metrics": [{ "id": "1", "settings": { "size": "500" }, "type": "logs" }],
-          "query": "$service_filter $level_filter",
-          "refId": "A",
-          "timeField": "@timestamp"
-        }
-      ],
-      "title": "Logs en temps réel",
-      "type": "logs",
+      "id": 5,
       "options": {
         "dedupStrategy": "none",
         "enableLogDetails": true,
@@ -161,28 +297,52 @@
         "showTime": true,
         "sortOrder": "Descending",
         "wrapLogMessage": false
-      }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "{service=~\"$service\", level=~\"$level\"}",
+          "refId": "A",
+          "queryType": "range"
+        }
+      ],
+      "title": "Logs en temps réel",
+      "type": "logs"
     }
   ],
   "refresh": "30s",
   "schemaVersion": 38,
-  "tags": ["logs", "nutri-app"],
+  "tags": [
+    "logs",
+    "nutri-app"
+  ],
   "templating": {
     "list": [
       {
         "current": {},
-        "datasource": { "type": "elasticsearch", "uid": "${DS_ELASTICSEARCH}" },
-        "definition": "{\"find\": \"terms\", \"field\": \"service.keyword\"}",
+        "datasource": {
+          "type": "loki",
+          "uid": "loki"
+        },
+        "definition": "label_values(service)",
         "hide": 0,
         "includeAll": true,
         "multi": true,
         "name": "service",
         "options": [],
-        "query": "{\"find\": \"terms\", \"field\": \"service.keyword\"}",
+        "query": {
+          "label": "service",
+          "refId": "LokiVariableQueryEditor-VariableQuery",
+          "stream": "",
+          "type": 1
+        },
         "refresh": 2,
         "type": "query",
         "label": "Service",
-        "allValue": "*"
+        "allValue": ".+"
       },
       {
         "current": {},
@@ -191,21 +351,41 @@
         "multi": true,
         "name": "level",
         "options": [
-          { "selected": false, "text": "info", "value": "info" },
-          { "selected": false, "text": "warning", "value": "warning" },
-          { "selected": false, "text": "error", "value": "error" },
-          { "selected": false, "text": "debug", "value": "debug" }
+          {
+            "selected": false,
+            "text": "info",
+            "value": "info"
+          },
+          {
+            "selected": false,
+            "text": "warning",
+            "value": "warning"
+          },
+          {
+            "selected": false,
+            "text": "error",
+            "value": "error"
+          },
+          {
+            "selected": false,
+            "text": "debug",
+            "value": "debug"
+          }
         ],
         "query": "info,warning,error,debug",
         "type": "custom",
-        "label": "Level"
+        "label": "Level",
+        "allValue": ".+"
       }
     ]
   },
-  "time": { "from": "now-1h", "to": "now" },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
   "timepicker": {},
   "timezone": "browser",
   "title": "Rost.r — Logs",
   "uid": "nutri-logs-001",
-  "version": 1
+  "version": 2
 }

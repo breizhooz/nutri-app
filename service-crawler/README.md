@@ -196,6 +196,3 @@ service-crawler/
 | `DATABASE_URL` | `postgresql+asyncpg://...@postgres-crawler:5432/...` |
 | `CELERY_BROKER_URL` | `redis://redis:6379/0` |
 | `CELERY_RESULT_BACKEND` | `redis://redis:6379/1` |
-| `S3_ENDPOINT` | `seaweedfs:8333` (endpoint S3 SeaweedFS) |
-| `S3_ACCESS_KEY` | Clé d'accès S3 |
-| `S3_SECRET_KEY` | Clé secrète S3 |

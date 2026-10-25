@@ -1,4 +1,4 @@
-"""Tests de la route d'orchestration /api/v1/nutrition-targets."""
+"""Tests de la route /api/v1/nutrition-targets (cibles précalculées)."""
 
 import pytest
 from httpx import AsyncClient
@@ -6,13 +6,9 @@ from httpx import AsyncClient
 
 def _payload(**over) -> dict:
     base = {
-        "goal": "weight_loss",
         "diet_type": "standard",
-        "tdee_kcal": 2500,
-        "bmr_kcal": 1700,
-        "weight_kg": 80,
+        "targets": {"calories": 2000, "proteines": 160, "lipides": 55, "glucides": 215},
         "excluded_foods": ["arachide"],
-        "medical_contraindications": [],
         "adjustment": {},
     }
     base.update(over)
@@ -22,33 +18,59 @@ def _payload(**over) -> dict:
 class TestNutritionTargetsRoute:
     @pytest.mark.unit
     async def test_nominal_orchestration(self, service_client: AsyncClient) -> None:
-        """Enchaîne les 3 étapes et retourne cibles + requête ES."""
+        """Cibles reçues → critères de recherche."""
         resp = await service_client.post("/api/v1/nutrition-targets", json=_payload())
         assert resp.status_code == 200
         body = resp.json()
         assert body["targets"]["calories"] == 2000.0
         assert body["targets"]["proteines"] == 160.0
-        assert "function_score" in body["search_query"]["query"]
-        # exclusion propagée jusqu'à la requête
-        assert "arachide" in str(body["search_query"])
+        criteria = body["search_criteria"]
+        assert len(criteria["macro_targets"]) == 4
+        assert "arachide" in criteria["excluded_terms"]
 
     @pytest.mark.unit
-    async def test_warnings_propagated_to_response(
-        self, service_client: AsyncClient
-    ) -> None:
-        """Un override sous le plancher remonte un warning dans la réponse API."""
+    async def test_manual_override_applied(self, service_client: AsyncClient) -> None:
         resp = await service_client.post(
             "/api/v1/nutrition-targets",
-            json=_payload(adjustment={"manual_calories_override": 1000}),
+            json=_payload(adjustment={"manual_calories_override": 1800}),
         )
-        assert resp.status_code == 200
-        body = resp.json()
-        assert body["targets"]["calories"] == 1800.0
-        assert len(body["targets"]["warnings"]) >= 1
+        assert resp.json()["targets"]["calories"] == 1800.0
 
     @pytest.mark.unit
-    async def test_unknown_goal_returns_422(self, service_client: AsyncClient) -> None:
+    @pytest.mark.parametrize(
+        "body_field",
+        ["tdee_kcal", "bmr_kcal", "weight_kg", "medical_contraindications"],
+    )
+    async def test_body_data_rejected(
+        self, service_client: AsyncClient, body_field: str
+    ) -> None:
+        """Aucune donnée corporelle ou médicale n'entre dans le moteur."""
         resp = await service_client.post(
-            "/api/v1/nutrition-targets", json=_payload(goal="cheat_day")
+            "/api/v1/nutrition-targets", json=_payload(**{body_field: 80})
         )
         assert resp.status_code == 422
+
+    @pytest.mark.unit
+    async def test_targets_required(self, service_client: AsyncClient) -> None:
+        payload = _payload()
+        del payload["targets"]
+        resp = await service_client.post("/api/v1/nutrition-targets", json=payload)
+        assert resp.status_code == 422
+
+    @pytest.mark.unit
+    async def test_non_positive_calories_rejected(
+        self, service_client: AsyncClient
+    ) -> None:
+        resp = await service_client.post(
+            "/api/v1/nutrition-targets", json=_payload(targets={"calories": 0})
+        )
+        assert resp.status_code == 422
+
+    @pytest.mark.unit
+    async def test_requires_service_token(self, service_client: AsyncClient) -> None:
+        resp = await service_client.post(
+            "/api/v1/nutrition-targets",
+            json=_payload(),
+            headers={"Authorization": "Bearer wrong"},
+        )
+        assert resp.status_code == 403

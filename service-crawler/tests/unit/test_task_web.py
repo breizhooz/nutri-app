@@ -2,7 +2,9 @@ import uuid
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from app.core.ssrf import UnsafeUrlError
 from app.models.enums import CrawlType
+from app.services.web_service import InsufficientContentError, PermanentFetchError
 
 _FAKE_USER_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 _FAKE_SOURCE_ID = str(uuid.UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
@@ -151,6 +153,49 @@ async def test_do_crawl_retries_on_fetch_error():
 
     task.retry.assert_called_once()
     result_repo.get_or_create_result.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "error",
+    [
+        PermanentFetchError("HTTP 404 pour https://example.com/recipe"),
+        InsufficientContentError("page probablement rendue en JavaScript"),
+        UnsafeUrlError("cible interne"),
+    ],
+)
+async def test_do_crawl_does_not_retry_permanent_errors(error):
+    fake_source = _make_fake_source()
+
+    result_repo = AsyncMock()
+    result_repo.user_link_exists = AsyncMock(return_value=False)
+
+    source_repo = AsyncMock()
+    source_repo.get_by_id = AsyncMock(return_value=fake_source)
+
+    task = MagicMock()
+    mock_session = _make_session_ctx()
+
+    with (
+        patch("tasks.web._make_session_factory") as mock_factory,
+        patch("tasks.web.ResultRepository", return_value=result_repo),
+        patch("tasks.web.SourceRepository", return_value=source_repo),
+        patch("tasks.web.WebService") as mock_ws_cls,
+        patch("tasks.web.NotificationClient", return_value=AsyncMock()),
+    ):
+        mock_factory.return_value.return_value = mock_session
+        mock_ws = AsyncMock()
+        mock_ws.fetch = AsyncMock(side_effect=error)
+        mock_ws_cls.return_value = mock_ws
+
+        from tasks.web import _do_crawl
+
+        with pytest.raises(type(error)):
+            await _do_crawl(task, _FAKE_SOURCE_ID, _FAKE_URL, None)
+
+    task.retry.assert_not_called()
+    result_repo.get_or_create_result.assert_not_called()
+    source_repo.mark_crawled.assert_not_called()
 
 
 @pytest.mark.asyncio

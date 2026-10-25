@@ -14,7 +14,7 @@ _FAKE_REQUEST = SimpleNamespace(state=SimpleNamespace(locale="fr"))
 async def test_counts_by_user_maps_repo_rows_to_dict():
     repo = AsyncMock()
     repo.count_by_user.return_value = [("user-a", 3), ("user-b", 1)]
-    service = RecipeService(repo, AsyncMock())
+    service = RecipeService(repo)
 
     result = await service.counts_by_user()
 
@@ -26,7 +26,7 @@ async def test_counts_by_user_maps_repo_rows_to_dict():
 async def test_counts_by_user_empty():
     repo = AsyncMock()
     repo.count_by_user.return_value = []
-    service = RecipeService(repo, AsyncMock())
+    service = RecipeService(repo)
 
     assert await service.counts_by_user() == {}
 

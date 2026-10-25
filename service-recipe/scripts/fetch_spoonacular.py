@@ -14,8 +14,6 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-os.environ.setdefault("ELASTICSEARCH_URL", "http://elasticsearch:9200")
-os.environ.setdefault("ELASTICSEARCH_INDEX_RECIPES", "recipes")
 os.environ.setdefault("JWT_SECRET", "fetch-secret")
 
 

@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from celery_app import celery_app
 
 from app.core.config import settings
-from app.db.session import _session_factory
+from app.db.session import task_session
 from app.services import retention_service
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ def _run(job: Callable[[AsyncSession], Awaitable[int]]) -> int:
     """Exécute une purge async sur une session dédiée et retourne le compte."""
 
     async def _main() -> int:
-        async with _session_factory()() as session:
+        async with task_session() as session:
             return await job(session)
 
     return asyncio.run(_main())

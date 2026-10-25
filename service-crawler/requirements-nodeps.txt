@@ -1,0 +1,7 @@
+# Installé SANS ses dépendances : pip install --no-deps -r requirements-nodeps.txt
+# rapidocr exige `opencv_python` (non headless → tire libGL/Mesa, ~270 Mo) ; ses
+# vraies dépendances sont listées dans requirements.txt avec OpenCV *headless*.
+# `pip check` signalera donc « rapidocr requires opencv-python » : attendu.
+-c ../shared/constraints.txt
+
+rapidocr

@@ -1,0 +1,15 @@
+# Config ruff commune aux 7 services (ruff remonte l'arborescence jusqu'ici ;
+# aucun pyproject.toml de service n'a de section [tool.ruff]).
+# Version de ruff : shared/constraints.txt.
+
+# Les images tournent en 3.14, mais le code doit rester valide en 3.12 (venv local
+# de l'hôte) : en py314, le formateur réécrirait `except (A, B):` en `except A, B:`
+# (PEP 758, syntaxe 3.14 uniquement).
+target-version = "py312"
+
+[lint]
+# Jeu de règles FIGÉ = anciennes valeurs par défaut (ruff ≤ 0.15). ruff 0.16 a
+# élargi ses défauts (UP, B, I, BLE, DTZ, RUF…) : adopter ces règles est un
+# chantier à part (≈ 600 corrections, et B008 est un faux positif FastAPI :
+# `Depends(...)` en valeur par défaut est le mécanisme même de FastAPI).
+select = ["E4", "E7", "E9", "F"]

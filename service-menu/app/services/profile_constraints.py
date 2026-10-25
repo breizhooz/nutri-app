@@ -1,22 +1,20 @@
 """Contraintes de génération issues du profil utilisateur (service-profile).
 
-Traduit le résumé nutritionnel inter-service (GET /profiles/{user_id}/
-nutrition-summary) en contraintes exploitables par le randomizer :
+Traduit le résumé nutritionnel inter-service (GET /internal/accounts/
+{account_id}/nutrition-summary) en contraintes exploitables par le randomizer :
 
-  • ``allergen_tags``        — allergies déclarées → tags ``enums.allergen.*``
+  • ``allergen_tags``        — aliments exclus reconnus comme allergènes → tags
+                               ``enums.allergen.*`` (le profil n'a plus de champ
+                               « allergies » : elles sont fondues dans les exclusions)
   • ``forbidden_tags``       — régime (diet_type) → tags ``enums.type_of_ingredient.*``
-  • ``excluded_food_terms``  — aliments exclus (et allergènes, en défense en
-                               profondeur) → match sur le NOM des ingrédients
-  • ``target_calories``      — cible énergétique calculée, utilisée comme défaut
+  • ``excluded_food_terms``  — aliments exclus → match sur le NOM des ingrédients
+  • ``target_calories``      — cible calculée sur l'appareil, utilisée comme défaut
 
 Le mapping régime est aligné sur la sémantique du moteur de service-nutrition
 (``step3_search_query._DIET_BANNED_INGREDIENTS``) mais appliqué ici sur les
 tags réels des ingrédients, seules données fiables du payload recette. Le porc
 n'ayant pas de tag dédié, halal/kosher/no_pork passent par une exclusion par
 noms d'ingrédients (best-effort documenté).
-
-NB : ``nutrition_preferences.medical_contraindications`` est un champ de prose
-libre — il n'est volontairement pas interprété ici.
 """
 
 import re
@@ -209,35 +207,24 @@ def build_constraints(summary: dict | None) -> ProfileConstraints:
     allergen_tags: set[str] = set()
     food_terms: set[str] = set()
 
-    # Allergies : tag si mappable + toujours le nom (défense en profondeur).
-    for allergy in summary.get("allergies") or []:
-        label = allergy.get("allergen") or ""
-        if not label.strip():
+    # Aliments exclus : toujours par nom ; en plus par tag s'il s'agit d'un
+    # allergène connu (« arachide » écarte aussi le beurre de cacahuète tagué).
+    for name in summary.get("excluded_foods") or []:
+        if not name or not name.strip():
             continue
-        mapped = _map_allergen(label)
+        mapped = _map_allergen(name)
         if mapped is not None:
             allergen_tags.add(mapped.value)
-        food_terms.add(_normalize(label))
-
-    # Aliments exclus : modèle dédié + liste libre des préférences.
-    for excluded in summary.get("excluded_foods") or []:
-        name = excluded.get("food_name") or ""
-        if name.strip():
-            food_terms.add(_normalize(name))
-
-    prefs = summary.get("nutrition_preferences") or {}
-    for name in prefs.get("excluded_foods") or []:
-        if name and name.strip():
-            food_terms.add(_normalize(name))
+        food_terms.add(_normalize(name))
 
     # Régime alimentaire → tags interdits + termes best-effort (porc, gélatine).
     forbidden_tags: set[str] = set()
-    diet_type = prefs.get("diet_type")
+    diet_type = summary.get("diet_type")
     if diet_type:
         forbidden_tags |= _DIET_FORBIDDEN_TAGS.get(diet_type, set())
         food_terms |= _DIET_FORBIDDEN_TERMS.get(diet_type, set())
 
-    target_calories = (summary.get("calculation") or {}).get("target_calories_kcal")
+    target_calories = (summary.get("targets") or {}).get("calories")
 
     return ProfileConstraints(
         allergen_tags=frozenset(allergen_tags),

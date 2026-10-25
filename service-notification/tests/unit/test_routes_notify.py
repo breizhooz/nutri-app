@@ -79,12 +79,13 @@ class TestNotifyRoute:
 
     @pytest.mark.unit
     async def test_notify_requires_auth_at_all(self):
-        """Appel sans Authorization header → 403."""
+        """Appel avec un token invalide → 403."""
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"
         ) as ac:
             resp = await ac.post(
                 "/api/v1/notify",
+                headers={"Authorization": "Bearer invalid-token"},
                 json={
                     "user_slug": str(uuid.uuid4()),
                     "type": "macro_error",

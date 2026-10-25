@@ -10,10 +10,10 @@ networks:
 volumes:
   instagram-session:
   pgdata:
-  es-data:
   redis-data:
   seaweedfs-data:
   prometheus-data:
   grafana-data:
   loki-data:
+  alloy-data:
   tempo-data:

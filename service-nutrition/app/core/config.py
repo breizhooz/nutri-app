@@ -10,9 +10,6 @@ class Settings(BaseSettings):
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
 
-    ELASTICSEARCH_URL: str = "http://elasticsearch:9200"
-    ELASTICSEARCH_INDEX: str = "nutrition_items"
-
     CELERY_BROKER_URL: str = "redis://redis:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://redis:6379/1"
 
@@ -20,7 +17,7 @@ class Settings(BaseSettings):
     MACRO_ERROR_RETENTION_DAYS: int = 90
 
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "llama-3.1-8b-instant"
+    GROQ_MODEL: str = "openai/gpt-oss-20b"
 
     OFF_BASE_URL: str = "https://world.openfoodfacts.org"
     OFF_USER_AGENT: str = "Rost.r/1.0 (contact@nutriplanner.fr)"

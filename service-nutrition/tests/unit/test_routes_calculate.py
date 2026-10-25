@@ -71,13 +71,14 @@ class TestCalculateRoute:
         assert resp.status_code == 403
 
     @pytest.mark.unit
-    async def test_no_auth_returns_403(self):
-        """Sans auth → 403."""
+    async def test_invalid_token_returns_403(self):
+        """Token invalide → 403."""
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"
         ) as ac:
             resp = await ac.post(
                 "/api/v1/calculate",
+                headers={"Authorization": "Bearer invalid-token"},
                 json={
                     "recipe_slug": "test",
                     "user_id": str(USER_ID),

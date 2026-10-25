@@ -339,7 +339,7 @@ async def update_member(
         raise _http_error(request, exc)
     if membership is None:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=t.get("accounts.nothing_to_update", get_locale(request)),
         )
     # Recharge l'email pour la réponse.
